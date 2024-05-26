@@ -1,9 +1,82 @@
 {
-	"geode": "2.0.0-beta.26",
+	"geode": "2.0.0-beta.27",
 	"gd": "2.204",
-	"version": "1.00",
+	"version": "v1.0.0",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
-	"description": ""
+	"description": "test",
+	"resources": {
+		"spritesheets": {
+			"jfp": [
+				"resources/*.png"
+			]
+		}
+	},
+	"dependencies": [
+		{
+			"id": "hjfod.gmd-api",
+			"version": "v1.1.0"
+		},
+		{
+			"id": "geode.node-ids",
+			"version": "v1.10.2"
+		}
+	],
+	"settings": {
+		"speed": {
+			"name": "Initial Speed",
+			"description": "Possible values (0.5, 1, 2, 3, 4)",
+			"type": "float",
+			"default": 3
+		},
+		"length": {
+			"name": "Length",
+			"description": "The length of the level generated in m (1 block = 1 m). In JFP, length is measured in meters and height in units.",
+			"type": "int",
+			"default": 400
+		},
+		"filename": {
+			"name": "File Name",
+			"description": "The name of the .gmd file saved during generation. File location: %LOCALAPPDATA%/GeometryDash/",
+			"type": "string",
+			"default": "waveman.gmd"
+		},
+		"marks": {
+			"name": "Meter Marks",
+			"type": "bool",
+			"default": true
+		},
+		"marker-interval": {
+			"name": "Mark Interval (m)",
+			"type": "int",
+			"default": 100
+		},
+		"corners": {
+			"name": "Corner Pieces",
+			"type": "bool",
+			"default": false
+		},
+		"zig-limit": {
+			"name": "Zigzagging Limit",
+			"type": "bool",
+			"default": true
+		},
+		"remove-spam": {
+			"name": "Spam Limit",
+			"type": "bool",
+			"default": true
+		},
+		"corridor-height": {
+			"name": "Corridor Height (units)",
+			"description":  "1 block = 30 units. In JFP, length is measured in meters and height in units.",
+			"type": "float",
+			"default": 60
+		},
+		"debug": {
+			"name": "Debug",
+			"type": "bool",
+			"default": true
+		}
+	}
 }
