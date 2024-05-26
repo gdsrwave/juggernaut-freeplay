@@ -1,1 +1,3 @@
-# Juggernaut Free Play
+# Template Mod
+
+Edit about.md to change this
