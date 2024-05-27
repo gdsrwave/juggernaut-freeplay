@@ -134,6 +134,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			386900,
 			167229
 		};
+		std::uniform_int_distribution<long long int> stdtr(0, sizeof(soundtrack)/sizeof(int)-1);
 
 		const std::string filename = Mod::get()->getSettingValue<std::string>("filename");
 
@@ -150,16 +151,18 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			speedID = 1334;
 		}
 		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
-		const int64_t markinterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
+		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 		const double corridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 		const int maxHeight = 195; // 6.5 blocks (based on lower bound)
 		const int minHeight = 45; // 1.5 blocks
 
 		// T/F constants
 		const bool marks = Mod::get()->getSettingValue<bool>("marks");
-		const bool corner = Mod::get()->getSettingValue<bool>("corners");
+		const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
 		const bool zigzagLimit = Mod::get()->getSettingValue<bool>("zig-limit");
 		const bool removeSpam = Mod::get()->getSettingValue<bool>("remove-spam");
+
+		const bool debug = Mod::get()->getSettingValue<bool>("debug");
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -169,7 +172,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		fmt::arg("ch_2", 165+corridorHeight),
 		fmt::arg("ch_3", 195+corridorHeight));
 		
-		log::info("Seed {}", seed);
+		if(debug) log::info("Seed {}", seed);
 
 		
 		// y_swing = the direction the wave corridor is currently moving - can be 0, 1, -1, and possibly -2/2 for miniwave in the future
@@ -237,12 +240,62 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			}
 			genBuildC += ";";
 
-			std::string corners = "";
+			std::string cornerBuild = "";
+			if(cornerPieces) {
+				if(prevO[10] == 1 && y_swing == -1) {
+					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90;",
+					fmt::arg("cnr1x", x-30),
+					fmt::arg("cnr2x", x),
+					fmt::arg("cnry", y+corridorHeight+30));
+				} else if(prevO[10] == -1 && y_swing == 1) {
+					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,90;1,473,2,{cnr2x},3,{cnry};",
+					fmt::arg("cnr1x", x-30),
+					fmt::arg("cnr2x", x),
+					fmt::arg("cnry", y+30));
+				}
+			}
 
-			level += (genBuildF + genBuildC);
+
+			level += (genBuildF + genBuildC + cornerBuild);
 		}
 
-		//log::info("{}", level);
+		// Ending Connectors
+		int xB = x, yB = y, xT = x, yT = y + corridorHeight;
+		if(prevO[10] == 1) {
+			yB += 30;
+		} else {
+			yT -= 30;
+		}
+		while(yT <= (maxHeight + corridorHeight + 30)) {
+			xT += 30;
+			yT += 30;
+			level += fmt::format("1,1338,2,{x},3,{y},6,180;", fmt::arg("x", xT), fmt::arg("y", yT));
+		}
+		while(yB >= (minHeight)) {
+			xB += 30;
+			yB -= 30;
+			level += fmt::format("1,1338,2,{x},3,{y},6,90;", fmt::arg("x", xB), fmt::arg("y", yB));
+		}
+
+		// Meter Mark Generation
+		if (marks && markInterval > 0) {
+			int meters = markInterval;
+			double markHeight;
+			for(int j = 0; j < (length / markInterval); j++) {
+				markHeight = 15.5;
+
+				for(int i = 0; i < 10; i++) {
+					level += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
+					markHeight += 30.0;
+				}
+
+				std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
+				level += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
+				meters += markInterval;
+			}
+		}
+
+		if(debug) log::info("{}", level);
 
 		// deflate usage source: https://github.com/HJfod/GMD-API/blob/main/src/GMD.cpp
 		/*unsigned char* gz = nullptr;
@@ -250,25 +303,23 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		if(!memEnd) return FLAlertLayer::create("Export Error", "Level data compression failed! Please try restarting, updating JFP or reporting the issue.", "Sure thing...")->show();
 		auto levelBV = ByteVector(reinterpret_cast<uint8_t*>(gz), reinterpret_cast<uint8_t(gz + memEnd));
 		if(gz) delete*/
+		int songSelection = soundtrack[stdtr(e2)];
 		std::string b64 = ZipUtils::compressString(level, true, 0);
 		std::string desc = fmt::format("Seed: {}", seed);
 		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
 		b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
 		desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
 
-		std::string levelString = fmt::format("<d><k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>614361</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i></d>",
+		std::string levelString = fmt::format("<d><k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i></d>",
 		fmt::arg("desc", desc),
 		fmt::arg("b64", b64),
-		fmt::arg("title", std::to_string(seed).substr(0, 6)));
+		fmt::arg("title", std::to_string(seed).substr(0, 6)),
+		fmt::arg("song", songSelection));
 
-		log::info("{}", levelString);
+		if(debug) log::info("{}", levelString);
 
 		return levelString;
 
-		// todo: add top and bottom slopes from this segment to the level string
-		// todo: add optional corner piece blocks
-		// todo: top/bottom ending connectors - requires coordinates and brief loops for each
-		// todo: meter mark generation
 		// todo: remove any unused code left from example, add comments, debug
 
 	}
