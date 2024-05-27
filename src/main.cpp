@@ -11,6 +11,7 @@
 #include <random>
 #include <cmath>
 #include <fmt/core.h>
+#include <Geode/cocos/support/zip_support/ZipUtils.h>
 
 /**
  * Brings cocos2d and all Geode namespaces to the current scope.
@@ -95,10 +96,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 	// checks if a certain orientation pattern matches the most recent previous orientations
 	// essentially this checks if the end of one int [] equals another int []
-	static bool orientationMatch(int prevO[11], int pattern[], int patternLength) {
-		if(patternLength>11) return false;
-		for(int i = 0; i < patternLength; i++) {
-			if(pattern[i] != prevO[i+(prevO-pattern)]) {
+	static bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
+		if(pattern.size()>11) return false;
+		for(int i = 0; i < pattern.size(); i++) {
+			if(pattern[i] != prevO[i+(11-pattern.size())]) {
 				return false;
 			}
 		}
@@ -152,18 +153,13 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
-		auto level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speed},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
+		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speed},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
 		fmt::arg("speed", speed),
 		fmt::arg("ch_1", 225+corridorHeight),
 		fmt::arg("ch_2", 165+corridorHeight),
 		fmt::arg("ch_3", 195+corridorHeight));
 		
 		log::info("Seed {}", seed);
-		log::info("{}", dtr(e2));
-		log::info("{}", dtr(e2));
-		log::info("{}", dtr(e2));
-		log::info("{}", dtr(e2));
-		log::info("{}", dtr(e2));
 
 		
 		// y_swing = the direction the wave corridor is currently moving - can be 0, 1, -1, and possibly -2/2 for miniwave in the future
@@ -178,36 +174,70 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		//     +-  +-        +
 		//    +  -+  -  +-  + 
 		//   +        -+  -+
-		const int antiZigzagMax[10] = {1,-1,1,-1,-1,1,-1,1,1,-1};
-		const int antiZigzagMin[10] = {-1,1,-1,1,1,-1,1,-1,-1,1};
-		const int antiZigzagStd1[11] = {-1,1,-1,1,1,-1,1,-1,-1,1,-1};
-		const int antiZigzagStd2[11] = {1,-1,1,-1,-1,1,-1,1,1,-1,1};
+		std::vector<int> antiZigzagMax = {1,-1,1,-1,-1,1,-1,1,1,-1};
+		std::vector<int> antiZigzagMin = {-1,1,-1,1,1,-1,1,-1,-1,1};
+		std::vector<int> antiZigzagStd1 = {-1,1,-1,1,1,-1,1,-1,-1,1,-1};
+		std::vector<int> antiZigzagStd2 = {1,-1,1,-1,-1,1,-1,1,1,-1,1};
 
 		// todo:
 		// orientationmatch doesnt work need to use vectors instead for dynamic length
 
-		const int antiSpam1[4] = {1,-1,1,-1};
-		const int antiSpam2[4] = {-1,1,-1,1};
+		std::vector<int> antiSpam1 = {1,-1,1,-1};
+		std::vector<int> antiSpam2 = {-1,1,-1,1};
 
-		/*for(int i = 0; i < length; i++) {
+		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
 			y_swing = 0;
 
-			if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMax, 10)))) {
+			if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMax)))) {
 				y_swing = -1;
-			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMin, 10)))) {
+			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMin)))) {
 				y_swing = 1;
 			} else {
-
+				if(zigzagLimit && orientationMatch(prevO, antiZigzagStd1)) {
+					y_swing = -1;
+				} else if (zigzagLimit && orientationMatch(prevO, antiZigzagStd2)) {
+					y_swing = 1;
+				} else if(removeSpam && orientationMatch(prevO, antiSpam1)) {
+					y_swing = -1;
+				} else if (removeSpam && orientationMatch(prevO, antiSpam2)) {
+					y_swing = 1;
+				} else {
+					// randomized coinflip condition
+					y_swing = dtr(e2);
+					if(y_swing == 0) y_swing = -1;
+				}
 			}
-		}*/
 
-		// todo: zigzag limit checks for standard generation
-		// todo: spam limit checks
-		// todo: generate random coinflip if no special condition (else)
-		// todo: shift prevO and add new y_swing
-		// todo: direction change check, y +=
+			if(prevO[10] == y_swing) y += (y_swing * 30);
+
+			orientationShift(prevO, y_swing);
+			
+			// blocks from this segment: F = floor, C = ceiling
+			std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
+			if(y_swing < 0) genBuildF += ",6,90";
+			genBuildF += ";";
+			
+			std::string genBuildC = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y+corridorHeight));
+			if(y_swing > 0) {
+				genBuildC += ",6,180";
+			} else {
+				genBuildC += ",6,270";
+			}
+			genBuildC += ";";
+
+			std::string corners = "";
+
+			level += (genBuildF + genBuildC);
+		}
+
+		//log::info("{}", level);
+
+		/*std::string b64 = ZipUtils::base64URLEncode(ZipUtils::compressString(level));*/
+		std::string desc = fmt::format("Seed: {}", seed);
+		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
+
 		// todo: add top and bottom slopes from this segment to the level string
 		// todo: add optional corner piece blocks
 		// todo: top/bottom ending connectors - requires coordinates and brief loops for each
