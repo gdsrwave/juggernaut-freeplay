@@ -113,7 +113,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		prevO[10] = newO;
 	}
 
-	static void mainGen() {
+	static std::string mainGen() {
 		std::random_device rd;
 		unsigned int seed = rd();
 		std::mt19937_64 e2(seed);
@@ -139,6 +139,16 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// numeric constants
 		const double speed = Mod::get()->getSettingValue<double>("speed");
+		int speedID = 203;
+		if(speed == 0.5) {
+			speedID = 200;
+		} else if(speed == 1.0) {
+			speedID = 201;
+		} else if(speed == 2.0) {
+			speedID = 202;
+		} else if(speed == 4.0) {
+			speedID = 1334;
+		}
 		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markinterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 		const double corridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
@@ -153,8 +163,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
-		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speed},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
-		fmt::arg("speed", speed),
+		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
+		fmt::arg("speedID", speedID),
 		fmt::arg("ch_1", 225+corridorHeight),
 		fmt::arg("ch_2", 165+corridorHeight),
 		fmt::arg("ch_3", 195+corridorHeight));
@@ -234,16 +244,31 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		//log::info("{}", level);
 
-		/*std::string b64 = ZipUtils::base64URLEncode(ZipUtils::compressString(level));*/
+		// deflate usage source: https://github.com/HJfod/GMD-API/blob/main/src/GMD.cpp
+		/*unsigned char* gz = nullptr;
+		int memEnd = ZipUtils::ccDeflateMemory(reinterpret_cast<unsigned char*>(level.data()), level.size(), &gz);
+		if(!memEnd) return FLAlertLayer::create("Export Error", "Level data compression failed! Please try restarting, updating JFP or reporting the issue.", "Sure thing...")->show();
+		auto levelBV = ByteVector(reinterpret_cast<uint8_t*>(gz), reinterpret_cast<uint8_t(gz + memEnd));
+		if(gz) delete*/
+		std::string b64 = ZipUtils::compressString(level, true, 0);
 		std::string desc = fmt::format("Seed: {}", seed);
 		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
+		b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
+		desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
+
+		std::string levelString = fmt::format("<d><k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>614361</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i></d>",
+		fmt::arg("desc", desc),
+		fmt::arg("b64", b64),
+		fmt::arg("title", std::to_string(seed).substr(0, 6)));
+
+		log::info("{}", levelString);
+
+		return levelString;
 
 		// todo: add top and bottom slopes from this segment to the level string
 		// todo: add optional corner piece blocks
 		// todo: top/bottom ending connectors - requires coordinates and brief loops for each
 		// todo: meter mark generation
-		// todo: base64 encode level data/metadata (robtop/geode libs?)
-		// todo: finalize xml string and send to exporter
 		// todo: remove any unused code left from example, add comments, debug
 
 	}
@@ -266,15 +291,16 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		// create fileutils object and get GMD file from game data path
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
-		mainGen();
 		auto localPath = CCFileUtils::sharedFileUtils();
+		auto levelString = mainGen();
+		exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
 
 		// infer filetype, should always be .gmd for us
 		jfpImport.tryInferType(); // .gmd
 		// convert to GJGameLevel
 		auto jfpResult = jfpImport.intoLevel();
-		if(!jfpResult) return FLAlertLayer::create("There was an error importing this level.", jfpResult.error(), "Sure thing")->show();
+		if(!jfpResult) return FLAlertLayer::create("Import Error", jfpResult.error(), "Sure thing...")->show();
 
 		// Insert level object into local list
 		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.value(), 0);
