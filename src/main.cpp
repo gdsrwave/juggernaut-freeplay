@@ -113,6 +113,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const bool removeSpam = Mod::get()->getSettingValue<bool>("remove-spam");
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
+		const bool portals = Mod::get()->getSettingValue<bool>("portals");
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -148,6 +149,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::vector<int> antiSpam1 = {1,-1,1,-1};
 		std::vector<int> antiSpam2 = {-1,1,-1,1};
 
+		int portalRNG;
+		bool gravity = false; // true == upside down
+		std::uniform_int_distribution<long long int> podtr(0, 10);
+
 		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
@@ -175,7 +180,6 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 			if(prevO[10] == y_swing) y += (y_swing * 30);
 
-			orientationShift(prevO, y_swing);
 			
 			// blocks from this segment: F = floor, C = ceiling
 			std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
@@ -205,8 +209,25 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 				}
 			}
 
+			std::string portalBuild = "";
+			if(portals && prevO[10] != y_swing) {
+				portalRNG = podtr(e2);
+				if(portalRNG == 0) {
+					double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+					int portalID = gravity ? 10 : 11;
+					gravity = gravity ? false : true;
+					portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale};",
+					fmt::arg("portalID", portalID),
+					fmt::arg("xP", x-6),
+					fmt::arg("yP", y+(y_swing == 1 ? 6 : 54)),
+					fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
+					fmt::arg("scale", portalFactor / 2.5));
+				}
+			}
 
-			level += (genBuildF + genBuildC + cornerBuild);
+			orientationShift(prevO, y_swing);
+
+			level += (genBuildF + genBuildC + cornerBuild + portalBuild);
 		}
 
 		// Ending Connectors
