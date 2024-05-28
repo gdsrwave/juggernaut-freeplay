@@ -73,6 +73,11 @@
 			"type": "float",
 			"default": 60
 		},
+		"portals": {
+			"name": "Portal Spawning",
+			"type": "bool",
+			"default": true
+		},
 		"debug": {
 			"name": "Debug",
 			"type": "bool",
