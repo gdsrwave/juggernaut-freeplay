@@ -1,7 +1,7 @@
 {
 	"geode": "2.0.0-beta.27",
 	"gd": "2.204",
-	"version": "v1.0.0",
+	"version": "v1.2.0",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -36,11 +36,17 @@
 			"type": "int",
 			"default": 400
 		},
+		"seed": {
+			"name": "RNG Seed",
+			"description": "Set seed for level generation (0 for random)",
+			"type": "string",
+			"default": ""
+		},
 		"filename": {
 			"name": "File Name",
 			"description": "The name of the .gmd file saved during generation. File location: %LOCALAPPDATA%/GeometryDash/",
 			"type": "string",
-			"default": "waveman.gmd"
+			"default": "waveman"
 		},
 		"marks": {
 			"name": "Meter Marks",
@@ -66,6 +72,11 @@
 			"name": "Spam Limit",
 			"type": "bool",
 			"default": true
+		},
+		"low-vis": {
+			"name": "Low Visibility",
+			"type": "bool",
+			"default": false
 		},
 		"corridor-height": {
 			"name": "Corridor Height (units)",
