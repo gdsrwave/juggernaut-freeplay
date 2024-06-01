@@ -64,10 +64,24 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 	}
 
 	static std::string mainGen() {
+
+		// random device setups - used with modulo to generate numbers in a range
 		std::random_device rd;
-		unsigned int seed = rd();
-		std::mt19937_64 e2(seed);
-		std::uniform_int_distribution<long long int> dtr(0, 1);
+		unsigned int seed = 0;
+		try {
+			std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
+			if(!seedStr.empty()) seed = std::stoul(seedStr);
+		} catch(const std::exception &e) {
+			FLAlertLayer::create("Error", e.what(), "Sure thing...")->show();
+			return "";
+		}
+		
+		if(seed == 0) seed = rd();
+		std::mt19937 segmentRNG(seed);
+		std::mt19937 portalRNG(seed);
+		std::mt19937 songRNG(seed);
+
+		// current soundtrack
 		const int soundtrack[] = {
 			614361,
 			569208,
@@ -82,9 +96,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			64842,
 			306254,
 			386900,
-			167229
+			167229,
+			895761
 		};
-		std::uniform_int_distribution<long long int> stdtr(0, sizeof(soundtrack)/sizeof(int)-1);
 
 		const std::string filename = Mod::get()->getSettingValue<std::string>("filename");
 
@@ -102,6 +116,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		}
 		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
+		
 		const double corridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 		const int maxHeight = 195; // 6.5 blocks (based on lower bound)
 		const int minHeight = 45; // 1.5 blocks
@@ -111,19 +126,20 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
 		const bool zigzagLimit = Mod::get()->getSettingValue<bool>("zig-limit");
 		const bool removeSpam = Mod::get()->getSettingValue<bool>("remove-spam");
+		const bool lowvis = Mod::get()->getSettingValue<bool>("low-vis");
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
 		const bool portals = Mod::get()->getSettingValue<bool>("portals");
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
-		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
+		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_3_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,1007,2,-15,3,315,20,1,36,1,51,3,10,0.0,35,0;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
 		fmt::arg("speedID", speedID),
 		fmt::arg("ch_1", 225+corridorHeight),
 		fmt::arg("ch_2", 165+corridorHeight),
 		fmt::arg("ch_3", 195+corridorHeight));
 		
-		if(debug) log::info("Seed {}", seed);
+		log::info("Seed: {}", seed);
 
 		
 		// y_swing = the direction the wave corridor is currently moving - can be 0, 1, -1, and possibly -2/2 for miniwave in the future
@@ -149,23 +165,23 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::vector<int> antiSpam1 = {1,-1,1,-1};
 		std::vector<int> antiSpam2 = {-1,1,-1,1};
 
-		int portalRNG;
 		bool gravity = false; // true == upside down
-		std::uniform_int_distribution<long long int> podtr(0, 10);
+
+		int portalOdds = 1;
 
 		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
 			y_swing = 0;
 
-			if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMax)))) {
+			if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)))) {
 				y_swing = -1;
-			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && orientationMatch(prevO, antiZigzagMin)))) {
+			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMin)))) {
 				y_swing = 1;
 			} else {
-				if(zigzagLimit && orientationMatch(prevO, antiZigzagStd1)) {
+				if(zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagStd1)) {
 					y_swing = -1;
-				} else if (zigzagLimit && orientationMatch(prevO, antiZigzagStd2)) {
+				} else if (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagStd2)) {
 					y_swing = 1;
 				} else if(removeSpam && orientationMatch(prevO, antiSpam1)) {
 					y_swing = -1;
@@ -173,7 +189,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 					y_swing = 1;
 				} else {
 					// randomized coinflip condition
-					y_swing = dtr(e2);
+					y_swing = segmentRNG() % 2;
 					if(y_swing == 0) y_swing = -1;
 				}
 			}
@@ -211,15 +227,18 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 			std::string portalBuild = "";
 			if(portals && prevO[10] != y_swing) {
-				portalRNG = podtr(e2);
-				if(portalRNG == 0) {
+				portalOdds = portalRNG() % 10;
+				if(portalOdds == 0) {
 					double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+					// no float precision right now. not sure if it will matter, especially for what people are actually playing.
+					int portalNormal = corridorHeight / 10;
+					int portalPos = corridorHeight / 4;
 					int portalID = gravity ? 10 : 11;
 					gravity = gravity ? false : true;
 					portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale};",
 					fmt::arg("portalID", portalID),
-					fmt::arg("xP", x-6),
-					fmt::arg("yP", y+(y_swing == 1 ? 6 : 54)),
+					fmt::arg("xP", x-15-portalNormal+portalPos),
+					fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
 					fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
 					fmt::arg("scale", portalFactor / 2.5));
 				}
@@ -266,9 +285,14 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			}
 		}
 
+		if(lowvis) {
+			std::string lvBuild = "1,901,2,315,3,285,20,2,36,1,51,3,28,0,29,0,10,1000,30,0,85,2,58,1;1,1011,2,495,3,150,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,210,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,30,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,90,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,270,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,211,2,600,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,600,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,1007,2,645,3,315,20,2,36,1,51,3,10,1.01,35,1;1,211,2,750,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,750,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,900,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,900,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;";
+			level += lvBuild;
+		}
+
 		if(debug) log::info("{}", level);
 
-		int songSelection = soundtrack[stdtr(e2)];
+		int songSelection = soundtrack[(songRNG() % (sizeof(soundtrack)/sizeof(int)))];
 		std::string b64 = ZipUtils::compressString(level, true, 0);
 		std::string desc = fmt::format("Seed: {}", seed);
 		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
@@ -298,7 +322,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
-		auto levelString = mainGen();
+		std::string levelString = mainGen();
+		if(levelString.empty()) return;
 		exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
 
