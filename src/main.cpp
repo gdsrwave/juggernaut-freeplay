@@ -33,9 +33,9 @@ static void orientationShift(int prevO[11], int newO) {
 	prevO[10] = newO;
 }
 
-static void exportLvlStringGMD(ghc::filesystem::path const& path, std::string ld1) {
+static void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
 	auto lvlData = ByteVector(ld1.begin(), ld1.end());
-	file::writeBinary(path, lvlData);
+	(void) file::writeBinary(path, lvlData);
 }
 
 #include <Geode/modify/LevelBrowserLayer.hpp>
@@ -331,10 +331,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		jfpImport.tryInferType(); // .gmd
 		// convert to GJGameLevel
 		auto jfpResult = jfpImport.intoLevel();
-		if(!jfpResult) return FLAlertLayer::create("Import Error", jfpResult.error(), "Sure thing...")->show();
+		if(jfpResult.isErr()) return FLAlertLayer::create("Import Error", jfpResult.unwrapErr(), "Sure thing...")->show();
 
 		// Insert level object into local list
-		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.value(), 0);
+		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.unwrap(), 0);
 
 		// create new scene
 		auto newScene = CCScene::create();
