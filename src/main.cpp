@@ -38,6 +38,16 @@ static void exportLvlStringGMD(std::filesystem::path const& path, std::string ld
 	(void) file::writeBinary(path, lvlData);
 }
 
+enum class AutoJFP : int {
+	NotInAutoJFP = 0,
+	JustStarted = 1,
+	JustRestarted = 2,
+	PlayingLevelAtt1 = 3,
+	PlayingLevel = 4,
+};
+
+AutoJFP state = AutoJFP::NotInAutoJFP;
+
 #include <Geode/modify/LevelBrowserLayer.hpp>
 class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
@@ -53,10 +63,17 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			this,
 			menu_selector(GenerateLevelLayer::onGenButton)
 		);
+		auto autoGenButton = CCMenuItemSpriteExtra::create(
+			CircleButtonSprite::createWithSpriteFrameName("waveman_s.png"_spr, .90f, CircleBaseColor::Pink, CircleBaseSize::Medium),
+			this,
+			menu_selector(GenerateLevelLayer::onAutoGenButton)
+		);
 
 		auto menu = this->getChildByID("my-levels-menu");
 		menu->addChild(genButton);
+		menu->addChild(autoGenButton);
 		genButton->setID("generate-level-button"_spr);
+		autoGenButton->setID("auto-generate-level-button"_spr);
 
 		menu->updateLayout();
 
@@ -299,7 +316,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
 		desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
 
-		std::string levelString = fmt::format("<d><k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i></d>",
+		std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
 		fmt::arg("desc", desc),
 		fmt::arg("b64", b64),
 		fmt::arg("title", std::to_string(seed).substr(0, 6)),
@@ -342,5 +359,70 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		newScene->addChild(newLayer);
 		CCDirector::sharedDirector()->replaceScene(newScene);
 
+	}
+
+	static GJGameLevel* createGameLevel() {
+		std::srand(std::time(0));
+		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + mainGen() + "</dict></plist>";
+
+		std::unique_ptr<DS_Dictionary> dict = std::make_unique<DS_Dictionary>();
+		if (!dict.get()->loadRootSubDictFromString(levelString)) {
+			return nullptr;
+    	}
+		dict->stepIntoSubDictWithKey("root");
+
+		GJGameLevel* level = GJGameLevel::create();
+		level->dataLoaded(dict.get());
+		level->m_levelType = GJLevelType::Editor;
+		return level;
+	}
+
+	void onAutoGenButton(CCObject*) {
+		auto level = createGameLevel();
+		if (!level) return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
+		state = AutoJFP::JustStarted;
+		auto newScene = PlayLayer::scene(level, false, false);
+		CCDirector::sharedDirector()->pushScene(newScene);
+	}
+};
+
+#include <Geode/modify/PlayLayer.hpp>
+class $modify(PlayLayer) {
+	void onQuit() {
+		state = AutoJFP::NotInAutoJFP;
+		PlayLayer::onQuit();
+	}
+
+	void resetLevel() {
+		if (state == AutoJFP::NotInAutoJFP) return PlayLayer::resetLevel();
+		else if (state == AutoJFP::JustStarted) {
+			state = AutoJFP::PlayingLevelAtt1;
+			return PlayLayer::resetLevel();
+		}
+		else if (state == AutoJFP::JustRestarted) {
+			// this var controls whether the camera follows the player at the start
+			this->m_unk3089 = false;
+			return PlayLayer::resetLevel();
+		}
+		state = AutoJFP::JustRestarted;
+		
+		auto level = GenerateLevelLayer::createGameLevel();
+		if (!level) return;
+		
+		// important note: resetLevel gets called somewhere within PlayLayer::scene()
+		// so its important that the state is JustRestarted by this point
+		auto scene = PlayLayer::scene(level, false, false);
+		CCDirector::sharedDirector()->replaceScene(scene);
+		auto pl = PlayLayer::get();
+
+		// gotta call this instantly to prevent the attempt 1 delay
+		pl->startGame();
+		state = AutoJFP::PlayingLevel;
+	}
+
+	void startGame() {
+		// prevents lag from this func being called twice when restarting
+		if (state == AutoJFP::PlayingLevel) return;
+		PlayLayer::startGame();
 	}
 };
