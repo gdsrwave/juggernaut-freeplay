@@ -64,7 +64,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			menu_selector(GenerateLevelLayer::onGenButton)
 		);
 		auto autoGenButton = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("waveman_s.png"_spr, .90f, CircleBaseColor::Pink, CircleBaseSize::Medium),
+			CircleButtonSprite::createWithSpriteFrameName("dabbink_s.png"_spr, .90f, CircleBaseColor::Pink, CircleBaseSize::Medium),
 			this,
 			menu_selector(GenerateLevelLayer::onAutoGenButton)
 		);
@@ -80,7 +80,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		return true;
 	}
 
-	static std::string mainGen() {
+	static std::string mainGen(bool compress) {
 
 		// random device setups - used with modulo to generate numbers in a range
 		std::random_device rd;
@@ -310,7 +310,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		if(debug) log::info("{}", level);
 
 		int songSelection = soundtrack[(songRNG() % (sizeof(soundtrack)/sizeof(int)))];
-		std::string b64 = ZipUtils::compressString(level, true, 0);
+		std::string b64;
+		if (compress) b64 = ZipUtils::compressString(level, true, 0);
+		else b64 = level;
 		std::string desc = fmt::format("Seed: {}", seed);
 		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
 		b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
@@ -339,7 +341,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
-		std::string levelString = mainGen();
+		std::string levelString = mainGen(true);
 		if(levelString.empty()) return;
 		exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
@@ -363,8 +365,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 	static GJGameLevel* createGameLevel() {
 		std::srand(std::time(0));
-		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + mainGen() + "</dict></plist>";
-
+		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + mainGen(false) + "</dict></plist>";
+		
+		// somewhat copied from gmd-api's source code dont sue please
 		std::unique_ptr<DS_Dictionary> dict = std::make_unique<DS_Dictionary>();
 		if (!dict.get()->loadRootSubDictFromString(levelString)) {
 			return nullptr;
@@ -407,7 +410,7 @@ class $modify(PlayLayer) {
 		state = AutoJFP::JustRestarted;
 		
 		auto level = GenerateLevelLayer::createGameLevel();
-		if (!level) return;
+		if (!level) return; // idk what to do here
 		
 		// important note: resetLevel gets called somewhere within PlayLayer::scene()
 		// so its important that the state is JustRestarted by this point
