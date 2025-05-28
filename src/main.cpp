@@ -64,7 +64,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			menu_selector(GenerateLevelLayer::onGenButton)
 		);
 		auto autoGenButton = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("dabbink_s.png"_spr, .90f, CircleBaseColor::Pink, CircleBaseSize::Medium),
+			CircleButtonSprite::createWithSpriteFrameName("dabbink_s.png"_spr, 1.125f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
 			this,
 			menu_selector(GenerateLevelLayer::onAutoGenButton)
 		);
