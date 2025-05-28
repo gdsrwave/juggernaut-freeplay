@@ -418,10 +418,12 @@ class $modify(PlayLayer) {
 		
 		// important note: resetLevel gets called somewhere within PlayLayer::scene()
 		// so its important that the state is JustRestarted by this point
+		auto dir = CCDirector::sharedDirector();
+		dir->popScene(); // gotta do this before creating the new playlayer to fix restart hotkey + cursor visibility
 		auto scene = PlayLayer::scene(level, false, false);
-		CCDirector::sharedDirector()->replaceScene(scene);
+		dir->pushScene(scene);
+		
 		auto pl = PlayLayer::get();
-
 		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
 		pl->m_attempts = atts;
 		pl->updateAttempts();
