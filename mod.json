@@ -94,7 +94,7 @@
 		"debug": {
 			"name": "Debug",
 			"type": "bool",
-			"default": true
+			"default": false
 		}
 	}
 }
