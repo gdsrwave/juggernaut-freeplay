@@ -406,8 +406,7 @@ class $modify(PlayLayer) {
 			return PlayLayer::resetLevel();
 		}
 		else if (state == AutoJFP::JustRestarted) {
-			// this var controls whether the camera follows the player at the start
-			this->m_unk3089 = false;
+			this->m_unk3089 = false; // this var controls whether the camera follows the player at the start
 			return PlayLayer::resetLevel();
 		}
 
@@ -423,8 +422,7 @@ class $modify(PlayLayer) {
 		CCDirector::sharedDirector()->replaceScene(scene);
 		auto pl = PlayLayer::get();
 
-		// gotta call this instantly to prevent the attempt 1 delay
-		pl->startGame();
+		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
 		pl->m_attempts = atts;
 		pl->updateAttempts();
 		
@@ -432,8 +430,7 @@ class $modify(PlayLayer) {
 	}
 
 	void startGame() {
-		// prevents lag from this func being called twice when restarting
-		if (state == AutoJFP::PlayingLevel) return;
+		if (state == AutoJFP::PlayingLevel) return; // prevents lag from this func being called twice when restarting
 		PlayLayer::startGame();
 	}
 };
