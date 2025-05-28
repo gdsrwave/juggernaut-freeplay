@@ -411,6 +411,7 @@ class $modify(PlayLayer) {
 		}
 
 		int atts = this->m_attempts;
+		int best = this->m_level->m_normalPercent;
 		state = AutoJFP::JustRestarted;
 		
 		auto level = GenerateLevelLayer::createGameLevel();
@@ -427,6 +428,7 @@ class $modify(PlayLayer) {
 		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
 		pl->m_attempts = atts;
 		pl->updateAttempts();
+		pl->m_level->m_normalPercent = best;
 		
 		state = AutoJFP::PlayingLevel;
 	}
