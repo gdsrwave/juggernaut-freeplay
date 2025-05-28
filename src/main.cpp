@@ -87,7 +87,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		unsigned int seed = 0;
 		try {
 			std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
-			if(!seedStr.empty()) seed = std::stoul(seedStr);
+			if(!seedStr.empty() && state == AutoJFP::NotInAutoJFP) seed = std::stoul(seedStr);
 		} catch(const std::exception &e) {
 			FLAlertLayer::create("Error", e.what(), "Sure thing...")->show();
 			return "";
@@ -381,11 +381,14 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 	}
 
 	void onAutoGenButton(CCObject*) {
-		auto level = createGameLevel();
-		if (!level) return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
 		state = AutoJFP::JustStarted;
+		auto level = createGameLevel();
+		if (!level) {
+			state = AutoJFP::NotInAutoJFP;
+			return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
+		}
 		auto newScene = PlayLayer::scene(level, false, false);
-		CCDirector::sharedDirector()->pushScene(newScene);
+		CCDirector::sharedDirector()->replaceScene(newScene); // seems to work better than pushScene?
 	}
 };
 
@@ -407,6 +410,8 @@ class $modify(PlayLayer) {
 			this->m_unk3089 = false;
 			return PlayLayer::resetLevel();
 		}
+
+		int atts = this->m_attempts;
 		state = AutoJFP::JustRestarted;
 		
 		auto level = GenerateLevelLayer::createGameLevel();
@@ -420,6 +425,9 @@ class $modify(PlayLayer) {
 
 		// gotta call this instantly to prevent the attempt 1 delay
 		pl->startGame();
+		pl->m_attempts = atts;
+		pl->updateAttempts();
+		
 		state = AutoJFP::PlayingLevel;
 	}
 
