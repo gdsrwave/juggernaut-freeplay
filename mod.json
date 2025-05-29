@@ -1,6 +1,8 @@
 {
-	"geode": "2.0.0-beta.27",
-	"gd": "2.204",
+	"geode": "4.4.0",
+	"gd": {
+		"win": "2.2074"
+	},
 	"version": "v1.2.0",
 	"id": "jcack.jfp",
 	"name": "jfp",
@@ -13,16 +15,16 @@
 			]
 		}
 	},
-	"dependencies": [
-		{
-			"id": "hjfod.gmd-api",
-			"version": "v1.1.0"
+	"dependencies": {
+		"hjfod.gmd-api": {
+			"importance": "required",
+			"version": ">=v1.4.0"
 		},
-		{
-			"id": "geode.node-ids",
-			"version": "v1.10.2"
+		"geode.node-ids": {
+			"importance": "required",
+			"version": ">=v1.20.0"
 		}
-	],
+	},
 	"settings": {
 		"speed": {
 			"name": "Initial Speed",
@@ -92,7 +94,7 @@
 		"debug": {
 			"name": "Debug",
 			"type": "bool",
-			"default": true
+			"default": false
 		}
 	}
 }

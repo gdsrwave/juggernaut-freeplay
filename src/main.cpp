@@ -33,10 +33,20 @@ static void orientationShift(int prevO[11], int newO) {
 	prevO[10] = newO;
 }
 
-static void exportLvlStringGMD(ghc::filesystem::path const& path, std::string ld1) {
+static void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
 	auto lvlData = ByteVector(ld1.begin(), ld1.end());
-	file::writeBinary(path, lvlData);
+	(void) file::writeBinary(path, lvlData);
 }
+
+enum class AutoJFP : int {
+	NotInAutoJFP = 0,
+	JustStarted = 1,
+	JustRestarted = 2,
+	PlayingLevelAtt1 = 3,
+	PlayingLevel = 4,
+};
+
+AutoJFP state = AutoJFP::NotInAutoJFP;
 
 #include <Geode/modify/LevelBrowserLayer.hpp>
 class $modify(GenerateLevelLayer, LevelBrowserLayer) {
@@ -53,24 +63,31 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			this,
 			menu_selector(GenerateLevelLayer::onGenButton)
 		);
+		auto autoGenButton = CCMenuItemSpriteExtra::create(
+			CircleButtonSprite::createWithSpriteFrameName("dabbink_s.png"_spr, 1.125f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
+			this,
+			menu_selector(GenerateLevelLayer::onAutoGenButton)
+		);
 
 		auto menu = this->getChildByID("my-levels-menu");
 		menu->addChild(genButton);
+		menu->addChild(autoGenButton);
 		genButton->setID("generate-level-button"_spr);
+		autoGenButton->setID("auto-generate-level-button"_spr);
 
 		menu->updateLayout();
 
 		return true;
 	}
 
-	static std::string mainGen() {
+	static std::string mainGen(bool compress) {
 
 		// random device setups - used with modulo to generate numbers in a range
 		std::random_device rd;
 		unsigned int seed = 0;
 		try {
 			std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
-			if(!seedStr.empty()) seed = std::stoul(seedStr);
+			if(!seedStr.empty() && state == AutoJFP::NotInAutoJFP) seed = std::stoul(seedStr);
 		} catch(const std::exception &e) {
 			FLAlertLayer::create("Error", e.what(), "Sure thing...")->show();
 			return "";
@@ -293,13 +310,15 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		if(debug) log::info("{}", level);
 
 		int songSelection = soundtrack[(songRNG() % (sizeof(soundtrack)/sizeof(int)))];
-		std::string b64 = ZipUtils::compressString(level, true, 0);
+		std::string b64;
+		if (compress) b64 = ZipUtils::compressString(level, true, 0);
+		else b64 = level;
 		std::string desc = fmt::format("Seed: {}", seed);
 		desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
 		b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
 		desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
 
-		std::string levelString = fmt::format("<d><k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i></d>",
+		std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
 		fmt::arg("desc", desc),
 		fmt::arg("b64", b64),
 		fmt::arg("title", std::to_string(seed).substr(0, 6)),
@@ -322,7 +341,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
-		std::string levelString = mainGen();
+		std::string levelString = mainGen(true);
 		if(levelString.empty()) return;
 		exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
@@ -331,10 +350,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		jfpImport.tryInferType(); // .gmd
 		// convert to GJGameLevel
 		auto jfpResult = jfpImport.intoLevel();
-		if(!jfpResult) return FLAlertLayer::create("Import Error", jfpResult.error(), "Sure thing...")->show();
+		if(jfpResult.isErr()) return FLAlertLayer::create("Import Error", jfpResult.unwrapErr(), "Sure thing...")->show();
 
 		// Insert level object into local list
-		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.value(), 0);
+		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.unwrap(), 0);
 
 		// create new scene
 		auto newScene = CCScene::create();
@@ -342,5 +361,80 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		newScene->addChild(newLayer);
 		CCDirector::sharedDirector()->replaceScene(newScene);
 
+	}
+
+	static GJGameLevel* createGameLevel() {
+		std::srand(std::time(0));
+		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + mainGen(false) + "</dict></plist>";
+		
+		// somewhat copied from gmd-api's source code dont sue please
+		std::unique_ptr<DS_Dictionary> dict = std::make_unique<DS_Dictionary>();
+		if (!dict.get()->loadRootSubDictFromString(levelString)) {
+			return nullptr;
+    	}
+		dict->stepIntoSubDictWithKey("root");
+
+		GJGameLevel* level = GJGameLevel::create();
+		level->dataLoaded(dict.get());
+		level->m_levelType = GJLevelType::Editor;
+		return level;
+	}
+
+	void onAutoGenButton(CCObject*) {
+		state = AutoJFP::JustStarted;
+		auto level = createGameLevel();
+		if (!level) {
+			state = AutoJFP::NotInAutoJFP;
+			return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
+		}
+		auto newScene = PlayLayer::scene(level, false, false);
+		CCDirector::sharedDirector()->replaceScene(newScene); // seems to work better than pushScene?
+	}
+};
+
+#include <Geode/modify/PlayLayer.hpp>
+class $modify(PlayLayer) {
+	void onQuit() {
+		state = AutoJFP::NotInAutoJFP;
+		PlayLayer::onQuit();
+	}
+
+	void resetLevel() {
+		if (state == AutoJFP::NotInAutoJFP) return PlayLayer::resetLevel();
+		else if (state == AutoJFP::JustStarted) {
+			state = AutoJFP::PlayingLevelAtt1;
+			return PlayLayer::resetLevel();
+		}
+		else if (state == AutoJFP::JustRestarted) {
+			this->m_unk3089 = false; // this var controls whether the camera follows the player at the start
+			return PlayLayer::resetLevel();
+		}
+
+		int atts = this->m_attempts;
+		int best = this->m_level->m_normalPercent;
+		state = AutoJFP::JustRestarted;
+		
+		auto level = GenerateLevelLayer::createGameLevel();
+		if (!level) return; // idk what to do here
+		
+		// important note: resetLevel gets called somewhere within PlayLayer::scene()
+		// so its important that the state is JustRestarted by this point
+		auto dir = CCDirector::sharedDirector();
+		dir->popScene(); // gotta do this before creating the new playlayer to fix restart hotkey + cursor visibility
+		auto scene = PlayLayer::scene(level, false, false);
+		dir->pushScene(scene);
+		
+		auto pl = PlayLayer::get();
+		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
+		pl->m_attempts = atts;
+		pl->updateAttempts();
+		pl->m_level->m_normalPercent = best;
+		
+		state = AutoJFP::PlayingLevel;
+	}
+
+	void startGame() {
+		if (state == AutoJFP::PlayingLevel) return; // prevents lag from this func being called twice when restarting
+		PlayLayer::startGame();
 	}
 };
