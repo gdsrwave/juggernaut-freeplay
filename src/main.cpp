@@ -428,6 +428,9 @@ class $modify(PlayLayer) {
 
 		scene->addChild(rt);
 		dir->replaceScene(scene);
+
+		// prevent cursor flashing on respawn
+		if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
 		
 		// the original playlayer isnt destroyed until later in the frame when u call replacescene so we have to queue this for the next frame
 		queueInMainThread([=]() {
@@ -449,10 +452,10 @@ class $modify(PlayLayer) {
 				
 			state = AutoJFP::PlayingLevel;
 
-			// prevent cursor flashing for 1 frame on death
+			// also necessary to prevent cursor flashing on respawn (maybe)
 			if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
 
-			// necessary for compat with mh restart key for some reason
+			// necessary for compat with mh restart key for some reason, third times the charm ig
 			queueInMainThread([]() {
 				if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
 			});
