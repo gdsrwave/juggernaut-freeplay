@@ -410,27 +410,53 @@ class $modify(PlayLayer) {
 			return PlayLayer::resetLevel();
 		}
 
-		int atts = this->m_attempts;
-		int best = this->m_level->m_normalPercent;
-		state = AutoJFP::JustRestarted;
-		
-		auto level = GenerateLevelLayer::createGameLevel();
-		if (!level) return; // idk what to do here
-		
-		// important note: resetLevel gets called somewhere within PlayLayer::scene()
-		// so its important that the state is JustRestarted by this point
-		auto dir = CCDirector::sharedDirector();
-		dir->popScene(); // gotta do this before creating the new playlayer to fix restart hotkey + cursor visibility
-		auto scene = PlayLayer::scene(level, false, false);
-		dir->pushScene(scene);
-		
 		auto pl = PlayLayer::get();
-		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
-		pl->m_attempts = atts;
-		pl->updateAttempts();
-		pl->m_level->m_normalPercent = best;
+		int atts = pl->m_attempts;
+		int best = pl->m_level->m_normalPercent;
+
+		auto dir = CCDirector::sharedDirector();
+		auto scene = CCScene::create();
+		auto size = dir->getWinSize();
+
+		// take screenshot, use this as filler during the 1 frame of transition between playlayers
+		// without this there would be an annoying black flash for 1 frame
+		auto rt = CCRenderTexture::create(size.width, size.height);
+		rt->setPosition(size / 2); // middle of screen
+		rt->begin();
+		dir->getRunningScene()->visit();
+		rt->end();
+
+		scene->addChild(rt);
+		dir->replaceScene(scene);
 		
-		state = AutoJFP::PlayingLevel;
+		// the original playlayer isnt destroyed until later in the frame when u call replacescene so we have to queue this for the next frame
+		queueInMainThread([=]() {
+			auto level = GenerateLevelLayer::createGameLevel();
+			if (!level) return; // idk what to do here
+
+			state = AutoJFP::JustRestarted;
+			
+			// important note: resetLevel gets called somewhere within PlayLayer::scene()
+			// so its important that the state is JustRestarted by this point
+			auto scene = PlayLayer::scene(level, false, false);
+			dir->replaceScene(scene);
+			
+			auto pl = PlayLayer::get();
+			pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
+			pl->m_attempts = atts;
+			pl->updateAttempts();
+			pl->m_level->m_normalPercent = best;
+				
+			state = AutoJFP::PlayingLevel;
+
+			// prevent cursor flashing for 1 frame on death
+			if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
+
+			// necessary for compat with mh restart key for some reason
+			queueInMainThread([]() {
+				if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
+			});
+		});
 	}
 
 	void startGame() {
