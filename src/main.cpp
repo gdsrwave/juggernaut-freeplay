@@ -73,6 +73,18 @@ enum class AutoJFP : int {
 
 AutoJFP state = AutoJFP::NotInAutoJFP;
 
+std::map<std::string, int> portalOddsMap = {
+	{"Light", 40},
+	{"Balanced", 10},
+	{"Aggressive", 3},
+};
+
+std::map<std::string, int> speedOddsMap = {
+	{"Light", 60},
+	{"Balanced", 10},
+	{"Aggressive", 5},
+};
+
 #include <Geode/modify/LevelBrowserLayer.hpp>
 class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
@@ -121,6 +133,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		if(seed == 0) seed = rd();
 		std::mt19937 segmentRNG(seed);
 		std::mt19937 portalRNG(seed);
+		std::mt19937 fakePortalRNG(seed);
 		std::mt19937 songRNG(seed);
 
 		// current soundtrack
@@ -312,17 +325,19 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const bool lowvis = Mod::get()->getSettingValue<bool>("low-vis");
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
-		const bool portals = Mod::get()->getSettingValue<bool>("portals");
+		const std::string portals = Mod::get()->getSettingValue<std::string>("portals");
 		const bool teleportals = Mod::get()->getSettingValue<bool>("teleportals");
 		
 		const bool corridorSpikes = Mod::get()->getSettingValue<bool>("corridor-spikes");
 		const bool fuzzySpikes = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
 
-		const bool changingSpeed = Mod::get()->getSettingValue<bool>("changing-speed");
+		const std::string changingSpeed = Mod::get()->getSettingValue<std::string>("changing-speed");
 		const std::string minSpeed = Mod::get()->getSettingValue<std::string>("min-speed");
 		const std::string maxSpeed = Mod::get()->getSettingValue<std::string>("max-speed");
 		const int minSpeedFloat = convertSpeedToFloat(minSpeed);
 		const int maxSpeedFloat = convertSpeedToFloat(maxSpeed);
+
+		const bool fakeGravityPortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
 
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
@@ -337,6 +352,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			fmt::arg("bg_2", background_color[2]),
 			fmt::arg("line_color", line_color)
 		);
+
+		if (Mod::get()->getSettingValue<bool>("upside-start")) {
+			level += "1,11,2,293,3,105,6,45,32,0.57;";
+		}
 		
 		log::info("Seed: {}", seed);
 
@@ -370,6 +389,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		bool gravity = false; // true == upside down
 
 		int portalOdds = 1;
+		int fakePortalOdds = 1;
 
 		static bool spikeActive = false;
 		static bool spikeSideHold = false;
@@ -455,15 +475,19 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			}
 
 			std::string portalBuild = "";
-			if(portals && prevO[10] != y_swing) {
-				portalOdds = portalRNG() % 10;
-				if(portalOdds == 0) {
+			if(portals != "None" && prevO[10] != y_swing) {
+				portalOdds = portalRNG() % portalOddsMap[portals];
+
+				fakePortalOdds = fakeGravityPortals ? (fakePortalRNG() % 10) : 1;
+
+				if(portalOdds == 0 || fakePortalOdds == 0) {
+					log::info("Portal odds: {} {}", portalOdds, fakePortalOdds);
 					double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
 					// no float precision right now. not sure if it will matter, especially for what people are actually playing.
 					int portalNormal = corridorHeight / 10;
 					int portalPos = corridorHeight / 4;
-					int portalID = gravity ? 10 : 11;
-					gravity = gravity ? false : true;
+					int portalID = portalOdds == 0 ? (gravity ? 10 : 11) : (gravity ? 11 : 10); // real portal hit? : real portal : fake portal
+					gravity = portalOdds == 0 ? (gravity ? false : true) : gravity;
 					portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale};",
 					fmt::arg("portalID", portalID),
 					fmt::arg("xP", x-15-portalNormal+portalPos),
@@ -544,8 +568,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			orientationShift(prevO, y_swing);
 
 			// SPEED CHANGE GENERATION
-			if (changingSpeed && ((prevO[8] == 1 && prevO[9] == -1 && prevO[10] == -1) || (prevO[8] == -1 && prevO[9] == 1 && prevO[10] == 1)) && maxSpeedFloat > minSpeedFloat) {
-				int speedOdds = portalRNG() % 10; // You can adjust the odds as needed
+			if (changingSpeed != "None" && ((prevO[8] == 1 && prevO[9] == -1 && prevO[10] == -1) || (prevO[8] == -1 && prevO[9] == 1 && prevO[10] == 1)) && maxSpeedFloat > minSpeedFloat) {
+				int speedOdds = portalRNG() % speedOddsMap[changingSpeed]; // You can adjust the odds as needed
 				if (speedOdds == 0) {
 					double speedFactor = 0.5 * (corridorHeight / 60.0);
 					int spY = y + corridorHeight / 2 + (corridorHeight / 4) * ((prevO[10] == 1) ? -1 : 1);

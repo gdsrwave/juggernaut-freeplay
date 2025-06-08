@@ -93,9 +93,15 @@
 			"default": 60
 		},
 		"portals": {
-			"name": "Portal Spawning",
-			"type": "bool",
-			"default": true
+			"name": "Gravity Portal Spawning",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
 		},
 		"color-mode": {
 			"name": "Color Mode",
@@ -119,9 +125,15 @@
 			"default": false
 		},
 		"changing-speed": {
-			"name": "Changing Speed",
-			"type": "bool",
-			"default": false
+			"name": "Speed Changes",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
 		},
 		"min-speed": {
 			"name": "Min Speed",
@@ -149,6 +161,16 @@
 		},
 		"teleportals": {
 			"name": "Teleportals",
+			"type": "bool",
+			"default": false
+		},
+		"fake-gravity-portals": {
+			"name": "Fake Gravity Portals",
+			"type": "bool",
+			"default": false
+		},
+		"upside-start": {
+			"name": "Start Upside Down",
 			"type": "bool",
 			"default": false
 		},
