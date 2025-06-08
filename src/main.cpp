@@ -150,7 +150,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
-		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_3_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,1007,2,-15,3,315,20,1,36,1,51,3,10,0.0,35,0;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
+		std::string level = fmt::format("kS38,1_28_2_34_3_44_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_3_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160,116,1;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,1007,2,-15,3,315,20,1,36,1,51,3,10,0.0,35,0;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
 		fmt::arg("speedID", speedID),
 		fmt::arg("ch_1", 225+corridorHeight),
 		fmt::arg("ch_2", 165+corridorHeight),
@@ -410,27 +410,53 @@ class $modify(PlayLayer) {
 			return PlayLayer::resetLevel();
 		}
 
-		int atts = this->m_attempts;
-		int best = this->m_level->m_normalPercent;
-		state = AutoJFP::JustRestarted;
-		
-		auto level = GenerateLevelLayer::createGameLevel();
-		if (!level) return; // idk what to do here
-		
-		// important note: resetLevel gets called somewhere within PlayLayer::scene()
-		// so its important that the state is JustRestarted by this point
-		auto dir = CCDirector::sharedDirector();
-		dir->popScene(); // gotta do this before creating the new playlayer to fix restart hotkey + cursor visibility
-		auto scene = PlayLayer::scene(level, false, false);
-		dir->pushScene(scene);
-		
 		auto pl = PlayLayer::get();
-		pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
-		pl->m_attempts = atts;
-		pl->updateAttempts();
-		pl->m_level->m_normalPercent = best;
+		int atts = pl->m_attempts;
+		int best = pl->m_level->m_normalPercent;
+
+		auto dir = CCDirector::sharedDirector();
+		auto scene = CCScene::create();
+		auto size = dir->getWinSize();
+
+		// take screenshot, use this as filler during the 1 frame of transition between playlayers
+		// without this there would be an annoying black flash for 1 frame
+		auto rt = CCRenderTexture::create(size.width, size.height);
+		rt->setPosition(size / 2); // middle of screen
+		rt->begin();
+		dir->getRunningScene()->visit();
+		rt->end();
+
+		scene->addChild(rt);
+		dir->replaceScene(scene);
 		
-		state = AutoJFP::PlayingLevel;
+		// the original playlayer isnt destroyed until later in the frame when u call replacescene so we have to queue this for the next frame
+		queueInMainThread([=]() {
+			auto level = GenerateLevelLayer::createGameLevel();
+			if (!level) return; // idk what to do here
+
+			state = AutoJFP::JustRestarted;
+			
+			// important note: resetLevel gets called somewhere within PlayLayer::scene()
+			// so its important that the state is JustRestarted by this point
+			auto scene = PlayLayer::scene(level, false, false);
+			dir->replaceScene(scene);
+			
+			auto pl = PlayLayer::get();
+			pl->startGame(); // gotta call this instantly to prevent the attempt 1 delay
+			pl->m_attempts = atts;
+			pl->updateAttempts();
+			pl->m_level->m_normalPercent = best;
+				
+			state = AutoJFP::PlayingLevel;
+
+			// necessary to prevent cursor flashing on respawn except it sometimes doesnt work idk
+			if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
+
+			// necessary for compat with mh restart key for some reason
+			queueInMainThread([]() {
+				if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
+			});
+		});
 	}
 
 	void startGame() {
