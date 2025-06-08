@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.2.2",
+	"version": "v1.2.3",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -27,7 +27,7 @@
 	},
 	"settings": {
 		"speed": {
-			"name": "Color Mode",
+			"name": "Speed",
 			"type": "string",
 			"one-of": [
 				"0.5x",
@@ -115,6 +115,40 @@
 		},
 		"fuzzy-spikes": {
 			"name": "Fuzzy Spikes",
+			"type": "bool",
+			"default": false
+		},
+		"changing-speed": {
+			"name": "Changing Speed",
+			"type": "bool",
+			"default": false
+		},
+		"min-speed": {
+			"name": "Min Speed",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "0.5x"
+		},
+		"max-speed": {
+			"name": "Max Speed",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "4x"
+		},
+		"teleportals": {
+			"name": "Teleportals",
 			"type": "bool",
 			"default": false
 		},

@@ -38,6 +38,31 @@ static void exportLvlStringGMD(std::filesystem::path const& path, std::string ld
 	(void) file::writeBinary(path, lvlData);
 }
 
+static int convertSpeed(const std::string& speed) {
+	if (speed == "0.5x") return 200;
+	else if (speed == "1x") return 201;
+	else if (speed == "2x") return 202;
+	else if (speed == "4x") return 1334;
+	return 203; // default speed
+}
+
+static float convertSpeedToFloat(const std::string& speed) {
+	if (speed == "0.5x") return 0.5f;
+	else if (speed == "1x") return 1.0f;
+	else if (speed == "2x") return 2.0f;
+	else if (speed == "4x") return 4.0f;
+	return 3.0f; // default speed
+}
+
+static int convertFloatSpeed(float speed) {
+	if (speed == 0.5f) return 200;
+	else if (speed == 1.0f) return 201;
+	else if (speed == 2.0f) return 202;
+	else if (speed == 4.0f) return 1334;
+	return 203; // default speed
+}
+
+
 enum class AutoJFP : int {
 	NotInAutoJFP = 0,
 	JustStarted = 1,
@@ -217,16 +242,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// numeric constants
 		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
-		int speedID = 203;
-		if(speed == "0.5x") {
-			speedID = 200;
-		} else if(speed == "1x") {
-			speedID = 201;
-		} else if(speed == "2x") {
-			speedID = 202;
-		} else if(speed == "4x") {
-			speedID = 1334;
-		}
+		int speedID = convertSpeed(speed);
+		int speedFloat = convertSpeedToFloat(speed);
 		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 
@@ -296,9 +313,17 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
 		const bool portals = Mod::get()->getSettingValue<bool>("portals");
+		const bool teleportals = Mod::get()->getSettingValue<bool>("teleportals");
 		
 		const bool corridorSpikes = Mod::get()->getSettingValue<bool>("corridor-spikes");
 		const bool fuzzySpikes = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
+
+		const bool changingSpeed = Mod::get()->getSettingValue<bool>("changing-speed");
+		const std::string minSpeed = Mod::get()->getSettingValue<std::string>("min-speed");
+		const std::string maxSpeed = Mod::get()->getSettingValue<std::string>("max-speed");
+		const int minSpeedFloat = convertSpeedToFloat(minSpeed);
+		const int maxSpeedFloat = convertSpeedToFloat(maxSpeed);
+
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -347,13 +372,36 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		static bool spikeSideHold = false;
 		static int spikeSide = 0;
 		int spikeOdds = 0;
+		static float current_speed = speedFloat;
+		static int last_tp = 0;
+		static int tp_count = 0;
+		static std::array<int, 2> tp_stored = {0, 0};
 
 		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
 			y_swing = 0;
 
-			if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)))) {
+			if (tp_stored[0] != 0 || tp_stored[1] != 0) {
+				if (prevO[10] == 1) {
+					y_swing = 1;
+					if (tp_count == 3) {
+						x = tp_stored[0] - 90;
+						y = tp_stored[1] - 120;
+					}
+				} else if (prevO[10] == -1) {
+					y_swing = -1;
+					if (tp_count == 4) {
+						x = tp_stored[0] - 60;
+						y = tp_stored[1] + 90;
+					}
+				}
+				if (tp_count == 7) {
+					tp_count = -1;
+					tp_stored = {0, 0};
+				}
+				tp_count += 1;
+			} else if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)))) {
 				y_swing = -1;
 			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMin)))) {
 				y_swing = 1;
@@ -488,10 +536,64 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 					);
 				}
 			}
-
 			level += fuzzPieces;
 
 			orientationShift(prevO, y_swing);
+
+			// SPEED CHANGE GENERATION
+			if (changingSpeed && ((prevO[8] == 1 && prevO[9] == -1 && prevO[10] == -1) || (prevO[8] == -1 && prevO[9] == 1 && prevO[10] == 1)) && maxSpeedFloat > minSpeedFloat) {
+				int speedOdds = portalRNG() % 10; // You can adjust the odds as needed
+				if (speedOdds == 0) {
+					double speedFactor = 0.5 * (corridorHeight / 60.0);
+					int spY = y + corridorHeight / 2 + (corridorHeight / 4) * ((prevO[10] == 1) ? -1 : 1);
+					int spR = (prevO[10] == 1) ? -45 : 45;
+					float new_speed = current_speed;
+					int minSpeedMod = (minSpeedFloat == 0.5) ? 0 : minSpeedFloat;
+
+					// Pick a new speed different from current_speed
+					for (int tries = 0; tries < 10 && new_speed == current_speed; ++tries) {
+						if (maxSpeedFloat == 0.5) break;
+						new_speed = minSpeedMod + (songRNG() % (maxSpeedFloat - minSpeedMod + 1));
+						if (new_speed == 0) new_speed = 0.5;
+					}
+					current_speed = new_speed;
+					std::string speedBuild = fmt::format("1,{speed},2,{x},3,{y},6,{r},32,{factor};",
+						fmt::arg("speed", convertFloatSpeed(current_speed)),
+						fmt::arg("x", x - 15),
+						fmt::arg("y", spY),
+						fmt::arg("r", spR),
+						fmt::arg("factor", speedFactor)
+					);
+					level += speedBuild;
+				}
+			}
+
+			// TELEPORTAL GENERATION
+			if (teleportals && tp_count == 0 &&
+				((y >= maxHeight && prevO[10] == 1) || (y <= minHeight && prevO[10] == -1)) &&
+				x + 120 < 435 + (length - 1) * 30) {
+				int portalOdds = portalRNG() % ((last_tp < 40) ? (50 - last_tp) : 10);
+				if (portalOdds == 0) {
+					double tpFactor = 0.5 * (corridorHeight / 60.0);
+					last_tp = 0;
+					int tpX = x + corridorHeight / 4;
+					int tpY1 = (y_swing == 1) ? (y + 3 * corridorHeight / 4) : (y + corridorHeight / 4);
+					int tpY2 = (y_swing == 1)
+						? (minHeight + 2 * corridorHeight / 3 - 30 - tpY1)
+						: (maxHeight + 30 + corridorHeight / 3 - tpY1);
+					int tpR = (y_swing == 1) ? -45 : 45;
+					level += fmt::format("1,747,2,{x},3,{y1},6,{r},32,{factor},54,{y2};",
+						fmt::arg("x", tpX),
+						fmt::arg("y1", tpY1),
+						fmt::arg("r", tpR),
+						fmt::arg("factor", tpFactor),
+						fmt::arg("y2", tpY2)
+					);
+					tp_stored = {x, (y <= minHeight) ? (maxHeight + 30) : (minHeight - 30)};
+				}
+			}
+			if (last_tp < 40) last_tp += 1;
+
 
 			level += (genBuildF + genBuildC + cornerBuild + portalBuild);
 		}
