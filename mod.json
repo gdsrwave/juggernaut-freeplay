@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.2.0",
+	"version": "v1.2.1",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -90,6 +90,17 @@
 			"name": "Portal Spawning",
 			"type": "bool",
 			"default": true
+		},
+		"color-mode": {
+			"name": "Color Mode",
+			"type": "string",
+			"one-of": [
+				"Washed",
+				"All Colors",
+				"Classic Mode",
+				"Night Mode"
+			],
+			"default": "Washed"
 		},
 		"debug": {
 			"name": "Debug",
