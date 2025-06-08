@@ -138,20 +138,25 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			591740,
 			638150,
 			557651,
+			286138,
 			581444,
+			223469,
 			621144,
 			739358,
 			495840,
 			516709,
 			234565,
+			590533,
 			76743,
 			378965,
 			691180,
 			465909,
+			117474,
 			459080,
 			513917,
 			622111,
 			564162,
+			498828,
 			530913,
 			489111,
 			1126156,
@@ -171,6 +176,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			718171,
 			469968,
 			771738,
+			666666,
 			829777,
 			739991,
 			905110,
@@ -202,21 +208,23 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			685686,
 			616845,
 			63082,
-			233860
+			233860,
+			598349,
+			437224
 		};
 
 		const std::string filename = Mod::get()->getSettingValue<std::string>("filename");
 
 		// numeric constants
-		const double speed = Mod::get()->getSettingValue<double>("speed");
+		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
 		int speedID = 203;
-		if(speed == 0.5) {
+		if(speed == "0.5x") {
 			speedID = 200;
-		} else if(speed == 1.0) {
+		} else if(speed == "1x") {
 			speedID = 201;
-		} else if(speed == 2.0) {
+		} else if(speed == "2x") {
 			speedID = 202;
-		} else if(speed == 4.0) {
+		} else if(speed == "4x") {
 			speedID = 1334;
 		}
 		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
@@ -288,7 +296,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
 		const bool portals = Mod::get()->getSettingValue<bool>("portals");
-
+		
+		const bool corridorSpikes = Mod::get()->getSettingValue<bool>("corridor-spikes");
+		const bool fuzzySpikes = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -333,6 +343,11 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		int portalOdds = 1;
 
+		static bool spikeActive = false;
+		static bool spikeSideHold = false;
+		static int spikeSide = 0;
+		int spikeOdds = 0;
+
 		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
@@ -359,7 +374,6 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			}
 
 			if(prevO[10] == y_swing) y += (y_swing * 30);
-
 			
 			// blocks from this segment: F = floor, C = ceiling
 			std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
@@ -407,6 +421,75 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 					fmt::arg("scale", portalFactor / 2.5));
 				}
 			}
+
+			// SPIKE GENERATION
+			if (corridorSpikes && prevO[10] != y_swing) {
+				spikeSideHold = false;
+				spikeOdds = segmentRNG() % 6;
+				if (spikeOdds == 0) {
+					if (spikeActive) spikeSideHold = true;
+					spikeActive = true;
+					if (!spikeSideHold) spikeSide = segmentRNG() % 2;
+				} else {
+					spikeActive = false;
+				}
+			}
+
+			if (spikeActive) {
+				// x should be -6 from the current block if top side + spike down, or bottom side + spike up
+				// y should be -6 from the current block if 
+				int xS = x - 6;
+				if (spikeSide == 0) {
+					xS = x + 6;
+				}
+				int yS = y + 6;
+				if ((y_swing == 1 && spikeSide == 0) || (y_swing == -1 && spikeSide == 1)) {
+					yS = y + corridorHeight - 6;
+				}
+				int rS = 45;
+				if (y_swing == 1 && spikeSide == 0) {
+					rS = 135;
+				} else if (y_swing == 1 && spikeSide == 1) {
+					rS = -45;
+				} else if (y_swing == -1 && spikeSide == 1) {
+					rS = -135;
+				}
+				std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS};",
+					fmt::arg("xS", xS),
+					fmt::arg("yS", yS),
+					fmt::arg("rS", rS)
+				);
+				level += spikeBuild;
+			}
+
+			std::string fuzzPieces = "";
+			if (fuzzySpikes) {
+				std::string colorMod = (colorMode == 3) ? ",21,1004" : "";
+				std::string fuzzId = "1717"; // Only big wave supported in this code
+				if (y_swing == 1) {
+					// Upwards
+					fuzzPieces = fmt::format(
+						"1,{fuzzId},2,{x},3,{y}{colorMod};1,1717,2,{x},3,{yC},6,180{colorMod};",
+						fmt::arg("fuzzId", fuzzId),
+						fmt::arg("x", x),
+						fmt::arg("y", y),
+						fmt::arg("yC", y + corridorHeight),
+						fmt::arg("colorMod", colorMod)
+					);
+				} else {
+					// Downwards
+					fuzzPieces = fmt::format(
+						"1,{fuzzId},2,{x},3,{y},6,90{colorMod};1,1717,2,{x},3,{yC},6,-90{colorMod};",
+						fmt::arg("fuzzId", fuzzId),
+						fmt::arg("x", x),
+						fmt::arg("y", y),
+						fmt::arg("yC", y + corridorHeight),
+						fmt::arg("colorMod", colorMod)
+					);
+				}
+			}
+
+			level += fuzzPieces;
 
 			orientationShift(prevO, y_swing);
 

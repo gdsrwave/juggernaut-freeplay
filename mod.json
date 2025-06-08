@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.2.1",
+	"version": "v1.2.2",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -27,10 +27,16 @@
 	},
 	"settings": {
 		"speed": {
-			"name": "Initial Speed",
-			"description": "Possible values (0.5, 1, 2, 3, 4)",
-			"type": "float",
-			"default": 3
+			"name": "Color Mode",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "3x"
 		},
 		"length": {
 			"name": "Length",
@@ -101,6 +107,16 @@
 				"Night Mode"
 			],
 			"default": "Washed"
+		},
+		"corridor-spikes": {
+			"name": "Corridor Spikes",
+			"type": "bool",
+			"default": false
+		},
+		"fuzzy-spikes": {
+			"name": "Fuzzy Spikes",
+			"type": "bool",
+			"default": false
 		},
 		"debug": {
 			"name": "Debug",
