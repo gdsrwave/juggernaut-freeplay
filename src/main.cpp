@@ -364,6 +364,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::vector<int> antiSpam1 = {1,-1,1,-1};
 		std::vector<int> antiSpam2 = {-1,1,-1,1};
 
+		std::vector<int> antiTpspam1 = {-1, -1};
+		std::vector<int> antiTpspam2 = {1, 1};
+
 		bool gravity = false; // true == upside down
 
 		int portalOdds = 1;
@@ -373,9 +376,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		static int spikeSide = 0;
 		int spikeOdds = 0;
 		static float current_speed = speedFloat;
-		static int last_tp = 0;
-		static int tp_count = 0;
-		static std::array<int, 2> tp_stored = {0, 0};
+		int last_tp = 0;
+		int tp_count = 0;
+		std::array<int, 2> tp_stored = {0, 0};
 
 		for(int i = 0; i < length; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
@@ -401,9 +404,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 					tp_stored = {0, 0};
 				}
 				tp_count += 1;
-			} else if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)))) {
+			} else if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)) || orientationMatch(prevO, antiTpspam1))) {
 				y_swing = -1;
-			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMin)))) {
+			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMin)) || orientationMatch(prevO, antiTpspam2))) {
 				y_swing = 1;
 			} else {
 				if(zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagStd1)) {
