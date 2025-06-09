@@ -644,22 +644,28 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		}
 
 		// Meter Mark Generation
+		std::string metermarksStr = "";
+		std::string currentMark;
 		if (marks && markInterval > 0) {
 			int meters = markInterval;
 			double markHeight;
 			for(int j = 0; j < (length / markInterval); j++) {
+				currentMark = "";
 				markHeight = 15.5;
 
 				for(int i = 0; i < 10; i++) {
-					level += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
+					currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
 					markHeight += 30.0;
 				}
 
 				std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
-				level += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
+				meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
+				currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
 				meters += markInterval;
+				metermarksStr += currentMark;
 			}
 		}
+		level += metermarksStr;
 
 		if(lowvis) {
 			std::string lvBuild = "1,901,2,315,3,285,20,2,36,1,51,3,28,0,29,0,10,1000,30,0,85,2,58,1;1,1011,2,495,3,150,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,210,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,30,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,90,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,1011,2,495,3,270,20,2,57,3,64,1,67,1,6,-90,21,3,24,9,32,2;1,211,2,600,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,600,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,1007,2,645,3,315,20,2,36,1,51,3,10,1.01,35,1;1,211,2,750,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,750,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,900,3,225,20,2,57,3,64,1,67,1,21,3,24,9,32,5;1,211,2,900,3,75,20,2,57,3,64,1,67,1,21,3,24,9,32,5;";
