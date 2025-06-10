@@ -135,6 +135,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::mt19937 portalRNG(seed);
 		std::mt19937 fakePortalRNG(seed);
 		std::mt19937 songRNG(seed);
+		std::mt19937 bgRNG(seed);
 
 		// current soundtrack
 		const int soundtrack[] = {
@@ -257,7 +258,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
 		int speedID = convertSpeed(speed);
 		int speedFloat = convertSpeedToFloat(speed);
-		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
+		int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 
 		// bg-color option
@@ -266,38 +267,31 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		if (colorModeStr == "Classic Mode") colorMode = 1;
 		else if (colorModeStr == "All Colors") colorMode = 2;
 		else if (colorModeStr == "Night Mode") colorMode = 3;
-		std::mt19937 bg_rng(seed);
-		std::uniform_int_distribution<int> dist256(0, 255);
-		std::uniform_int_distribution<int> dist3(0, 2);
-		std::uniform_int_distribution<int> dist17(0, 16);
 
 		std::array<int, 3> background_color = {28, 28, 28};
 		std::string line_color;
 		if (colorMode == 3) {
 			background_color = {0, 0, 0};
-			int excluded = dist3(bg_rng);
-			int maxed = dist3(bg_rng);
+			int excluded = bgRNG() % 3;
+			int maxed = bgRNG() % 3;
 			if (maxed >= excluded) maxed += 1;
-			if (maxed > 2) maxed = 2;
 
 			std::array<int, 3> object_color = {255, 255, 255};
 			object_color[excluded] = 0;
 			object_color[maxed] = 255;
 			for (int i = 0; i < 3; ++i) {
 				if (i == excluded || i == maxed) continue;
-				object_color[i] += dist256(bg_rng);
-				if (object_color[i] > 255) object_color[i] = 255;
+				object_color[i] += bgRNG() % 256;
 			}
 			line_color = fmt::format("1_{}_2_{}_3_{}_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1|",
 				object_color[0], object_color[1], object_color[2]);
 		}
 		else if (colorMode == 2) {
 			background_color = {0, 0, 0};
-			int excluded = dist3(bg_rng);
+			int excluded = bgRNG() % 3;
 			for (int i = 0; i < 3; ++i) {
 				if (i == excluded) continue;
-				background_color[i] += dist256(bg_rng);
-				if (background_color[i] > 255) background_color[i] = 255;
+				background_color[i] += bgRNG() % 256;
 			}
 		}
 		else if (colorMode == 1) {
@@ -305,10 +299,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		}
 		else {
 			background_color = {28, 28, 28};
-			int excluded = dist3(bg_rng);
+			int excluded = bgRNG() % 3;
 			for (int i = 0; i < 3; ++i) {
 				if (i == excluded) continue;
-				background_color[i] += dist17(bg_rng);
+				background_color[i] += bgRNG() % 17;
 				if (background_color[i] > 255) background_color[i] = 255;
 			}
 		}
@@ -338,7 +332,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const int maxSpeedFloat = convertSpeedToFloat(maxSpeed);
 
 		const bool fakeGravityPortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
-
+		const bool upsideStart = Mod::get()->getSettingValue<bool>("upside-start");
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -353,7 +347,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			fmt::arg("line_color", line_color)
 		);
 
-		if (Mod::get()->getSettingValue<bool>("upside-start")) {
+		if (upsideStart) {
 			level += "1,11,2,293,3,105,6,45,32,0.57;";
 		}
 		
@@ -386,7 +380,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::vector<int> antiTpspam1 = {-1, -1};
 		std::vector<int> antiTpspam2 = {1, 1};
 
-		bool gravity = false; // true == upside down
+		bool gravity = upsideStart; // true == upside down
 
 		int portalOdds = 1;
 		int fakePortalOdds = 1;
@@ -400,7 +394,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		int tp_count = 0;
 		std::array<int, 2> tp_stored = {0, 0};
 
-		for(int i = 0; i < length; i++) {
+		for(int i = 0; i < length-1; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
 			y_swing = 0;
@@ -617,6 +611,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 						fmt::arg("y2", tpY2)
 					);
 					tp_stored = {x, (y <= minHeight) ? (maxHeight + 30) : (minHeight - 30)};
+
+					length += 7;
 				}
 			}
 			if (last_tp < 40) last_tp += 1;
@@ -686,7 +682,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
 		fmt::arg("desc", desc),
 		fmt::arg("b64", b64),
-		fmt::arg("title", std::to_string(seed).substr(0, 6)),
+		fmt::arg("title", std::to_string(seed)),
 		fmt::arg("song", songSelection));
 
 		if(debug) log::info("{}", levelString);
