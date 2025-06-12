@@ -274,14 +274,15 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			background_color = {0, 0, 0};
 			int excluded = bgRNG() % 3;
 			int maxed = bgRNG() % 3;
-			if (maxed >= excluded) maxed += 1;
+			if (excluded == maxed && excluded == 2) maxed = 0;
+			else if (maxed == excluded) maxed += 1;
 
 			std::array<int, 3> object_color = {255, 255, 255};
 			object_color[excluded] = 0;
 			object_color[maxed] = 255;
 			for (int i = 0; i < 3; ++i) {
 				if (i == excluded || i == maxed) continue;
-				object_color[i] += bgRNG() % 256;
+				object_color[i] -= bgRNG() % 256;
 			}
 			line_color = fmt::format("1_{}_2_{}_3_{}_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1|",
 				object_color[0], object_color[1], object_color[2]);
@@ -336,7 +337,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
-		std::string level = fmt::format("kS38,1_{bg_0}_2_{bg_1}_3_{bg_2}_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|{line_color}1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_3_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160,116,1;1,7,2,15,3,105,6,-90,21,1004;1,5,2,15,3,75,21,1004;1,5,2,15,3,45,21,1004;1,5,2,15,3,15,21,1004;1,7,2,45,3,105,6,-90,21,1004;1,5,2,45,3,15,21,1004;1,5,2,45,3,45,21,1004;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5;1,1007,2,-15,3,315,20,1,36,1,51,3,10,0.0,35,0;1,5,2,45,3,75,21,1004;1,7,2,75,3,105,6,-90,21,1004;1,5,2,75,3,15,21,1004;1,5,2,75,3,75,21,1004;1,5,2,75,3,45,21,1004;1,7,2,195,3,15,21,1004;1,5,2,105,3,75,21,1004;1,5,2,105,3,15,21,1004;1,7,2,105,3,105,6,-90,21,1004;1,5,2,165,3,75;1,5,2,105,3,45,21,1004;1,103,2,165,3,129;1,5,2,135,3,75,21,1004;1,5,2,135,3,45,21,1004;1,5,2,135,3,15,21,1004;1,8,2,195,3,135;1,5,2,165,3,15,21,1004;1,5,2,165,3,45,21,1004;1,7,2,135,3,105,6,-90,21,1004;1,7,2,165,3,105,6,-90;1,1,2,195,3,105;1,7,2,195,3,75;1,7,2,195,3,45,21,1004;1,1338,2,255,3,45;1,660,2,255,3,163,6,17,13,0;1,{speedID},2,255,3,165,13,1;1,1338,2,225,3,15;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75;1,1338,2,345,3,{ch_2},6,270;1,1338,2,345,3,135;1,1338,2,375,3,{ch_2},6,180;1,1338,2,315,3,105;1,1338,2,375,3,165;1,1338,2,315,3,{ch_3},6,270;1,1338,2,405,3,195;1,1338,2,435,3,195,6,90;1,1338,2,405,3,{ch_3},6,180;1,1338,2,435,3,{ch_3},6,270;",
+		std::string level = fmt::format("kS38,1_{bg_0}_2_{bg_1}_3_{bg_2}_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1|1_25_2_24_3_24_11_255_12_255_13_255_4_-1_6_1001_7_1_15_1_18_0_8_1|1_0_2_102_3_255_11_255_12_255_13_255_4_-1_6_1009_7_1_15_1_18_0_8_1|1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1002_5_1_7_1_15_1_18_0_8_1|{line_color}1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1005_5_1_7_1_15_1_18_0_8_1|1_255_2_75_3_0_11_255_12_255_13_255_4_-1_6_1006_5_1_7_1_15_1_18_0_8_1|1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_3_7_1_15_1_18_0_8_1|,kA13,0,kA15,0,kA16,0,kA14,,kA6,0,kA7,7,kA17,0,kA18,0,kS39,0,kA2,0,kA3,0,kA8,0,kA4,1,kA9,0,kA10,0,kA11,0;1,747,2,15,3,15,54,160,116,1;1,7,2,15,3,105,6,-90,21,1004,64,1,67,1;1,5,2,15,3,75,21,1004,64,1,67,1;1,5,2,15,3,45,21,1004,64,1,67,1;1,5,2,15,3,15,21,1004,64,1,67,1;1,7,2,45,3,105,6,-90,21,1004,64,1,67,1;1,5,2,45,3,15,21,1004,64,1,67,1;1,5,2,45,3,45,21,1004,64,1,67,1;1,1007,2,-15,3,285,20,1,36,1,51,2,10,1.57,35,0.5,64,1,67,1;1,1007,2,-15,3,315,20,1,36,1,51,3,10,0.0,35,0,64,1,67,1;1,5,2,45,3,75,21,1004,64,1,67,1;1,7,2,75,3,105,6,-90,21,1004,64,1,67,1;1,5,2,75,3,15,21,1004,64,1,67,1;1,5,2,75,3,75,21,1004,64,1,67,1;1,5,2,75,3,45,21,1004,64,1,67,1;1,7,2,195,3,15,21,1004,64,1,67,1;1,5,2,105,3,75,21,1004,64,1,67,1;1,5,2,105,3,15,21,1004,64,1,67,1;1,7,2,105,3,105,6,-90,21,1004,64,1,67,1;1,5,2,165,3,75;1,5,2,105,3,45,21,1004,64,1,67,1;1,103,2,165,3,129,64,1,67,1;1,5,2,135,3,75,21,1004,64,1,67,1;1,5,2,135,3,45,21,1004,64,1,67,1;1,5,2,135,3,15,21,1004,64,1,67,1;1,8,2,195,3,135,64,1,67,1;1,5,2,165,3,15,21,1004,64,1,67,1;1,5,2,165,3,45,21,1004,64,1,67,1;1,7,2,135,3,105,6,-90,21,1004,64,1,67,1;1,7,2,165,3,105,6,-90,64,1,67,1;1,1,2,195,3,105,64,1,67,1;1,7,2,195,3,75,64,1,67,1;1,7,2,195,3,45,21,1004,64,1,67,1;1,1338,2,255,3,45,64,1,67,1;1,660,2,255,3,163,6,17,13,0,64,1,67,1;1,{speedID},2,255,3,165,13,1,64,1,67,1;1,1338,2,225,3,15,64,1,67,1;1,1338,2,285,3,{ch_1},6,270;1,1338,2,285,3,75,64,1,67,1;1,1338,2,345,3,{ch_2},6,270,64,1,67,1;1,1338,2,345,3,135,64,1,67,1;1,1338,2,375,3,{ch_2},6,180,64,1,67,1;1,1338,2,315,3,105,64,1,67,1;1,1338,2,375,3,165,64,1,67,1;1,1338,2,315,3,{ch_3},6,270,64,1,67,1;1,1338,2,405,3,195,64,1,67,1;1,1338,2,435,3,195,6,90,64,1,67,1;1,1338,2,405,3,{ch_3},6,180,64,1,67,1;1,1338,2,435,3,{ch_3},6,270,64,1,67,1;",
 			fmt::arg("speedID", speedID),
 			fmt::arg("ch_1", 225+corridorHeight),
 			fmt::arg("ch_2", 165+corridorHeight),
@@ -443,7 +444,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			// blocks from this segment: F = floor, C = ceiling
 			std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
 			if(y_swing < 0) genBuildF += ",6,90";
-			genBuildF += ";";
+			genBuildF += ",64,1,67,1;";
 			
 			std::string genBuildC = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y+corridorHeight));
 			if(y_swing > 0) {
@@ -451,17 +452,17 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			} else {
 				genBuildC += ",6,270";
 			}
-			genBuildC += ";";
+			genBuildC += ",64,1,67,1;";
 
 			std::string cornerBuild = "";
 			if(cornerPieces) {
 				if(prevO[10] == 1 && y_swing == -1) {
-					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90;",
+					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90,64,1,67,1;",
 					fmt::arg("cnr1x", x-30),
 					fmt::arg("cnr2x", x),
 					fmt::arg("cnry", y+corridorHeight+30));
 				} else if(prevO[10] == -1 && y_swing == 1) {
-					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,90;1,473,2,{cnr2x},3,{cnry};",
+					cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,90;1,473,2,{cnr2x},3,{cnry},64,1,67,1;",
 					fmt::arg("cnr1x", x-30),
 					fmt::arg("cnr2x", x),
 					fmt::arg("cnry", y+30));
@@ -482,7 +483,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 					int portalPos = corridorHeight / 4;
 					int portalID = portalOdds == 0 ? (gravity ? 10 : 11) : (gravity ? 11 : 10); // real portal hit? : real portal : fake portal
 					gravity = portalOdds == 0 ? (gravity ? false : true) : gravity;
-					portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale};",
+					portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
 					fmt::arg("portalID", portalID),
 					fmt::arg("xP", x-15-portalNormal+portalPos),
 					fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
@@ -523,7 +524,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 				} else if (y_swing == -1 && spikeSide == 1) {
 					rS = -135;
 				}
-				std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS};",
+				std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1;",
 					fmt::arg("xS", xS),
 					fmt::arg("yS", yS),
 					fmt::arg("rS", rS)
@@ -538,7 +539,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 				if (y_swing == 1) {
 					// Upwards
 					fuzzPieces = fmt::format(
-						"1,{fuzzId},2,{x},3,{y}{colorMod};1,1717,2,{x},3,{yC},6,180{colorMod};",
+						"1,{fuzzId},2,{x},3,{y}{colorMod};1,1717,2,{x},3,{yC},6,180{colorMod},64,1,67,1;",
 						fmt::arg("fuzzId", fuzzId),
 						fmt::arg("x", x),
 						fmt::arg("y", y),
@@ -548,7 +549,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 				} else {
 					// Downwards
 					fuzzPieces = fmt::format(
-						"1,{fuzzId},2,{x},3,{y},6,90{colorMod};1,1717,2,{x},3,{yC},6,-90{colorMod};",
+						"1,{fuzzId},2,{x},3,{y},6,90{colorMod};1,1717,2,{x},3,{yC},6,-90{colorMod},64,1,67,1;",
 						fmt::arg("fuzzId", fuzzId),
 						fmt::arg("x", x),
 						fmt::arg("y", y),
@@ -578,7 +579,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 						if (new_speed == 0) new_speed = 0.5;
 					}
 					current_speed = new_speed;
-					std::string speedBuild = fmt::format("1,{speed},2,{x},3,{y},6,{r},32,{factor};",
+					std::string speedBuild = fmt::format("1,{speed},2,{x},3,{y},6,{r},32,{factor},64,1,67,1;",
 						fmt::arg("speed", convertFloatSpeed(current_speed)),
 						fmt::arg("x", x - 15),
 						fmt::arg("y", spY),
@@ -603,7 +604,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 						? (minHeight + 2 * corridorHeight / 3 - 30 - tpY1)
 						: (maxHeight + 30 + corridorHeight / 3 - tpY1);
 					int tpR = (y_swing == 1) ? -45 : 45;
-					level += fmt::format("1,747,2,{x},3,{y1},6,{r},32,{factor},54,{y2};",
+					level += fmt::format("1,747,2,{x},3,{y1},6,{r},32,{factor},54,{y2},64,1,67,1;",
 						fmt::arg("x", tpX),
 						fmt::arg("y1", tpY1),
 						fmt::arg("r", tpR),
@@ -631,12 +632,12 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		while(yT <= (maxHeight + corridorHeight + 30)) {
 			xT += 30;
 			yT += 30;
-			level += fmt::format("1,1338,2,{x},3,{y},6,180;", fmt::arg("x", xT), fmt::arg("y", yT));
+			level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
 		}
 		while(yB >= (minHeight)) {
 			xB += 30;
 			yB -= 30;
-			level += fmt::format("1,1338,2,{x},3,{y},6,90;", fmt::arg("x", xB), fmt::arg("y", yB));
+			level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
 		}
 
 		// Meter Mark Generation
@@ -650,7 +651,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 				markHeight = 15.5;
 
 				for(int i = 0; i < 10; i++) {
-					currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
+					currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
 					markHeight += 30.0;
 				}
 
@@ -767,7 +768,7 @@ class $modify(PlayLayer) {
 			return PlayLayer::resetLevel();
 		}
 		else if (state == AutoJFP::JustRestarted) {
-			this->m_unk3089 = false; // this var controls whether the camera follows the player at the start
+			this->m_unk3229 = false; // this var controls whether the camera follows the player at the start
 			return PlayLayer::resetLevel();
 		}
 
