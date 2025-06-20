@@ -71,15 +71,15 @@
 			"type": "bool",
 			"default": false
 		},
-		"zig-limit": {
-			"name": "Zigzagging Limit",
-			"type": "bool",
-			"default": true
-		},
-		"remove-spam": {
-			"name": "Spam Limit",
-			"type": "bool",
-			"default": true
+		"corridor-rules": {
+			"name": "Corridor Rules",
+			"type": "string",
+			"one-of": [
+				"No Spam, No Zigzagging",
+				"No Spam",
+				"Unrestricted"
+			],
+			"default": "No Spam, No Zigzagging"
 		},
 		"low-vis": {
 			"name": "Low Visibility",

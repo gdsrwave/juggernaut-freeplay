@@ -258,7 +258,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
 		int speedID = convertSpeed(speed);
 		int speedFloat = convertSpeedToFloat(speed);
-		int64_t length = Mod::get()->getSettingValue<int64_t>("length");
+		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 
 		// bg-color option
@@ -315,8 +315,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		// T/F constants
 		const bool marks = Mod::get()->getSettingValue<bool>("marks");
 		const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
-		const bool zigzagLimit = Mod::get()->getSettingValue<bool>("zig-limit");
-		const bool removeSpam = Mod::get()->getSettingValue<bool>("remove-spam");
+		const std::string corridorRule = Mod::get()->getSettingValue<std::string>("corridor-rules");
 		const bool lowvis = Mod::get()->getSettingValue<bool>("low-vis");
 
 		const bool debug = Mod::get()->getSettingValue<bool>("debug");
@@ -334,6 +333,9 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
 		const bool fakeGravityPortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
 		const bool upsideStart = Mod::get()->getSettingValue<bool>("upside-start");
+
+		const bool removeSpam = corridorRule == "No Spam" || corridorRule == "No Spam, No Zigzagging";
+		const bool zigzagLimit = corridorRule == "No Spam, No Zigzagging";
 
 		// Initialize the string, which contains the level base formatted with certain values from settings
 		// This is very long and verbose, but I'm okay with how it works
@@ -354,11 +356,11 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		
 		log::info("Seed: {}", seed);
 
-		
 		// y_swing = the direction the wave corridor is currently moving - can be 0, 1, -1, and possibly -2/2 for miniwave in the future
 		// prevO stands for Previous Orientations. Stores previous swings
 		// the name prevO is a remnant from the Python version, where y_swing was stored numerically as is now but orientations were stored in the +- str format e.g. "+-++-+-+--+"
 		int y_swing = 0, x = 435, y = 195;
+		
 		int prevO[11] = {0,0,0,0,0,0,0,1,1,1,-1};
 
 		// constant patterns for anti-zigzagging
@@ -392,33 +394,14 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		int spikeOdds = 0;
 		static float current_speed = speedFloat;
 		int last_tp = 0;
-		int tp_count = 0;
-		std::array<int, 2> tp_stored = {0, 0};
 
 		for(int i = 0; i < length-1; i++) {
 			// for each loop, reset the current y_swing (might be unnecessary) and increment x by 1 block/30 units
 			x += 30;
 			y_swing = 0;
 
-			if (tp_stored[0] != 0 || tp_stored[1] != 0) {
-				if (prevO[10] == 1) {
-					y_swing = 1;
-					if (tp_count == 3) {
-						x = tp_stored[0] - 90;
-						y = tp_stored[1] - 120;
-					}
-				} else if (prevO[10] == -1) {
-					y_swing = -1;
-					if (tp_count == 4) {
-						x = tp_stored[0] - 60;
-						y = tp_stored[1] + 90;
-					}
-				}
-				if (tp_count == 7) {
-					tp_count = -1;
-					tp_stored = {0, 0};
-				}
-				tp_count += 1;
+			if (last_tp <= 1) {
+				y_swing = prevO[10];
 			} else if (y >= maxHeight && (prevO[10] == 1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMax)) || orientationMatch(prevO, antiTpspam1))) {
 				y_swing = -1;
 			} else if(y <= minHeight && (prevO[10] == -1 || (zigzagLimit && removeSpam && orientationMatch(prevO, antiZigzagMin)) || orientationMatch(prevO, antiTpspam2))) {
@@ -591,7 +574,7 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			}
 
 			// TELEPORTAL GENERATION
-			if (teleportals && tp_count == 0 &&
+			if (teleportals && last_tp > 2 &&
 				((y >= maxHeight && prevO[10] == 1) || (y <= minHeight && prevO[10] == -1)) &&
 				x + 120 < 435 + (length - 1) * 30) {
 				int portalOdds = portalRNG() % ((last_tp < 40) ? (50 - last_tp) : 10);
@@ -604,6 +587,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 						? (minHeight + 2 * corridorHeight / 3 - 30 - tpY1)
 						: (maxHeight + 30 + corridorHeight / 3 - tpY1);
 					int tpR = (y_swing == 1) ? -45 : 45;
+
+					// add teleportal to level
 					level += fmt::format("1,747,2,{x},3,{y1},6,{r},32,{factor},54,{y2},64,1,67,1;",
 						fmt::arg("x", tpX),
 						fmt::arg("y1", tpY1),
@@ -611,9 +596,43 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 						fmt::arg("factor", tpFactor),
 						fmt::arg("y2", tpY2)
 					);
-					tp_stored = {x, (y <= minHeight) ? (maxHeight + 30) : (minHeight - 30)};
 
-					length += 7;
+					// Generate corridor end connectors
+					std::string tpConnector = "";
+					int r1 = (y_swing == 1) ? 0 : 90;
+					int r2 = (y_swing == 1) ? 180 : 270;
+					for (int j = 1; j <= 3; ++j) {
+						int xj = x + 30 * j;
+						int yj = y + 30 * j * y_swing;
+						int yj2 = yj + 60;
+						tpConnector += fmt::format("1,1338,2,{x},3,{y},6,{r1},64,1,67,1;1,1338,2,{x},3,{y2},6,{r2},64,1,67,1;",
+							fmt::arg("x", xj),
+							fmt::arg("y", yj),
+							fmt::arg("y2", yj2),
+							fmt::arg("r1", r1),
+							fmt::arg("r2", r2)
+						);
+					}
+
+					int yFuture = (y <= minHeight) ? (maxHeight + 30) : (minHeight - 30);
+					for (int j = 0; j <= 2; ++j) {
+						int xj = x + 30 * j * -1;
+						int yj = yFuture + 30 * j * y_swing * -1;
+						int yj2 = yj + 60;
+						tpConnector += fmt::format("1,1338,2,{x},3,{y},6,{r1},64,1,67,1;1,1338,2,{x},3,{y2},6,{r2},64,1,67,1;",
+							fmt::arg("x", xj),
+							fmt::arg("y", yj),
+							fmt::arg("y2", yj2),
+							fmt::arg("r1", r1),
+							fmt::arg("r2", r2)
+						);
+					}
+
+					// add teleportal corridor ends
+					level += tpConnector;
+
+					// store the teleportal coordinates for later use
+					y = yFuture;
 				}
 			}
 			if (last_tp < 40) last_tp += 1;
