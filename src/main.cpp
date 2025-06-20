@@ -258,8 +258,11 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
 		int speedID = convertSpeed(speed);
 		int speedFloat = convertSpeedToFloat(speed);
-		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
+		const int length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
+
+		// WIP: ninja format
+		std::vector<std::pair<int, int>> segmentCoords(length);
 
 		// bg-color option
 		const std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
@@ -428,6 +431,8 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
 			if(y_swing < 0) genBuildF += ",6,90";
 			genBuildF += ",64,1,67,1;";
+
+			segmentCoords[i] = std::make_pair(x, y);
 			
 			std::string genBuildC = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y+corridorHeight));
 			if(y_swing > 0) {
