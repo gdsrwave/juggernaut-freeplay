@@ -85,6 +85,27 @@ std::map<std::string, int> speedOddsMap = {
 	{"Aggressive", 5},
 };
 
+// WIP: ninja format
+struct Segment {
+	std::pair<int, int> coords;
+	int y_swing;
+	// Add more attributes as needed
+};
+
+struct Biome {
+	int x_initial;
+	std::string type;
+	std::string theme;
+	std::string options;
+	std::vector<Segment> segments;
+	// Add more attributes as needed
+};
+
+struct LevelData {
+	std::string name;
+	std::vector<Biome> biomes;
+};
+
 #include <Geode/modify/LevelBrowserLayer.hpp>
 class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 
@@ -258,11 +279,23 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 		const std::string speed = Mod::get()->getSettingValue<std::string>("speed");
 		int speedID = convertSpeed(speed);
 		int speedFloat = convertSpeedToFloat(speed);
-		const int length = Mod::get()->getSettingValue<int64_t>("length");
+		const int64_t length = Mod::get()->getSettingValue<int64_t>("length");
 		const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
 
-		// WIP: ninja format
-		std::vector<std::pair<int, int>> segmentCoords(length);
+		// Example LevelData with 1 biome and 1 segment
+		std::vector<Segment> segments(length);
+		LevelData levelData = {
+			.name = "JFP Level",
+			.biomes = {
+				{
+					.x_initial = 435,
+					.type = "Default",
+					.theme = "Classic",
+					.options = "",
+					.segments = segments
+				}
+			}
+		};
 
 		// bg-color option
 		const std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
@@ -432,7 +465,10 @@ class $modify(GenerateLevelLayer, LevelBrowserLayer) {
 			if(y_swing < 0) genBuildF += ",6,90";
 			genBuildF += ",64,1,67,1;";
 
-			segmentCoords[i] = std::make_pair(x, y);
+			levelData.biomes[0].segments[i] = Segment{
+				.coords = std::make_pair(x, y),
+				.y_swing = y_swing
+			};
 			
 			std::string genBuildC = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y+corridorHeight));
 			if(y_swing > 0) {
