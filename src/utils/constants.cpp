@@ -1,13 +1,8 @@
-enum class AutoJFP : int {
-	NotInAutoJFP = 0,
-	JustStarted = 1,
-	JustRestarted = 2,
-	PlayingLevelAtt1 = 3,
-	PlayingLevel = 4,
-};
+
+namespace JFP {
 
 // current soundtrack
-const int SOUNDTRACK[] = {
+const int soundtrack[] = {
     614361,
     569208,
     678606,
@@ -120,3 +115,5 @@ const int SOUNDTRACK[] = {
     598349,
     437224
 };
+
+}

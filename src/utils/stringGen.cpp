@@ -9,10 +9,12 @@
 #include <cmath>
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include "constants.hpp"
+#include "constants.cpp"
 
 using namespace geode::prelude;
 using namespace gmd;
+
+namespace JFPGen {
 
 std::map<std::string, int> portalOddsMap = {
 	{"Light", 40},
@@ -95,9 +97,17 @@ static int convertFloatSpeed(float speed) {
 	return 203; // default speed
 }
 
+enum class AutoJFP : int {
+	NotInAutoJFP = 0,
+	JustStarted = 1,
+	JustRestarted = 2,
+	PlayingLevelAtt1 = 3,
+	PlayingLevel = 4,
+};
+
 AutoJFP state = AutoJFP::NotInAutoJFP;
 
-static std::string mainGen(bool compress) {
+static std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP) {
 
     // random device setups - used with modulo to generate numbers in a range
     std::random_device rd;
@@ -577,7 +587,7 @@ static std::string mainGen(bool compress) {
 
     if(debug) log::info("{}", level);
 
-    int songSelection = SOUNDTRACK[(songRNG() % (sizeof(SOUNDTRACK)/sizeof(int)))];
+    int songSelection = JFP::soundtrack[(songRNG() % (sizeof(JFP::soundtrack)/sizeof(int)))];
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);
     else b64 = level;
@@ -597,5 +607,7 @@ static std::string mainGen(bool compress) {
     return levelString;
 
     // todo: remove any unused code left from example, add comments, debug
+
+}
 
 }

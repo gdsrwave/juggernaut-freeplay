@@ -11,7 +11,7 @@
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "utils/constants.hpp"
-#include "utils/stringGen.cpp"
+#include "utils/StringGen.cpp"
 
 // bring used namespaces to scope
 using namespace geode::prelude;
@@ -20,6 +20,7 @@ using namespace gmd;
 // checks if a certain orientation pattern matches the most recent previous orientations
 // essentially this checks if the end of one int [] equals another int []
 
+JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 #include <Geode/modify/CreatorLayer.hpp>
 class $modify(GenerateLevelLayer, CreatorLayer) {
@@ -58,7 +59,7 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 
 	static GJGameLevel* createGameLevel() {
 		std::srand(std::time(0));
-		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + mainGen(false) + "</dict></plist>";
+		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + JFPGen::jfpMainStringGen(false, state) + "</dict></plist>";
 		
 		// somewhat copied from gmd-api's source code dont sue please
 		std::unique_ptr<DS_Dictionary> dict = std::make_unique<DS_Dictionary>();
@@ -74,10 +75,10 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 	}
 
 	void onAutoGenButton(CCObject*) {
-		state = AutoJFP::JustStarted;
+		state = JFPGen::AutoJFP::JustStarted;
 		auto level = createGameLevel();
 		if (!level) {
-			state = AutoJFP::NotInAutoJFP;
+			state = JFPGen::AutoJFP::NotInAutoJFP;
 			return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
 		}
 		auto newScene = PlayLayer::scene(level, false, false);
@@ -119,9 +120,9 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
-		std::string levelString = mainGen(true);
+		std::string levelString = JFPGen::jfpMainStringGen(true, state);
 		if(levelString.empty()) return;
-		exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
+		JFPGen::exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
 
 		// infer filetype, should always be .gmd for us
@@ -145,17 +146,17 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 #include <Geode/modify/PlayLayer.hpp>
 class $modify(PlayLayer) {
 	void onQuit() {
-		state = AutoJFP::NotInAutoJFP;
+		state = JFPGen::AutoJFP::NotInAutoJFP;
 		PlayLayer::onQuit();
 	}
 
 	void resetLevel() {
-		if (state == AutoJFP::NotInAutoJFP) return PlayLayer::resetLevel();
-		else if (state == AutoJFP::JustStarted) {
-			state = AutoJFP::PlayingLevelAtt1;
+		if (state == JFPGen::AutoJFP::NotInAutoJFP) return PlayLayer::resetLevel();
+		else if (state == JFPGen::AutoJFP::JustStarted) {
+			state = JFPGen::AutoJFP::PlayingLevelAtt1;
 			return PlayLayer::resetLevel();
 		}
-		else if (state == AutoJFP::JustRestarted) {
+		else if (state == JFPGen::AutoJFP::JustRestarted) {
 			this->m_unk3229 = false; // this var controls whether the camera follows the player at the start
 			return PlayLayer::resetLevel();
 		}
@@ -184,7 +185,7 @@ class $modify(PlayLayer) {
 			auto level = GenerateLevelLayer::createGameLevel();
 			if (!level) return; // idk what to do here
 
-			state = AutoJFP::JustRestarted;
+			state = JFPGen::AutoJFP::JustRestarted;
 			
 			// important note: resetLevel gets called somewhere within PlayLayer::scene()
 			// so its important that the state is JustRestarted by this point
@@ -197,7 +198,7 @@ class $modify(PlayLayer) {
 			pl->updateAttempts();
 			pl->m_level->m_normalPercent = best;
 				
-			state = AutoJFP::PlayingLevel;
+			state = JFPGen::AutoJFP::PlayingLevel;
 
 			// necessary to prevent cursor flashing on respawn except it sometimes doesnt work idk
 			if (!GameManager::get()->getGameVariable("0024")) PlatformToolbox::hideCursor(); 
@@ -210,7 +211,7 @@ class $modify(PlayLayer) {
 	}
 
 	void startGame() {
-		if (state == AutoJFP::PlayingLevel) return; // prevents lag from this func being called twice when restarting
+		if (state == JFPGen::AutoJFP::PlayingLevel) return; // prevents lag from this func being called twice when restarting
 		PlayLayer::startGame();
 	}
 };
