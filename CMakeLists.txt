@@ -6,11 +6,14 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 project(jfp VERSION 1.0.0)
 
-# Set up the mod binary
-add_library(${PROJECT_NAME} SHARED
-    src/main.cpp
-    # Add your cpp files here
+file(GLOB_RECURSE SOURCES
+    src/*.cpp
 )
+
+# Explicitly add the file that defines jfpSoundtrack and jfpSoundtrackSize
+list(APPEND SOURCES src/utils/constants.cpp)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")

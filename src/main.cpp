@@ -11,7 +11,8 @@
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "utils/constants.hpp"
-#include "utils/StringGen.cpp"
+#include "utils/StringGen.hpp"
+#include "ui/JFPMenuLayer.hpp"
 
 // bring used namespaces to scope
 using namespace geode::prelude;
@@ -54,7 +55,9 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 	}
 
 	void onOptionButton(CCObject*) {
-		openSettingsPopup(Mod::get());
+		//openSettingsPopup(Mod::get());
+		auto jfpLayer = JFPMenuLayer::scene();
+		CCDirector::sharedDirector()->pushScene(jfpLayer);
 	}
 
 	static GJGameLevel* createGameLevel() {

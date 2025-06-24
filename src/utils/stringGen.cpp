@@ -9,10 +9,10 @@
 #include <cmath>
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include "constants.cpp"
+#include "constants.hpp"
+#include "StringGen.hpp"
 
 using namespace geode::prelude;
-using namespace gmd;
 
 namespace JFPGen {
 
@@ -26,27 +26,6 @@ std::map<std::string, int> speedOddsMap = {
 	{"Light", 60},
 	{"Balanced", 10},
 	{"Aggressive", 5},
-};
-
-// WIP: ninja format
-struct Segment {
-	std::pair<int, int> coords;
-	int y_swing;
-	// Add more attributes as needed
-};
-
-struct Biome {
-	int x_initial;
-	std::string type;
-	std::string theme;
-	std::string options;
-	std::vector<Segment> segments;
-	// Add more attributes as needed
-};
-
-struct LevelData {
-	std::string name;
-	std::vector<Biome> biomes;
 };
 
 // checks if a certain orientation pattern matches the most recent previous orientations
@@ -68,9 +47,9 @@ static void orientationShift(int prevO[11], int newO) {
 	prevO[10] = newO;
 }
 
-static void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
-	auto lvlData = ByteVector(ld1.begin(), ld1.end());
-	(void) file::writeBinary(path, lvlData);
+void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
+    auto lvlData = ByteVector(ld1.begin(), ld1.end());
+    (void) file::writeBinary(path, lvlData);
 }
 
 static int convertSpeed(const std::string& speed) {
@@ -97,17 +76,9 @@ static int convertFloatSpeed(float speed) {
 	return 203; // default speed
 }
 
-enum class AutoJFP : int {
-	NotInAutoJFP = 0,
-	JustStarted = 1,
-	JustRestarted = 2,
-	PlayingLevelAtt1 = 3,
-	PlayingLevel = 4,
-};
-
 AutoJFP state = AutoJFP::NotInAutoJFP;
 
-static std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP) {
+std::string jfpMainStringGen(bool compress, AutoJFP state) {
 
     // random device setups - used with modulo to generate numbers in a range
     std::random_device rd;
@@ -587,7 +558,7 @@ static std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotI
 
     if(debug) log::info("{}", level);
 
-    int songSelection = JFP::soundtrack[(songRNG() % (sizeof(JFP::soundtrack)/sizeof(int)))];
+    int songSelection = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);
     else b64 = level;

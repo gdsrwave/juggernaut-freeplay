@@ -1,8 +1,6 @@
+#include "constants.hpp"
 
-namespace JFP {
-
-// current soundtrack
-const int soundtrack[] = {
+const int jfpSoundtrack[] = {
     614361,
     569208,
     678606,
@@ -115,5 +113,4 @@ const int soundtrack[] = {
     598349,
     437224
 };
-
-}
+const int jfpSoundtrackSize = sizeof(jfpSoundtrack) / sizeof(int);
