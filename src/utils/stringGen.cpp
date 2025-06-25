@@ -18,6 +18,8 @@ using namespace geode::prelude;
 // essentially this checks if the end of one int [] equals another int []
 JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
+bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
+
 namespace JFPGen {
 
 std::map<std::string, int> portalOddsMap = {

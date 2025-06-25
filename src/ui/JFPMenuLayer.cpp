@@ -108,9 +108,12 @@ bool JFPMenuLayer::init() {
 
 void JFPMenuLayer::onOptionButton(CCObject*) {
     openSettingsPopup(Mod::get());
+    // auto searchLayer = LevelSearchLayer::scene(0);
+    // CCDirector::sharedDirector()->pushScene(searchLayer);
 }
 
 void JFPMenuLayer::onAutoGenButton(CCObject*) {
+    jfpActive = true;
     state = JFPGen::AutoJFP::JustStarted;
     auto level = createGameLevel();
     if (!level) {
@@ -122,8 +125,8 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
 }
 
 CCScene* JFPMenuLayer::scene() {
-    auto layer = JFPMenuLayer::create();
     auto scene = CCScene::create();
+    auto layer = JFPMenuLayer::create();
     scene->addChild(layer);
     return scene;
 }

@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.2.4",
+	"version": "v1.3.1",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -26,6 +26,10 @@
 		}
 	},
 	"settings": {
+        "gen-title": {
+            "type": "title",
+            "name": "Generation"
+        },
 		"speed": {
 			"name": "Speed",
 			"type": "string",
@@ -49,12 +53,6 @@
 			"description": "Set seed for level generation (0 for random)",
 			"type": "string",
 			"default": ""
-		},
-		"filename": {
-			"name": "File Name",
-			"description": "The name of the .gmd file saved during generation. File location: %LOCALAPPDATA%/GeometryDash/",
-			"type": "string",
-			"default": "waveman"
 		},
 		"marks": {
 			"name": "Meter Marks",
@@ -173,6 +171,22 @@
 			"name": "Start Upside Down",
 			"type": "bool",
 			"default": false
+		},
+        "meta-title": {
+            "type": "title",
+            "name": "Meta"
+        },
+		"waveman-button": {
+			"name": "Waveman Button",
+			"description": "Button for generating JFP levels within your 'created' list.",
+			"type": "bool",
+			"default": false
+		},
+		"filename": {
+			"name": "File Name",
+			"description": "The name of the .gmd file saved during waveman. File location: %LOCALAPPDATA%/GeometryDash/",
+			"type": "string",
+			"default": "waveman"
 		},
 		"debug": {
 			"name": "Debug",

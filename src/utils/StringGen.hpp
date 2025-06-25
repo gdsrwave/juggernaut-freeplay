@@ -68,4 +68,6 @@ std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJF
 
 extern JFPGen::AutoJFP state;
 
+extern bool jfpActive;
+
 #endif
