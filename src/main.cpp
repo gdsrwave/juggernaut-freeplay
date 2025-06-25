@@ -18,10 +18,7 @@
 using namespace geode::prelude;
 using namespace gmd;
 
-// checks if a certain orientation pattern matches the most recent previous orientations
-// essentially this checks if the end of one int [] equals another int []
 
-JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 #include <Geode/modify/CreatorLayer.hpp>
 class $modify(GenerateLevelLayer, CreatorLayer) {
@@ -31,30 +28,22 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 		if (!CreatorLayer::init()) {
 			return false;
 		}
-
-		auto autoGenButton = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("dabbink_s.png"_spr, 1.125f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
-			this,
-			menu_selector(GenerateLevelLayer::onAutoGenButton)
-		);
 		auto optionButton = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("lmao_s.png"_spr, .80f, CircleBaseColor::DarkPurple, CircleBaseSize::Medium),
+			CircleButtonSprite::createWithSpriteFrameName("lmao_s.png"_spr, .80f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
 			this,
-			menu_selector(GenerateLevelLayer::onOptionButton)
+			menu_selector(GenerateLevelLayer::onJFPButton)
 		);
 
 		auto menu = this->getChildByID("bottom-left-menu");
-		menu->addChild(autoGenButton);
 		menu->addChild(optionButton);
-		autoGenButton->setID("auto-generate-level-button"_spr);
-		optionButton->setID("jfp-option-button"_spr);
+		optionButton->setID("jfp-launch-button"_spr);
 
 		menu->updateLayout();
 
 		return true;
 	}
 
-	void onOptionButton(CCObject*) {
+	void onJFPButton(CCObject*) {
 		//openSettingsPopup(Mod::get());
 		auto jfpLayer = JFPMenuLayer::scene();
 		CCDirector::sharedDirector()->pushScene(jfpLayer);
@@ -75,17 +64,6 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 		level->dataLoaded(dict.get());
 		level->m_levelType = GJLevelType::Editor;
 		return level;
-	}
-
-	void onAutoGenButton(CCObject*) {
-		state = JFPGen::AutoJFP::JustStarted;
-		auto level = createGameLevel();
-		if (!level) {
-			state = JFPGen::AutoJFP::NotInAutoJFP;
-			return FLAlertLayer::create("Error", "Could not generate level", "Okay buddy...")->show();
-		}
-		auto newScene = PlayLayer::scene(level, false, false);
-		CCDirector::sharedDirector()->replaceScene(newScene); // seems to work better than pushScene?
 	}
 };
 

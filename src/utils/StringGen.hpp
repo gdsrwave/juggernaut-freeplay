@@ -58,8 +58,14 @@ enum class AutoJFP : int {
     PlayingLevel = 4,
 };
 
-extern AutoJFP state;
-
 std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP);
 
 } // namespace JFPGen
+
+
+#ifndef JFPSTATE
+#define JFPSTATE
+
+extern JFPGen::AutoJFP state;
+
+#endif

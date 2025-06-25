@@ -2,13 +2,16 @@
 
 #include <Geode/Geode.hpp>
 
+#include "JFPGenericLayer.hpp"
+
 using namespace geode::prelude;
 
-class JFPMenuLayer : public cocos2d::CCLayer {
+class JFPMenuLayer : public JFPGenericLayer {
 protected:
     virtual bool init();
-    virtual void keyBackClicked();
     void onBack(cocos2d::CCObject*);
+    void onOptionButton(cocos2d::CCObject*);
+    void onAutoGenButton(cocos2d::CCObject*);
 public:
     static JFPMenuLayer* create();
     static cocos2d::CCScene* scene();
