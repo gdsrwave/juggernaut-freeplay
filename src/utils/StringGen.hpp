@@ -25,24 +25,6 @@ namespace JFPGen {
 extern std::map<std::string, int> portalOddsMap;
 extern std::map<std::string, int> speedOddsMap;
 
-struct Segment {
-    std::pair<int, int> coords;
-    int y_swing;
-};
-
-struct Biome {
-    int x_initial;
-    std::string type;
-    std::string theme;
-    std::string options;
-    std::vector<Segment> segments;
-};
-
-struct LevelData {
-    std::string name;
-    std::vector<Biome> biomes;
-};
-
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
 void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include "Ninja.hpp"
 
 namespace ThemeGen {
 
@@ -18,10 +19,10 @@ struct Theme {
     std::unordered_map<std::string, Color> colors;
 };
 
-// Generates a theme based on a seed or preset
-Theme GenerateTheme(const std::string& seed);
+// Generates a theme based on a seed or preset and level data
+std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 
 // Utility to convert hex color string to Color
-Color HexToColor(const std::string& hex);
+Color hexToColor(const std::string& hex);
 
 } // namespace ThemeGen

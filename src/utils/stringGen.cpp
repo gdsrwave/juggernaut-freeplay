@@ -11,6 +11,7 @@
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "constants.hpp"
 #include "StringGen.hpp"
+#include "Ninja.hpp"
 
 using namespace geode::prelude;
 
@@ -121,7 +122,20 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
                 .x_initial = 435,
                 .type = "Default",
                 .theme = "Classic",
-                .options = "",
+                .options = {
+                    .length = static_cast<int>(length),
+                    .corridorHeight = static_cast<int>(Mod::get()->getSettingValue<double>("corridor-height")),
+                    .maxHeight = 195,
+                    .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
+                    .startingSpeed = SpeedChange::Speed3x,
+                    .colorMode = []{
+                        auto cm = Mod::get()->getSettingValue<std::string>("color-mode");
+                        if (cm == "Classic Mode") return ColorMode::ClassicMode;
+                        if (cm == "All Colors") return ColorMode::AllColors;
+                        if (cm == "Night Mode") return ColorMode::NightMode;
+                        return ColorMode::Washed;
+                    }()
+                },
                 .segments = segments
             }
         }
@@ -296,11 +310,6 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
         std::string genBuildF = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y));
         if(y_swing < 0) genBuildF += ",6,90";
         genBuildF += ",64,1,67,1;";
-
-        levelData.biomes[0].segments[i] = Segment{
-            .coords = std::make_pair(x, y),
-            .y_swing = y_swing
-        };
         
         std::string genBuildC = fmt::format("1,1338,2,{x},3,{y}", fmt::arg("x", x), fmt::arg("y", y+corridorHeight));
         if(y_swing > 0) {
@@ -510,6 +519,10 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
         }
         if (last_tp < 40) last_tp += 1;
 
+        levelData.biomes[0].segments[i] = Segment{
+            .coords = std::make_pair(x, y),
+            .y_swing = y_swing
+        };
 
         level += (genBuildF + genBuildC + cornerBuild + portalBuild);
     }
