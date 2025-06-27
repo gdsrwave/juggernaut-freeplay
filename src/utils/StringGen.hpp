@@ -32,14 +32,6 @@ int convertSpeed(const std::string& speed);
 float convertSpeedToFloat(const std::string& speed);
 int convertFloatSpeed(float speed);
 
-enum class AutoJFP : int {
-    NotInAutoJFP = 0,
-    JustStarted = 1,
-    JustRestarted = 2,
-    PlayingLevelAtt1 = 3,
-    PlayingLevel = 4,
-};
-
 std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP);
 
 } // namespace JFPGen

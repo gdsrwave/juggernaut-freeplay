@@ -27,6 +27,26 @@ enum class ColorMode : int {
     NightMode = 3
 };
 
+enum class CorridorRules : int {
+    NoSpamNoZigzag = 0,
+    NoSpam = 1,
+    Unrestricted = 2
+};
+
+enum class Difficulties : int {
+    None = 0,
+    Light = 1,
+    Balanced = 2,
+    Aggressive = 3
+};
+
+enum class Portals : int {
+    None = 0,
+    Gravity = 1,
+    Fake = 2,
+    Teleportal = 3
+};
+
 struct SegmentOptions {
     bool gravity = false;
     bool isSpikeM = false;
@@ -45,15 +65,18 @@ struct Segment {
 
 struct BiomeOptions {
     int length;
-    int corridorHeight = 60;
+    int corridorHeight;
     int maxHeight;
+    int minHeight;
     Visibility visibility = Visibility::Standard;
+    bool startingGravity = false;
     SpeedChange startingSpeed;
     ColorMode colorMode = ColorMode::Washed;
 };
 
 struct Biome {
     int x_initial;
+    int y_initial;
     std::string type;
     std::string theme;
     BiomeOptions options;

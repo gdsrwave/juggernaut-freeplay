@@ -17,7 +17,6 @@ using namespace geode::prelude;
 
 // checks if a certain orientation pattern matches the most recent previous orientations
 // essentially this checks if the end of one int [] equals another int []
-JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
 
@@ -37,15 +36,6 @@ std::map<std::string, int> speedOddsMap = {
 
 // checks if a certain orientation pattern matches the most recent previous orientations
 // essentially this checks if the end of one int [] equals another int []
-static bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
-	if(pattern.size()>11) return false;
-	for(int i = 0; i < pattern.size(); i++) {
-		if(pattern[i] != prevO[i+(11-pattern.size())]) {
-			return false;
-		}
-	}
-	return true;
-}
 
 static void orientationShift(int prevO[11], int newO) {
 	for(int i = 0; i < 10; i++) {
@@ -67,14 +57,6 @@ static int convertSpeed(const std::string& speed) {
 	return 203; // default speed
 }
 
-static float convertSpeedToFloat(const std::string& speed) {
-	if (speed == "0.5x") return 0.5f;
-	else if (speed == "1x") return 1.0f;
-	else if (speed == "2x") return 2.0f;
-	else if (speed == "4x") return 4.0f;
-	return 3.0f; // default speed
-}
-
 static int convertFloatSpeed(float speed) {
 	if (speed == 0.5f) return 200;
 	else if (speed == 1.0f) return 201;
@@ -82,7 +64,6 @@ static int convertFloatSpeed(float speed) {
 	else if (speed == 4.0f) return 1334;
 	return 203; // default speed
 }
-
 
 std::string jfpMainStringGen(bool compress, AutoJFP state) {
 

@@ -6,4 +6,16 @@
 extern const int jfpSoundtrack[];
 extern const int jfpSoundtrackSize;
 
+namespace JFPGen {
+
+enum class AutoJFP : int {
+    NotInAutoJFP = 0,
+    JustStarted = 1,
+    JustRestarted = 2,
+    PlayingLevelAtt1 = 3,
+    PlayingLevel = 4,
+};
+
+}
+
 #endif // JFP_CONSTANTS_HPP
