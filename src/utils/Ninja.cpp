@@ -8,6 +8,23 @@ JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 namespace JFPGen {
 
+int convertFloatSpeed(float speed) {
+	if (speed == 0.5f) return 200;
+	else if (speed == 1.0f) return 201;
+	else if (speed == 2.0f) return 202;
+	else if (speed == 4.0f) return 1334;
+	return 203; // default speed
+}
+
+SpeedChange convertFloatSpeedEnum(float speed) {
+    if (speed == 0.5f) return SpeedChange::Speed05x;
+    else if (speed == 1.0f) return SpeedChange::Speed1x;
+    else if (speed == 2.0f) return SpeedChange::Speed2x;
+    else if (speed == 3.0f) return SpeedChange::Speed3x;
+    else if (speed == 4.0f) return SpeedChange::Speed4x;
+    return SpeedChange::None; // default
+}
+
 float convertSpeedToFloat(const std::string& speed) {
     if (speed == "0.5x") return 0.5f;
     else if (speed == "1x") return 1.0f;
@@ -38,9 +55,9 @@ bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::
 }
 
 bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
-    if(pattern.size()>11) return false;
+    if (pattern.size()>11) return false;
     for(int i = 0; i < pattern.size(); i++) {
-        if(pattern[i] != prevO[i+(11-pattern.size())]) {
+        if (pattern[i] != prevO[i+(11-pattern.size())]) {
             return false;
         }
     }
@@ -60,19 +77,17 @@ std::map<std::string, int> speedOddsMap = {
 };
 
 LevelData generateJFPLevel() {
-    const bool optChangingSpeed = Mod::get()->getSettingValue<bool>("changing-speed");
     const bool optSpikes = Mod::get()->getSettingValue<bool>("corridor-spikes");
     const bool optFakePortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
     const bool optFuzz = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
     const bool optLowvis = Mod::get()->getSettingValue<bool>("low-vis");
-    const bool optTeleportals = Mod::get()->getSettingValue<bool>("teleportals");
+    const bool optTeleportals = false; // TODO
     bool gravity = Mod::get()->getSettingValue<bool>("upside-start");
     std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
     ColorMode optColorMode = ColorMode::Washed;
     if (colorModeStr == "All Colors") optColorMode = ColorMode::AllColors;
     else if (colorModeStr == "Classic Mode") optColorMode = ColorMode::ClassicMode;
     else if (colorModeStr == "Night Mode") optColorMode = ColorMode::NightMode;
-    log::info("{}", colorModeStr);
 
     std::string corridorRulesStr = Mod::get()->getSettingValue<std::string>("corridor-rules");
     CorridorRules optCorridorRules = CorridorRules::Unrestricted;
@@ -84,6 +99,12 @@ LevelData generateJFPLevel() {
     if (portalsStr == "Light") optPortals = Difficulties::Light;
     else if (portalsStr == "Balanced") optPortals = Difficulties::Balanced;
     else if (portalsStr == "Aggressive") optPortals = Difficulties::Aggressive;
+
+    std::string cspeedStr = Mod::get()->getSettingValue<std::string>("changing-speed");
+    Difficulties optChangingSpeed = Difficulties::None;
+    if (cspeedStr == "Light") optChangingSpeed = Difficulties::Light;
+    else if (cspeedStr == "Balanced") optChangingSpeed = Difficulties::Balanced;
+    else if (cspeedStr == "Aggressive") optChangingSpeed = Difficulties::Aggressive;
 
     auto getSpeedChange = [](const std::string& speedStr) -> SpeedChange {
         if (speedStr == "0.5x") return SpeedChange::Speed05x;
@@ -100,6 +121,8 @@ LevelData generateJFPLevel() {
     SpeedChange optMaxSpeed = getSpeedChange(maxSpeedStr);
     SpeedChange optMinSpeed = getSpeedChange(minSpeedStr);
     SpeedChange optSpeed = getSpeedChange(speedStr);
+    float maxSpeedFloat = convertSpeedToFloat(optMaxSpeed);
+    float minSpeedFloat = convertSpeedToFloat(optMinSpeed);
 
     const double optCorridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 
@@ -111,12 +134,14 @@ LevelData generateJFPLevel() {
 
     LevelData levelData = {
         .name = "JFP Level",
+        .seed = 0,
         .biomes = {
             {
                 .x_initial = cX,
                 .y_initial = cY,
-                .type = "Default",
+                .type = Biomes::Juggernaut,
                 .theme = "Classic",
+                .song = 234565,
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
@@ -139,12 +164,13 @@ LevelData generateJFPLevel() {
     unsigned int seed = 0;
     try {
         std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
-        if(!seedStr.empty() && state == AutoJFP::NotInAutoJFP) seed = std::stoul(seedStr);
+        if (!seedStr.empty() && state == AutoJFP::NotInAutoJFP) seed = std::stoul(seedStr);
     } catch(const std::exception &e) {
         return levelData; // Return base level data on error
     }
-    
-    if(seed == 0) seed = rd();
+    if (seed == 0) seed = rd();
+    levelData.seed = seed;
+
     std::mt19937 segmentRNG(seed);
     std::mt19937 portalRNG(seed);
     std::mt19937 fakePortalRNG(seed);
@@ -159,6 +185,8 @@ LevelData generateJFPLevel() {
     std::vector<int> antiSpam2 = {-1,1,-1,1};
     std::vector<int> antiTpspam1 = {-1, -1};
     std::vector<int> antiTpspam2 = {1, 1};
+    std::vector<int> antiSpeedspam1 = {1, -1};
+    std::vector<int> antiSpeedspam2 = {-1, 1};
 
     int portalOdds = 1;
     int fakePortalOdds = 1;
@@ -168,8 +196,10 @@ LevelData generateJFPLevel() {
     static bool spikeActive = false;
     static bool spikeSideHold = false;
     static int spikeSide = 0;
-    float current_speed = convertSpeedToFloat(optSpeed);
-    
+    static float currentSpeed = convertSpeedToFloat(optSpeed);
+
+    levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
+
     std::array<int, 3> backgroundColor = {28, 28, 28};
     std::array<int, 3> lineColor = {255, 255, 255};
     if (optColorMode == JFPGen::ColorMode::NightMode) {
@@ -265,20 +295,51 @@ LevelData generateJFPLevel() {
         } else {
             // randomized coinflip condition
             y_swing = segmentRNG() % 2;
-            if(y_swing == 0) y_swing = -1;
+            if (y_swing == 0) y_swing = -1;
         }
         
         if ((i == 0 && y_swing == -1) || segments[i - 1].y_swing == y_swing) {
             cY += (y_swing * 30);
         }
 
-        if (optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
+        for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
+            volatile auto _ = fakePortalRNG();
+        }
+
+        if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
-            fakePortalOdds = optFakePortals ? (fakePortalRNG() % 10) : 1;
+            fakePortalOdds = optFakePortals ? (fakePortalRNG() % 12) : 1;
             if (portalOdds == 0 || fakePortalOdds == 0) {
-                log::info("Portal odds: {} {} {}", portalOdds, cX, cY);
+                //log::info("Portal odds: {} {} {}", portalOdds, cX, cY);
                 gravity = portalOdds == 0 ? !gravity : gravity;
                 currentPortal = (portalOdds == 0) ? Portals::Gravity : Portals::Fake;
+            }
+        }
+
+        int speedOdds = 1;
+        if (optChangingSpeed != Difficulties::None &&
+            (
+                (orientationMatch(segments, i, antiSpeedspam1) && y_swing == -1) ||
+                (orientationMatch(segments, i, antiSpeedspam2) && y_swing == 1)
+            ) &&
+            maxSpeedFloat > minSpeedFloat
+        ) {
+            speedOdds = portalRNG() % speedOddsMap.at(cspeedStr); // You can adjust the odds as needed
+            if (speedOdds == 0) {
+                double speedFactor = 0.5 * (optCorridorHeight / 60.0);
+                int spY = cY + optCorridorHeight / 2 + (optCorridorHeight / 4) * ((segments[i].y_swing == 1) ? -1 : 1);
+                int spR = (segments[i].y_swing == 1) ? -45 : 45;
+                float newSpeed = currentSpeed;
+                int minSpeedMod = (minSpeedFloat == 0.5) ? 0 : minSpeedFloat;
+
+                for (int tries = 0; tries < 10 && newSpeed == currentSpeed; ++tries) {
+                    if (maxSpeedFloat == 0.5) break;
+                    newSpeed = minSpeedMod + (songRNG() % (static_cast<int>(maxSpeedFloat - minSpeedMod + 1)));
+                    if (newSpeed == 0) newSpeed = 0.5;
+                }
+                SpeedChange newSpeedEnum = convertFloatSpeedEnum(newSpeed);
+                //log::info("SpeedChange: {} (enum int: {})", newSpeed, static_cast<int>(newSpeedEnum));
+                currentSpeed = newSpeed;
             }
         }
 
@@ -287,11 +348,13 @@ LevelData generateJFPLevel() {
             spikeOdds = segmentRNG() % 6;
             if (spikeOdds == 0) {
                 if (spikeActive) spikeSideHold = true;
+                spikeActive = true;
                 if (!spikeSideHold) spikeSide = segmentRNG() % 2;
             } else {
                 spikeActive = false;
             }
         }
+
         if (spikeActive) {
             segments[i].options.isSpikeM = true;
         }
@@ -299,16 +362,17 @@ LevelData generateJFPLevel() {
         if (optFuzz) {
             segments[i].options.isFuzzy = true;
         }
+        
         segments[i] = Segment{
             .coords = std::make_pair(cX, cY),
             .y_swing = y_swing,
             .options = {
                 .gravity = gravity,
                 .isSpikeM = segments[i].options.isSpikeM,
+                .spikeSide = static_cast<bool>(spikeSide),
                 .cornerPieces = (optCorridorRules == CorridorRules::Unrestricted),
                 .isPortal = currentPortal,
-                .speedChange = (optMaxSpeed != SpeedChange::None && optMinSpeed != SpeedChange::None) ? optMinSpeed : SpeedChange::None,
-                .isFakePortal = (fakePortalOdds == 0),
+                .speedChange = speedOdds == 0 ? convertFloatSpeedEnum(currentSpeed) : SpeedChange::None,
                 .isFuzzy = segments[i].options.isFuzzy
             }
         };
@@ -323,7 +387,6 @@ LevelData generateJFPLevel() {
         //     static_cast<int>(segments[i].options.cornerPieces),
         //     static_cast<int>(segments[i].options.isPortal),
         //     static_cast<int>(segments[i].options.speedChange),
-        //     segments[i].options.isFakePortal,
         //     segments[i].options.isFuzzy
         // );
 
@@ -332,17 +395,7 @@ LevelData generateJFPLevel() {
         //     i, cX, cY, y_swing
         // );
 
-        if (optChangingSpeed) {
-            if (i % 10 == 0) {
-                segments[i].options.speedChange = static_cast<SpeedChange>(segmentRNG() % 5);
-                current_speed = convertSpeedToFloat(segments[i].options.speedChange);
-            }
-        } else {
-            segments[i].options.speedChange = SpeedChange::None;
-            current_speed = convertSpeedToFloat(optSpeed);
-        }
-
-        if(optTeleportals && last_tp > 2 &&
+        if (optTeleportals && last_tp > 2 &&
             ((cY >= maxHeight && segments[i].y_swing == 1) || (cY <= minHeight && segments[i].y_swing == -1)) &&
             cX + 120 < 435 + (optLength - 1) * 30) {
             int portalOdds = portalRNG() % ((last_tp < 40) ? (50 - last_tp) : 10);

@@ -157,11 +157,6 @@
 			],
 			"default": "4x"
 		},
-		"teleportals": {
-			"name": "Teleportals",
-			"type": "bool",
-			"default": false
-		},
 		"fake-gravity-portals": {
 			"name": "Fake Gravity Portals",
 			"type": "bool",

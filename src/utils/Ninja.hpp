@@ -50,13 +50,23 @@ enum class Portals : int {
     Teleportal = 3
 };
 
+enum class Biomes : int {
+    Juggernaut = 0,
+    DeathFactory = 1,
+    SawField = 2,
+    SpikeRain = 3,
+    NeironExGaming = 4,
+    Campfire = 5,
+    DeathCWaveBuff = 6
+};
+
 struct SegmentOptions {
     bool gravity = false;
     bool isSpikeM = false;
+    bool spikeSide = false;
     bool cornerPieces = false;
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
-    bool isFakePortal = false;
     bool isFuzzy = false;
 };
 
@@ -82,17 +92,21 @@ struct BiomeOptions {
 struct Biome {
     int x_initial;
     int y_initial;
-    std::string type;
+    Biomes type;
     std::string theme;
+    int song;
     BiomeOptions options;
     std::vector<Segment> segments;
 };
 
 struct LevelData {
     std::string name;
+    unsigned int seed;
     std::vector<Biome> biomes;
 };
 
+int convertFloatSpeed(float speed);
+SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);

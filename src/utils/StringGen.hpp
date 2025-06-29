@@ -26,7 +26,6 @@ namespace JFPGen {
 void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
 int convertSpeed(const std::string& speed);
-int convertFloatSpeed(float speed);
 
 std::string jfpMainStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP);
 std::string jfpNewStringGen(bool compress, AutoJFP state = AutoJFP::NotInAutoJFP);

@@ -19,6 +19,7 @@ enum class AutoJFP : int {
 extern const std::string levelBaseSeg1;
 extern const std::string levelBaseSeg2;
 extern const std::string levelStartingBase;
+extern const std::string lowVis;
 
 }
 #endif // JFP_CONSTANTS_HPP
