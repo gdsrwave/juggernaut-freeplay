@@ -215,10 +215,12 @@ LevelData generateJFPLevel() {
     levelData.biomes[0].options.lineColor[2] = lineColor[2];
 
     // future prior block to generate lengths of different biomes
-    
+
+    Portals currentPortal;
     for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
+        currentPortal = Portals::None;
 
         if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
@@ -274,8 +276,9 @@ LevelData generateJFPLevel() {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
             fakePortalOdds = optFakePortals ? (fakePortalRNG() % 10) : 1;
             if (portalOdds == 0 || fakePortalOdds == 0) {
-                log::info("Portal odds: {} {}", portalOdds, fakePortalOdds);
+                log::info("Portal odds: {} {} {}", portalOdds, cX, cY);
                 gravity = portalOdds == 0 ? !gravity : gravity;
+                currentPortal = (portalOdds == 0) ? Portals::Gravity : Portals::Fake;
             }
         }
 
@@ -303,7 +306,7 @@ LevelData generateJFPLevel() {
                 .gravity = gravity,
                 .isSpikeM = segments[i].options.isSpikeM,
                 .cornerPieces = (optCorridorRules == CorridorRules::Unrestricted),
-                .isPortal = (optPortals != Difficulties::None && portalOdds == 0) ? Portals::Gravity : Portals::None,
+                .isPortal = currentPortal,
                 .speedChange = (optMaxSpeed != SpeedChange::None && optMinSpeed != SpeedChange::None) ? optMinSpeed : SpeedChange::None,
                 .isFakePortal = (fakePortalOdds == 0),
                 .isFuzzy = segments[i].options.isFuzzy

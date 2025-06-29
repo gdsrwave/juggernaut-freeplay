@@ -108,6 +108,7 @@ std::string jfpNewStringGen(bool compress, AutoJFP state) {
     int y = biome.y_initial;
     int y_swing = 0;
     int corridorHeight = opts.corridorHeight;
+    int gravity = 0;
 
     fmt::dynamic_format_arg_store<fmt::format_context> args;
     args.push_back(fmt::arg("ch_1", 225 + corridorHeight));
@@ -165,6 +166,36 @@ std::string jfpNewStringGen(bool compress, AutoJFP state) {
             }
             level += cornerBuild;
         }
+
+        // Gravity portals
+        if (seg.options.isPortal == Portals::Gravity) {
+            double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+            int portalNormal = corridorHeight / 10;
+            int portalPos = corridorHeight / 4;
+            int portalID = seg.options.gravity ? 11 : 10;
+
+            std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+            fmt::arg("portalID", portalID),
+            fmt::arg("xP", x-15-portalNormal+portalPos),
+            fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
+            fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
+            fmt::arg("scale", portalFactor / 2.5));
+            level += portalBuild;
+        } else if (seg.options.isPortal == Portals::Fake) {
+            double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+            int portalNormal = corridorHeight / 10;
+            int portalPos = corridorHeight / 4;
+            int portalID = seg.options.gravity ? 10 : 11;
+
+            std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+            fmt::arg("portalID", portalID),
+            fmt::arg("xP", x-15-portalNormal+portalPos),
+            fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
+            fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
+            fmt::arg("scale", portalFactor / 2.5));
+            level += portalBuild;
+        }
+
     }
     
     // Ending Connectors
