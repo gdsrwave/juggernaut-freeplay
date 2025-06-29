@@ -47,6 +47,18 @@ bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
     return true;
 }
 
+std::map<std::string, int> portalOddsMap = {
+	{"Light", 40},
+	{"Balanced", 10},
+	{"Aggressive", 3},
+};
+
+std::map<std::string, int> speedOddsMap = {
+	{"Light", 60},
+	{"Balanced", 10},
+	{"Aggressive", 5},
+};
+
 LevelData generateJFPLevel() {
     const bool optChangingSpeed = Mod::get()->getSettingValue<bool>("changing-speed");
     const bool optSpikes = Mod::get()->getSettingValue<bool>("corridor-spikes");
@@ -55,14 +67,41 @@ LevelData generateJFPLevel() {
     const bool optLowvis = Mod::get()->getSettingValue<bool>("low-vis");
     const bool optTeleportals = Mod::get()->getSettingValue<bool>("teleportals");
     bool gravity = Mod::get()->getSettingValue<bool>("upside-start");
+    std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
+    ColorMode optColorMode = ColorMode::Washed;
+    if (colorModeStr == "All Colors") optColorMode = ColorMode::AllColors;
+    else if (colorModeStr == "Classic Mode") optColorMode = ColorMode::ClassicMode;
+    else if (colorModeStr == "Night Mode") optColorMode = ColorMode::NightMode;
+    log::info("{}", colorModeStr);
 
-    const CorridorRules optCorridorRules = static_cast<CorridorRules>(Mod::get()->getSettingValue<int>("corridor-rules"));
+    std::string corridorRulesStr = Mod::get()->getSettingValue<std::string>("corridor-rules");
+    CorridorRules optCorridorRules = CorridorRules::Unrestricted;
+    if (corridorRulesStr == "No Spam") optCorridorRules = CorridorRules::NoSpam;
+    else if (corridorRulesStr == "No Spam, No Zigzagging") optCorridorRules = CorridorRules::NoSpamNoZigzag;
 
-    const Difficulties optPortals = static_cast<Difficulties>(Mod::get()->getSettingValue<int>("portals"));
+    std::string portalsStr = Mod::get()->getSettingValue<std::string>("portals");
+    Difficulties optPortals = Difficulties::None;
+    if (portalsStr == "Light") optPortals = Difficulties::Light;
+    else if (portalsStr == "Balanced") optPortals = Difficulties::Balanced;
+    else if (portalsStr == "Aggressive") optPortals = Difficulties::Aggressive;
 
-    const SpeedChange optMaxSpeed = static_cast<SpeedChange>(Mod::get()->getSettingValue<int>("max-speed"));
-    const SpeedChange optMinSpeed = static_cast<SpeedChange>(Mod::get()->getSettingValue<int>("min-speed"));
-    const SpeedChange optSpeed = static_cast<SpeedChange>(Mod::get()->getSettingValue<int>("speed"));
+    auto getSpeedChange = [](const std::string& speedStr) -> SpeedChange {
+        if (speedStr == "0.5x") return SpeedChange::Speed05x;
+        else if (speedStr == "1x") return SpeedChange::Speed1x;
+        else if (speedStr == "2x") return SpeedChange::Speed2x;
+        else if (speedStr == "3x") return SpeedChange::Speed3x;
+        else if (speedStr == "4x") return SpeedChange::Speed4x;
+        return SpeedChange::None;
+    };
+
+    std::string maxSpeedStr = Mod::get()->getSettingValue<std::string>("max-speed");
+    std::string minSpeedStr = Mod::get()->getSettingValue<std::string>("min-speed");
+    std::string speedStr = Mod::get()->getSettingValue<std::string>("speed");
+    SpeedChange optMaxSpeed = getSpeedChange(maxSpeedStr);
+    SpeedChange optMinSpeed = getSpeedChange(minSpeedStr);
+    SpeedChange optSpeed = getSpeedChange(speedStr);
+
+    const double optCorridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 
     const int64_t optLength = Mod::get()->getSettingValue<int64_t>("length");
     int y_swing = 0, cX = 435, cY = 195;
@@ -80,19 +119,15 @@ LevelData generateJFPLevel() {
                 .theme = "Classic",
                 .options = {
                     .length = static_cast<int>(optLength),
-                    .corridorHeight = static_cast<int>(Mod::get()->getSettingValue<double>("corridor-height")),
+                    .corridorHeight = static_cast<int>(optCorridorHeight),
                     .maxHeight = maxHeight,
                     .minHeight = minHeight,
                     .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
                     .startingGravity = gravity,
                     .startingSpeed = SpeedChange::Speed3x,
-                    .colorMode = []{
-                        auto cm = Mod::get()->getSettingValue<std::string>("color-mode");
-                        if (cm == "Classic Mode") return ColorMode::ClassicMode;
-                        if (cm == "All Colors") return ColorMode::AllColors;
-                        if (cm == "Night Mode") return ColorMode::NightMode;
-                        return ColorMode::Washed;
-                    }()
+                    .colorMode = optColorMode,
+                    .bgColor = {28, 28, 28},
+                    .lineColor = {255, 255, 255}
                 },
                 .segments = segments
             }
@@ -134,22 +169,67 @@ LevelData generateJFPLevel() {
     static bool spikeSideHold = false;
     static int spikeSide = 0;
     float current_speed = convertSpeedToFloat(optSpeed);
+    
+    std::array<int, 3> backgroundColor = {28, 28, 28};
+    std::array<int, 3> lineColor = {255, 255, 255};
+    if (optColorMode == JFPGen::ColorMode::NightMode) {
+        backgroundColor = {0, 0, 0};
+        int excluded = bgRNG() % 3;
+        int maxed = bgRNG() % 3;
+        if (excluded == maxed && excluded == 2) maxed = 0;
+        else if (maxed == excluded) maxed += 1;
+
+        lineColor[excluded] = 0;
+        lineColor[maxed] = 255;
+        for (int i = 0; i < 3; ++i) {
+            if (i == excluded || i == maxed) continue;
+            lineColor[i] -= bgRNG() % 256;
+        }
+    }
+    else if (optColorMode == JFPGen::ColorMode::AllColors) {
+        backgroundColor = {0, 0, 0};
+        int excluded = bgRNG() % 3;
+        for (int i = 0; i < 3; ++i) {
+            if (i == excluded) continue;
+            backgroundColor[i] += bgRNG() % 256;
+        }
+    }
+    else if (optColorMode == JFPGen::ColorMode::ClassicMode) {
+        backgroundColor = {128, 128, 128};
+    }
+    else {
+        backgroundColor = {28, 28, 28};
+        int excluded = bgRNG() % 3;
+        for (int i = 0; i < 3; ++i) {
+            if (i == excluded) continue;
+            backgroundColor[i] += bgRNG() % 17;
+            if (backgroundColor[i] > 255) backgroundColor[i] = 255;
+        }
+    }
+    // Set the background and line colors in the level data
+    levelData.biomes[0].options.bgColor[0] = backgroundColor[0];
+    levelData.biomes[0].options.bgColor[1] = backgroundColor[1];
+    levelData.biomes[0].options.bgColor[2] = backgroundColor[2];
+    levelData.biomes[0].options.lineColor[0] = lineColor[0];
+    levelData.biomes[0].options.lineColor[1] = lineColor[1];
+    levelData.biomes[0].options.lineColor[2] = lineColor[2];
 
     // future prior block to generate lengths of different biomes
     
-    for (int i = 0; i < optLength - 1; i++) {
+    for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
 
-        if (last_tp <= 1) {
-            y_swing = i == 0 ? -1 : segments[i - 1].y_swing;
+        if (last_tp <= 1 && i > 1) {
+            y_swing = segments[i - 1].y_swing;
         } else if (
             cY >= maxHeight &&(segments[i - 1].y_swing == 1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMax)
             ) ||
-            orientationMatch(segments, i, antiTpspam1)
+            orientationMatch(segments, i, antiTpspam1) ||
+            i == 1
         )) {
             y_swing = -1;
         } else if (
@@ -170,7 +250,10 @@ LevelData generateJFPLevel() {
         } else if ((
             optCorridorRules == CorridorRules::NoSpam ||
             optCorridorRules == CorridorRules::NoSpamNoZigzag
-        ) && orientationMatch(segments, i, antiSpam1)) {
+        ) && (
+            orientationMatch(segments, i, antiSpam1) ||
+            (i == 2 && orientationMatch(segments, i, {1, -1}))
+        )) {
             y_swing = -1;
         } else if ((
             optCorridorRules == CorridorRules::NoSpam ||
@@ -183,12 +266,12 @@ LevelData generateJFPLevel() {
             if(y_swing == 0) y_swing = -1;
         }
         
-        if (segments.size() > 0 && segments[i - 1].y_swing == y_swing) {
+        if ((i == 0 && y_swing == -1) || segments[i - 1].y_swing == y_swing) {
             cY += (y_swing * 30);
         }
 
         if (optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
-            portalOdds = portalRNG() % static_cast<int>(optPortals);
+            portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
             fakePortalOdds = optFakePortals ? (fakePortalRNG() % 10) : 1;
             if (portalOdds == 0 || fakePortalOdds == 0) {
                 log::info("Portal odds: {} {}", portalOdds, fakePortalOdds);
@@ -213,11 +296,6 @@ LevelData generateJFPLevel() {
         if (optFuzz) {
             segments[i].options.isFuzzy = true;
         }
-
-        log::info(
-            "Segment[{}]: cX={}, cY={}, y_swing={}",
-            i, cX, cY, y_swing
-        );
         segments[i] = Segment{
             .coords = std::make_pair(cX, cY),
             .y_swing = y_swing,
@@ -244,6 +322,11 @@ LevelData generateJFPLevel() {
         //     static_cast<int>(segments[i].options.speedChange),
         //     segments[i].options.isFakePortal,
         //     segments[i].options.isFuzzy
+        // );
+
+        // log::info(
+        //     "Segment[{}]: cX={}, cY={}, y_swing={}",
+        //     i, cX, cY, y_swing
         // );
 
         if (optChangingSpeed) {

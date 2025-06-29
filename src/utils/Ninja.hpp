@@ -5,6 +5,9 @@
 
 namespace JFPGen {
 
+extern std::map<std::string, int> portalOddsMap;
+extern std::map<std::string, int> speedOddsMap;
+
 enum class SpeedChange : int {
     None = 0,
     Speed1x = 1,
@@ -72,6 +75,8 @@ struct BiomeOptions {
     bool startingGravity = false;
     SpeedChange startingSpeed;
     ColorMode colorMode = ColorMode::Washed;
+    int bgColor[3] = {0, 0, 0};
+    int lineColor[3] = {255, 255, 255};
 };
 
 struct Biome {

@@ -8,6 +8,7 @@
 #include <random>
 #include <cmath>
 #include <fmt/core.h>
+#include <fmt/args.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "constants.hpp"
 #include "StringGen.hpp"
@@ -22,17 +23,7 @@ bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
 
 namespace JFPGen {
 
-std::map<std::string, int> portalOddsMap = {
-	{"Light", 40},
-	{"Balanced", 10},
-	{"Aggressive", 3},
-};
 
-std::map<std::string, int> speedOddsMap = {
-	{"Light", 60},
-	{"Balanced", 10},
-	{"Aggressive", 5},
-};
 
 // checks if a certain orientation pattern matches the most recent previous orientations
 // essentially this checks if the end of one int [] equals another int []
@@ -85,15 +76,23 @@ std::string jfpPackString(const std::string& level, bool compress) {
 }
 
 std::string jfpNewStringGen(bool compress, AutoJFP state) {
-    log::info("{}", levelBaseSeg1);
-    log::info("{}", levelBaseSeg2);
+
     LevelData ldata = generateJFPLevel();
-    std::string levelBuildSeg1 = "kS38,1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1";
+    std::string levelBuildSeg1 = fmt::format("kS38,1_{bg1}_2_{bg2}_3_{bg3}_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1",
+        fmt::arg("bg1", ldata.biomes[0].options.bgColor[0]),
+        fmt::arg("bg2", ldata.biomes[0].options.bgColor[1]),
+        fmt::arg("bg3", ldata.biomes[0].options.bgColor[2])
+    );
     std::string levelBuildSeg2 = fmt::format(
         "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
         fmt::arg("speedID", convertSpeed(Mod::get()->getSettingValue<std::string>("speed")))
     );
-    std::string lineColor = "1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1";
+    std::string lineColor = fmt::format("1_{lc1}_2_{lc2}_3_{lc3}_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1",
+        fmt::arg("lc1", ldata.biomes[0].options.lineColor[0]),
+        fmt::arg("lc2", ldata.biomes[0].options.lineColor[1]),
+        fmt::arg("lc3", ldata.biomes[0].options.lineColor[2])
+    );
+    const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
     
     std::string level;
     level += levelBuildSeg1;
@@ -102,32 +101,92 @@ std::string jfpNewStringGen(bool compress, AutoJFP state) {
     level += levelBaseSeg2;
     level += levelBuildSeg2;
 
-    if (!ldata.biomes.empty()) {
-        const auto& biome = ldata.biomes[0];
-        const auto& opts = biome.options;
-        int x = biome.x_initial;
-        int y = opts.maxHeight;
-        int y_swing = 0;
-        int corridorHeight = opts.corridorHeight;
+    if (ldata.biomes.empty()) return jfpPackString(level, compress);
+    const auto& biome = ldata.biomes[0];
+    const auto& opts = biome.options;
+    int x = biome.x_initial;
+    int y = biome.y_initial;
+    int y_swing = 0;
+    int corridorHeight = opts.corridorHeight;
 
-        for (const auto& seg : biome.segments) {
-            x = seg.coords.first;
-            y = seg.coords.second;
-            y_swing = seg.y_swing;
-            // Floor block
-            level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("y", y),
-                fmt::arg("rot", y_swing > 0 ? 0 : 90)
-            );
-            // Ceiling block
-            level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("yC", y + corridorHeight),
-                fmt::arg("rot", y_swing > 0 ? 180 : 270)
-            );
+    fmt::dynamic_format_arg_store<fmt::format_context> args;
+    args.push_back(fmt::arg("ch_1", 225 + corridorHeight));
+    args.push_back(fmt::arg("ch_2", 165 + corridorHeight));
+    args.push_back(fmt::arg("ch_3", 195 + corridorHeight));
+    args.push_back(fmt::arg("ch_4", 255 + corridorHeight));
+    args.push_back(fmt::arg("ch_5", 285 + corridorHeight));
+    std::string startingConnectors = fmt::vformat(
+        levelStartingBase,
+        args
+    );
+    level += startingConnectors;
+
+    if(cornerPieces) {
+        level += fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90,64,1,67,1;",
+        fmt::arg("cnr1x", x - 30),
+        fmt::arg("cnr2x", x),
+        fmt::arg("cnry", y + corridorHeight + 30));
+    }
+
+    for (int64_t i = 0; i < biome.segments.size(); i++) {
+        const auto& seg = biome.segments[i];
+        x = seg.coords.first;
+        y = seg.coords.second;
+        y_swing = seg.y_swing;
+        // Floor block
+        level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("y", y),
+            fmt::arg("rot", y_swing > 0 ? 0 : 90)
+        );
+        // Ceiling block
+        level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("yC", y + corridorHeight),
+            fmt::arg("rot", y_swing > 0 ? 180 : 270)
+        );
+        
+        // Corners
+        std::string cornerBuild = "";
+        if (cornerPieces) {
+            if (biome.segments[i - 1].y_swing == 1 && y_swing == -1) {
+                cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90,64,1,67,1;",
+                fmt::arg("cnr1x", x - 30),
+                fmt::arg("cnr2x", x),
+                fmt::arg("cnry", y + corridorHeight + 30));
+            } else if (
+                (biome.segments[i - 1].y_swing == -1 && y_swing == 1) ||
+                (i == 0 && y_swing == 1)
+            ) {
+                cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,90;1,473,2,{cnr2x},3,{cnry},64,1,67,1;",
+                fmt::arg("cnr1x", x - 30),
+                fmt::arg("cnr2x", x),
+                fmt::arg("cnry", y - 30));
+            }
+            level += cornerBuild;
         }
     }
+    
+    // Ending Connectors
+    auto lastSegment = biome.segments[biome.segments.size() - 1];
+    log::info("{} {} {}", lastSegment.coords.first, lastSegment.coords.second, lastSegment.y_swing);
+    int xB = lastSegment.coords.first, yB = lastSegment.coords.second, xT = xB, yT = yB + corridorHeight;
+    if (!biome.segments.empty() && lastSegment.y_swing == 1) {
+        yB += 30;
+    } else {
+        yT -= 30;
+    }
+    while (yT <= (opts.maxHeight + corridorHeight + 30)) {
+        xT += 30;
+        yT += 30;
+        level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
+    }
+    while (yB >= (opts.minHeight)) {
+        xB += 30;
+        yB -= 30;
+        level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
+    }
+    
     // log::info("LevelData: name={}", ldata.name);
     // log::info("Biomes: {}", ldata.biomes.size());
     // for (size_t i = 0; i < ldata.biomes.size(); ++i) {
@@ -317,8 +376,6 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
         fmt::arg("bg_2", background_color[2]),
         fmt::arg("line_color", line_color)
     );
-
-    return level;
 
     if (upsideStart) {
         level += "1,11,2,293,3,105,6,45,32,0.57;";

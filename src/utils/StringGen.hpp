@@ -23,9 +23,6 @@ using namespace geode::prelude;
 
 namespace JFPGen {
 
-extern std::map<std::string, int> portalOddsMap;
-extern std::map<std::string, int> speedOddsMap;
-
 void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
 int convertSpeed(const std::string& speed);
