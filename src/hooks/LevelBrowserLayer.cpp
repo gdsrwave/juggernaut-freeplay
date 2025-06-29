@@ -53,7 +53,7 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 		// getWritablePath() = %LOCALAPPDATA%\GeometryDash
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
-		std::string levelString = JFPGen::jfpNewStringGen(true, state);
+		std::string levelString = JFPGen::jfpStringGen(true);
 		if(levelString.empty()) return;
 		JFPGen::exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");

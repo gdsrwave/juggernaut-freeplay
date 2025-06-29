@@ -46,7 +46,7 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 
 	static GJGameLevel* createGameLevel() {
 		std::srand(std::time(0));
-		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + JFPGen::jfpNewStringGen(false, state) + "</dict></plist>";
+		std::string levelString = "<?xml version=\"1.0\"?><plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>" + JFPGen::jfpStringGen(false) + "</dict></plist>";
 		
 		// somewhat copied from gmd-api's source code dont sue please
 		std::unique_ptr<DS_Dictionary> dict = std::make_unique<DS_Dictionary>();

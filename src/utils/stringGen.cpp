@@ -67,9 +67,19 @@ std::string jfpPackString(const std::string& level, unsigned int seed, int song,
     return levelString;
 }
 
-std::string jfpNewStringGen(bool compress, AutoJFP state) {
-
+std::string jfpStringGen(bool compress) {
     LevelData ldata = generateJFPLevel();
+    if (ldata.biomes.empty()) return "";
+
+    std::string levelString = jfpNewStringGen(ldata);
+
+    return jfpPackString(levelString, ldata.seed, ldata.biomes[0].song, compress);
+}
+
+std::string jfpNewStringGen(LevelData ldata) {
+
+    if (ldata.biomes.empty()) return "";
+
     std::string levelBuildSeg1 = fmt::format("kS38,1_{bg1}_2_{bg2}_3_{bg3}_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1",
         fmt::arg("bg1", ldata.biomes[0].options.bgColor[0]),
         fmt::arg("bg2", ldata.biomes[0].options.bgColor[1]),
@@ -93,7 +103,6 @@ std::string jfpNewStringGen(bool compress, AutoJFP state) {
     level += levelBaseSeg2;
     level += levelBuildSeg2;
 
-    if (ldata.biomes.empty()) return jfpPackString(level, ldata.seed, 234565, compress);
     const auto& biome = ldata.biomes[0];
     const auto& opts = biome.options;
     int x = biome.x_initial;
@@ -328,7 +337,7 @@ std::string jfpNewStringGen(bool compress, AutoJFP state) {
     //     }
     // }
 
-    return jfpPackString(level, ldata.seed, biome.song, compress);
+    return level;
 }
 
 }
