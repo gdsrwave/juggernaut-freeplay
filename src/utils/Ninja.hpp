@@ -51,7 +51,7 @@ struct SegmentOptions {
     bool gravity = false;
     bool isSpikeM = false;
     bool cornerPieces = false;
-    std::string isPortal = "None";
+    Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFakePortal = false;
     bool isFuzzy = false;
@@ -87,6 +87,11 @@ struct LevelData {
     std::string name;
     std::vector<Biome> biomes;
 };
+
+float convertSpeedToFloat(const std::string& speed);
+float convertSpeedToFloat(SpeedChange speed);
+bool orientationMatch(int prevO[11], const std::vector<int> pattern);
+bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern);
 
 LevelData generateJFPLevel();
 

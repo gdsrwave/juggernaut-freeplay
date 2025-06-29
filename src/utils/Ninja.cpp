@@ -8,15 +8,15 @@ JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 namespace JFPGen {
 
-static float convertSpeedToFloat(const std::string& speed) {
-	if (speed == "0.5x") return 0.5f;
-	else if (speed == "1x") return 1.0f;
-	else if (speed == "2x") return 2.0f;
-	else if (speed == "4x") return 4.0f;
-	return 3.0f; // default speed
+float convertSpeedToFloat(const std::string& speed) {
+    if (speed == "0.5x") return 0.5f;
+    else if (speed == "1x") return 1.0f;
+    else if (speed == "2x") return 2.0f;
+    else if (speed == "4x") return 4.0f;
+    return 3.0f; // default speed
 }
 
-static float convertSpeedToFloat(SpeedChange speed) {
+float convertSpeedToFloat(SpeedChange speed) {
     switch (speed) {
         case SpeedChange::Speed05x: return 0.5f;
         case SpeedChange::Speed1x:  return 1.0f;
@@ -26,17 +26,18 @@ static float convertSpeedToFloat(SpeedChange speed) {
         default: return 3.0f;
     }
 }
-static bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern) {
-    if (idx < static_cast<int>(pattern.size()) - 1) return false;
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        if (segments[idx - pattern.size() + 1 + i].y_swing != pattern[i]) {
+
+bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern) {
+    if (idx < static_cast<int>(pattern.size())) return false;
+    for (int i = 0; i < pattern.size(); i++) {
+        if (segments[idx - pattern.size() + i].y_swing != pattern[i]) {
             return false;
         }
     }
     return true;
 }
 
-static bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
+bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
     if(pattern.size()>11) return false;
     for(int i = 0; i < pattern.size(); i++) {
         if(pattern[i] != prevO[i+(11-pattern.size())]) {
@@ -141,9 +142,9 @@ LevelData generateJFPLevel() {
         y_swing = 0;
 
         if (last_tp <= 1) {
-            y_swing = segments[i].y_swing;
+            y_swing = i == 0 ? -1 : segments[i - 1].y_swing;
         } else if (
-            cY >= maxHeight &&(segments[i].y_swing == 1 ||
+            cY >= maxHeight &&(segments[i - 1].y_swing == 1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMax)
@@ -152,7 +153,7 @@ LevelData generateJFPLevel() {
         )) {
             y_swing = -1;
         } else if (
-            cY <= minHeight && (segments[i].y_swing == -1 ||
+            cY <= minHeight && (segments[i - 1].y_swing == -1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMin)
@@ -166,9 +167,15 @@ LevelData generateJFPLevel() {
         } else if (
             optCorridorRules == CorridorRules::NoSpamNoZigzag && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
-        } else if (optCorridorRules == CorridorRules::NoSpam && orientationMatch(segments, i, antiSpam1)) {
+        } else if ((
+            optCorridorRules == CorridorRules::NoSpam ||
+            optCorridorRules == CorridorRules::NoSpamNoZigzag
+        ) && orientationMatch(segments, i, antiSpam1)) {
             y_swing = -1;
-        } else if (optCorridorRules == CorridorRules::NoSpam && orientationMatch(segments, i, antiSpam2)) {
+        } else if ((
+            optCorridorRules == CorridorRules::NoSpam ||
+            optCorridorRules == CorridorRules::NoSpamNoZigzag
+        ) && orientationMatch(segments, i, antiSpam2)) {
             y_swing = 1;
         } else {
             // randomized coinflip condition
@@ -207,6 +214,10 @@ LevelData generateJFPLevel() {
             segments[i].options.isFuzzy = true;
         }
 
+        log::info(
+            "Segment[{}]: cX={}, cY={}, y_swing={}",
+            i, cX, cY, y_swing
+        );
         segments[i] = Segment{
             .coords = std::make_pair(cX, cY),
             .y_swing = y_swing,
@@ -220,6 +231,20 @@ LevelData generateJFPLevel() {
                 .isFuzzy = segments[i].options.isFuzzy
             }
         };
+        // log::info(
+        //     "Segment[{}]: coords=({}, {}), y_swing={}, gravity={}, isSpikeM={}, cornerPieces={}, isPortal={}, speedChange={}, isFakePortal={}, isFuzzy={}",
+        //     i,
+        //     segments[i].coords.first,
+        //     segments[i].coords.second,
+        //     segments[i].y_swing,
+        //     segments[i].options.gravity,
+        //     segments[i].options.isSpikeM,
+        //     static_cast<int>(segments[i].options.cornerPieces),
+        //     static_cast<int>(segments[i].options.isPortal),
+        //     static_cast<int>(segments[i].options.speedChange),
+        //     segments[i].options.isFakePortal,
+        //     segments[i].options.isFuzzy
+        // );
 
         if (optChangingSpeed) {
             if (i % 10 == 0) {
@@ -240,7 +265,10 @@ LevelData generateJFPLevel() {
                 last_tp = 0; // reset teleportal counter
             }
         }
+        if (last_tp < 40) last_tp += 1;
     }
+
+    levelData.biomes[0].segments = segments;
 
     return levelData;
 };

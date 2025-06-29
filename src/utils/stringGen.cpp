@@ -65,6 +65,91 @@ static int convertFloatSpeed(float speed) {
 	return 203; // default speed
 }
 
+std::string jfpPackString(const std::string& level, bool compress) {
+
+    std::string b64;
+    if (compress) b64 = ZipUtils::compressString(level, true, 0);
+    else b64 = level;
+    std::string desc = fmt::format("ninja v1");
+    desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
+    b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
+    desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
+
+    std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
+    fmt::arg("desc", desc),
+    fmt::arg("b64", b64),
+    fmt::arg("title", "Juggernaut Freeplay"),
+    fmt::arg("song", 574484));
+
+    return levelString;
+}
+
+std::string jfpNewStringGen(bool compress, AutoJFP state) {
+    log::info("{}", levelBaseSeg1);
+    log::info("{}", levelBaseSeg2);
+    LevelData ldata = generateJFPLevel();
+    std::string levelBuildSeg1 = "kS38,1_0_2_0_3_0_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1";
+    std::string levelBuildSeg2 = fmt::format(
+        "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
+        fmt::arg("speedID", convertSpeed(Mod::get()->getSettingValue<std::string>("speed")))
+    );
+    std::string lineColor = "1_255_2_255_3_255_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1";
+    
+    std::string level;
+    level += levelBuildSeg1;
+    level += levelBaseSeg1;
+    level += lineColor;
+    level += levelBaseSeg2;
+    level += levelBuildSeg2;
+
+    if (!ldata.biomes.empty()) {
+        const auto& biome = ldata.biomes[0];
+        const auto& opts = biome.options;
+        int x = biome.x_initial;
+        int y = opts.maxHeight;
+        int y_swing = 0;
+        int corridorHeight = opts.corridorHeight;
+
+        for (const auto& seg : biome.segments) {
+            x = seg.coords.first;
+            y = seg.coords.second;
+            y_swing = seg.y_swing;
+            // Floor block
+            level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
+                fmt::arg("x", x),
+                fmt::arg("y", y),
+                fmt::arg("rot", y_swing > 0 ? 0 : 90)
+            );
+            // Ceiling block
+            level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
+                fmt::arg("x", x),
+                fmt::arg("yC", y + corridorHeight),
+                fmt::arg("rot", y_swing > 0 ? 180 : 270)
+            );
+        }
+    }
+    // log::info("LevelData: name={}", ldata.name);
+    // log::info("Biomes: {}", ldata.biomes.size());
+    // for (size_t i = 0; i < ldata.biomes.size(); ++i) {
+    //     const auto& biome = ldata.biomes[i];
+    //     log::info("  Biome {}: x_initial={}, type={}, theme={}, segments={}", i, biome.x_initial, biome.type, biome.theme, biome.segments.size());
+    //     log::info("    Options: length={}, corridorHeight={}, maxHeight={}, visibility={}, startingSpeed={}, colorMode={}",
+    //         biome.options.length,
+    //         biome.options.corridorHeight,
+    //         biome.options.maxHeight,
+    //         static_cast<int>(biome.options.visibility),
+    //         static_cast<int>(biome.options.startingSpeed),
+    //         static_cast<int>(biome.options.colorMode)
+    //     );
+    //     for (size_t j = 0; j < biome.segments.size(); ++j) {
+    //         const auto& seg = biome.segments[j];
+    //         // log::info("      Segment {}: coords=({}, {}), y_swing={}", j, seg.coords.first, seg.coords.second, seg.y_swing);
+    //     }
+    // }
+
+    return jfpPackString(level, compress);
+}
+
 std::string jfpMainStringGen(bool compress, AutoJFP state) {
 
     // random device setups - used with modulo to generate numbers in a range
@@ -77,6 +162,26 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
         FLAlertLayer::create("Error", e.what(), "Sure thing...")->show();
         return "";
     }
+
+    LevelData ldata = generateJFPLevel();
+    // log::info("LevelData: name={}", ldata.name);
+    // log::info("Biomes: {}", ldata.biomes.size());
+    // for (size_t i = 0; i < ldata.biomes.size(); ++i) {
+    //     const auto& biome = ldata.biomes[i];
+    //     log::info("  Biome {}: x_initial={}, type={}, theme={}, segments={}", i, biome.x_initial, biome.type, biome.theme, biome.segments.size());
+    //     log::info("    Options: length={}, corridorHeight={}, maxHeight={}, visibility={}, startingSpeed={}, colorMode={}",
+    //         biome.options.length,
+    //         biome.options.corridorHeight,
+    //         biome.options.maxHeight,
+    //         static_cast<int>(biome.options.visibility),
+    //         static_cast<int>(biome.options.startingSpeed),
+    //         static_cast<int>(biome.options.colorMode)
+    //     );
+    //     for (size_t j = 0; j < biome.segments.size(); ++j) {
+    //         const auto& seg = biome.segments[j];
+    //         log::info("      Segment {}: coords=({}, {}), y_swing={}", j, seg.coords.first, seg.coords.second, seg.y_swing);
+    //     }
+    // }
     
     if(seed == 0) seed = rd();
     std::mt19937 segmentRNG(seed);
@@ -212,6 +317,8 @@ std::string jfpMainStringGen(bool compress, AutoJFP state) {
         fmt::arg("bg_2", background_color[2]),
         fmt::arg("line_color", line_color)
     );
+
+    return level;
 
     if (upsideStart) {
         level += "1,11,2,293,3,105,6,45,32,0.57;";
