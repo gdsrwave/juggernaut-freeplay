@@ -12,6 +12,7 @@
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "constants.hpp"
 #include "StringGen.hpp"
+#include "ThemeGen.hpp"
 #include "Ninja.hpp"
 
 using namespace geode::prelude;
@@ -72,35 +73,49 @@ std::string jfpStringGen(bool compress) {
     if (ldata.biomes.empty()) return "";
 
     std::string levelString = jfpNewStringGen(ldata);
+    std::string themeString = ThemeGen::parseTheme("heinous", ldata);
+    log::info("{}", themeString);
+    log::info("{}", ThemeGen::parseAddBlock("Add Block 1,1338,2,[X-60],3,[Y-30],96,1,64,1,67,1,155,3,21,1004"));
+    levelString = colorStringGen() + levelString + themeString;
 
     return jfpPackString(levelString, ldata.seed, ldata.biomes[0].song, compress);
+}
+
+std::string colorStringGen() {
+    std::string result = "kS38,";
+
+    for (const auto& color : colorBank) {
+        result += fmt::format(
+            "1_{r}_2_{g}_3_{b}_11_255_12_255_13_255_4_-1_6_{slot}_15_1_18_0_8_1",
+            fmt::arg("r", color.rgb[0]),
+            fmt::arg("g", color.rgb[1]),
+            fmt::arg("b", color.rgb[2]),
+            fmt::arg("slot", color.slot)
+        );
+        if (color.blending) result += "_5_1";
+        if (color.opacity <= 1.0) {
+            result += fmt::format("_7_{}", color.opacity);
+        } else {
+            result += "_7_1";
+        }
+        result += "|";
+    }
+
+    return result;
 }
 
 std::string jfpNewStringGen(LevelData ldata) {
 
     if (ldata.biomes.empty()) return "";
 
-    std::string levelBuildSeg1 = fmt::format("kS38,1_{bg1}_2_{bg2}_3_{bg3}_11_255_12_255_13_255_4_-1_6_1000_7_1_15_1_18_0_8_1",
-        fmt::arg("bg1", ldata.biomes[0].options.bgColor[0]),
-        fmt::arg("bg2", ldata.biomes[0].options.bgColor[1]),
-        fmt::arg("bg3", ldata.biomes[0].options.bgColor[2])
-    );
     std::string levelBuildSeg2 = fmt::format(
         "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
         fmt::arg("speedID", convertSpeed(Mod::get()->getSettingValue<std::string>("speed")))
     );
-    std::string lineColor = fmt::format("1_{lc1}_2_{lc2}_3_{lc3}_11_255_12_255_13_255_4_-1_6_1004_7_1_15_1_18_0_8_1",
-        fmt::arg("lc1", ldata.biomes[0].options.lineColor[0]),
-        fmt::arg("lc2", ldata.biomes[0].options.lineColor[1]),
-        fmt::arg("lc3", ldata.biomes[0].options.lineColor[2])
-    );
     const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
     
     std::string level;
-    level += levelBuildSeg1;
-    level += levelBaseSeg1;
-    level += lineColor;
-    level += levelBaseSeg2;
+    level += levelBaseSeg;
     level += levelBuildSeg2;
 
     const auto& biome = ldata.biomes[0];
@@ -296,13 +311,13 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
             std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
             meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }

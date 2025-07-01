@@ -18,7 +18,7 @@ class $modify(PlayLayer) {
 			return PlayLayer::resetLevel();
 		}
 		else if (state == JFPGen::AutoJFP::JustRestarted) {
-			this->m_unk3229 = false; // this var controls whether the camera follows the player at the start
+			this->m_freezeStartCamera = false; // this var controls whether the camera follows the player at the start
 			return PlayLayer::resetLevel();
 		}
 

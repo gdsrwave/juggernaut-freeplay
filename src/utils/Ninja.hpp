@@ -2,6 +2,9 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include "constants.hpp"
+
+extern JFPGen::AutoJFP state;
 
 namespace JFPGen {
 
@@ -105,6 +108,14 @@ struct LevelData {
     std::vector<Biome> biomes;
 };
 
+// Represents a color in RGBA format
+struct Color {
+    int slot = 13;
+    std::array<int, 3> rgb = {255, 255, 255};
+    bool blending = false;
+    float opacity = 1.f;
+};
+
 int convertFloatSpeed(float speed);
 SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
@@ -115,3 +126,7 @@ bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::
 LevelData generateJFPLevel();
 
 }
+
+extern std::vector<JFPGen::Color> colorBank;
+
+void pushColor(const JFPGen::Color& color);

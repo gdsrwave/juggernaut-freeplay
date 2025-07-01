@@ -30,6 +30,7 @@ int convertSpeed(const std::string& speed);
 
 std::string jfpStringGen(bool compress);
 std::string jfpNewStringGen(LevelData ldata);
+std::string colorStringGen();
 
 } // namespace JFPGen
 

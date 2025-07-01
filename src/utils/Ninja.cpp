@@ -5,6 +5,28 @@
 
 using namespace geode::prelude;
 JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
+// Use std::vector for colorBank, but provide a pushOrReplaceColor function
+std::vector<JFPGen::Color> colorBank = {
+    JFPGen::Color{1000, {128, 128, 128}, false, 1.0f},
+    JFPGen::Color{1001, {25, 24, 24}, false, 1.0f},
+    JFPGen::Color{1009, {0, 102, 255}, false, 1.0f},
+    JFPGen::Color{1002, {255, 255, 255}, true, 1.0f},
+    JFPGen::Color{1004, {255, 255, 255}, false, 1.0f},
+    JFPGen::Color{1005, {255, 75, 0}, true, 1.0f},
+    JFPGen::Color{1006, {255, 75, 0}, true, 1.0f},
+    JFPGen::Color{101, {0, 0, 0}, false, 1.0f}
+};
+
+void pushColor(const JFPGen::Color& color) {
+    for (auto& c : colorBank) {
+        if (c.slot == color.slot) {
+            log::info("{} {}", c.slot, color.slot);
+            c = color;
+            return;
+        }
+    }
+    colorBank.push_back(color);
+}
 
 namespace JFPGen {
 
@@ -243,6 +265,9 @@ LevelData generateJFPLevel() {
     levelData.biomes[0].options.lineColor[0] = lineColor[0];
     levelData.biomes[0].options.lineColor[1] = lineColor[1];
     levelData.biomes[0].options.lineColor[2] = lineColor[2];
+
+    pushColor(JFPGen::Color{1000, backgroundColor, false, 1.0f});
+    pushColor(JFPGen::Color{1004, lineColor, false, 1.0f});
 
     // future prior block to generate lengths of different biomes
 
