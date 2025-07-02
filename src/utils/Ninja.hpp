@@ -114,6 +114,8 @@ struct Color {
     std::array<int, 3> rgb = {255, 255, 255};
     bool blending = false;
     float opacity = 1.f;
+    int copyColor = -1;
+    std::string special = "";
 };
 
 int convertFloatSpeed(float speed);

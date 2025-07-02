@@ -74,8 +74,6 @@ std::string jfpStringGen(bool compress) {
 
     std::string levelString = jfpNewStringGen(ldata);
     std::string themeString = ThemeGen::parseTheme("heinous", ldata);
-    log::info("{}", themeString);
-    log::info("{}", ThemeGen::parseAddBlock("Add Block 1,1338,2,[X-60],3,[Y-30],96,1,64,1,67,1,155,3,21,1004"));
     levelString = colorStringGen() + levelString + themeString;
 
     return jfpPackString(levelString, ldata.seed, ldata.biomes[0].song, compress);
@@ -97,6 +95,12 @@ std::string colorStringGen() {
             result += fmt::format("_7_{}", color.opacity);
         } else {
             result += "_7_1";
+        }
+        if (color.copyColor >= 0) {
+            result += fmt::format("_9_{}", color.copyColor);
+        }
+        if (!color.special.empty()) {
+            result += "_" + color.special;
         }
         result += "|";
     }
@@ -311,13 +315,13 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,155,12;", fmt::arg("dist", 435+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
             std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
             meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel};", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},155,12;", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }

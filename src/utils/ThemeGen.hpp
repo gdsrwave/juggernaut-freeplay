@@ -30,6 +30,13 @@ struct ThemeMatch {
     std::vector<std::string> commands;
 };
 
+struct RepeatingPattern {
+    int id;
+    std::string data;
+    int start = 195;
+    int repeat = 300;
+};
+
 // Generates a theme based on a seed or preset and level data
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45);

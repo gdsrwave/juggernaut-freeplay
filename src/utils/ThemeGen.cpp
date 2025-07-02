@@ -102,13 +102,15 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     bool inDown = false;
     bool inMatches = false;
     bool inOverride = false;
+    bool inPattern = false;
     ThemeMetadata metadata;
     std::string themeGen = "";
-    std::string themeColorGen = "";
+    RepeatingPattern patternGen = RepeatingPattern();
     std::vector<ThemeMatch> matchPatterns;
     ThemeMatch cMP = ThemeMatch();
     std::vector<std::string> upCommands;
     std::vector<std::string> downCommands;
+    std::vector<RepeatingPattern> repeatingPatterns;
 
     JFPGen::Color sColor = JFPGen::Color();
 
@@ -181,8 +183,17 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
                 value.erase(value.find_last_not_of(" \t\r\n") + 1);
 
-                if (key == "Color") sColor.rgb = hexToColor(value);
-                else if (key == "Slot") {
+                if (key == "Color") {
+                    if (value.size() > 4 && value.substr(0, 4) == "Copy") {
+                        try {
+                            sColor.copyColor = std::stoi(value.substr(5));
+                        } catch (...) {
+                            sColor.copyColor = -1;
+                        }
+                    } else {
+                        sColor.rgb = hexToColor(value);
+                    }
+                } else if (key == "Slot") {
                     try {
                         sColor.slot = std::stoi(value);
                     } catch (const std::invalid_argument&) {
@@ -196,6 +207,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     } catch (const std::invalid_argument&) {
                         sColor.opacity = 1.0f; // Default opacity
                     }
+                } else if (key == "Special") {
+                    sColor.special = value;
                 }
             }
             continue;
@@ -316,9 +329,76 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         if (inMatches) {
             cMP.commands.push_back(l);
         }
+
+        if (l == "# pattern #") {
+            inPattern = true;
+            continue;
+        } else if (l == "# end pattern #") {
+            inPattern = false;
+            if (!patternGen.data.empty()) {
+                repeatingPatterns.push_back(patternGen);
+                patternGen = RepeatingPattern(); // Reset for next pattern
+            }
+            continue;
+        }
+        if (inPattern) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                // Trim leading/trailing spaces
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                if (key == "ID") {
+                    try {
+                        patternGen.id = std::stoi(value);
+                    } catch (...) {
+                        patternGen.id = 0;
+                    }
+                } else if (key == "Data") {
+                    patternGen.data = value;
+                } else if (key == "Start") {
+                    try {
+                        patternGen.start = std::stoi(value);
+                    } catch (...) {
+                        patternGen.start = 195;
+                    }
+                } else if (key == "Repeat") {
+                    try {
+                        patternGen.repeat = std::stoi(value);
+                        if (patternGen.repeat < 1) {
+                            patternGen.repeat = 1; // Ensure minimum repeat value
+                        }
+                    } catch (...) {
+                        patternGen.repeat = 30;
+                    }
+                }
+            }
+            continue;
+        }
     }
 
     auto biome = ldata.biomes[0];
+
+    const int trueLength = (biome.options.length * 30);
+    for (const auto& pattern : repeatingPatterns) {
+        int loopCount = std::min((trueLength / pattern.repeat) + 1, 1000);
+        int n = pattern.start;
+        for (int i = 0; i < loopCount; ++i) {
+            std::string patternStr = "1," + std::to_string(pattern.id) + ",2," +
+                std::to_string(n) + "," + pattern.data;
+            if (patternStr.empty() || patternStr.back() != ';') {
+                patternStr += ';';
+            }
+            themeGen += patternStr;
+            n += pattern.repeat;
+        }
+    }
+
     for (int i = 0; i < biome.segments.size(); i++) {
 
         // Check all match patterns

@@ -13,7 +13,10 @@
 			"jfp": [
 				"resources/*.png"
 			]
-		}
+		},
+		"files": [
+			"resources/themes/*.jfpt"
+		]
 	},
 	"dependencies": {
 		"hjfod.gmd-api": {
