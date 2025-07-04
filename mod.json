@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.3.1",
+	"version": "v1.4.0",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -169,6 +169,20 @@
 			"name": "Start Upside Down",
 			"type": "bool",
 			"default": false
+		},
+        "themes-title": {
+            "type": "title",
+            "name": "Theming"
+        },
+		"active-theme": {
+			"name": "Theme",
+			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
+			"type": "string",
+			"default": ""
+		},
+		"reload-themes": {
+			"name": "",
+			"type": "custom:reload-themes"
 		},
         "meta-title": {
             "type": "title",

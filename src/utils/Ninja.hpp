@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "constants.hpp"
+#include <map>
 
 extern JFPGen::AutoJFP state;
 
@@ -129,6 +130,8 @@ LevelData generateJFPLevel();
 
 }
 
+extern std::map<std::string, std::string> kBank;
+extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
 
 void pushColor(const JFPGen::Color& color);

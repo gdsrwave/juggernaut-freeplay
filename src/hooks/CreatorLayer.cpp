@@ -41,7 +41,8 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 	void onJFPButton(CCObject*) {
 		//openSettingsPopup(Mod::get());
 		auto jfpLayer = JFPMenuLayer::scene();
-		CCDirector::sharedDirector()->pushScene(jfpLayer);
+		auto jlTransition = CCTransitionFade::create(0.5, jfpLayer);
+		CCDirector::sharedDirector()->pushScene(jlTransition);
 	}
 
 	static GJGameLevel* createGameLevel() {

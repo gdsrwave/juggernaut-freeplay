@@ -24,9 +24,10 @@ std::array<int, 3> hexToColor(const std::string& hex) {
     return color;
 }
 
-std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHeight, int minHeight) {
+std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHeight, int minHeight, int corridorHeight) {
 
-    // Remove "Add Block" prefix
+    // Remove "Add Block" prefix if present
+    if (addBlockLine.empty()) return "";
     const std::string prefix = "Add Block";
     auto pos = addBlockLine.find(prefix);
     if (pos != std::string::npos) {
@@ -35,9 +36,6 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
     // Trim leading/trailing spaces
     addBlockLine.erase(0, addBlockLine.find_first_not_of(" \t\r\n"));
     addBlockLine.erase(addBlockLine.find_last_not_of(" \t\r\n") + 1);
-
-    int xEval = static_cast<int>(X);
-    int yEval = static_cast<int>(Y);
 
     // Find and evaluate bracketed expressions
     std::string result;
@@ -50,31 +48,60 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
                 // Remove spaces
                 expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
                 float value = 0.f;
-                // Simple parser for X/Y arithmetic
-                if (expr.find("X") != std::string::npos) {
-                    value = X;
-                    if (expr.size() > 1) {
-                        if (expr[1] == '+') value += std::stof(expr.substr(2));
-                        else if (expr[1] == '-') value -= std::stof(expr.substr(2));
-                        else if (expr[1] == '*') value *= std::stof(expr.substr(2));
-                        else if (expr[1] == '/') value /= std::stof(expr.substr(2));
+
+                // Support for [X+C+60] and similar
+                // Replace X, Y, C with their values
+                std::string parsedExpr;
+                for (size_t j = 0; j < expr.size(); ++j) {
+                    if (expr[j] == 'X') {
+                        parsedExpr += std::to_string(X);
+                    } else if (expr[j] == 'Y') {
+                        parsedExpr += std::to_string(Y);
+                    } else if (expr[j] == 'C') {
+                        parsedExpr += std::to_string(corridorHeight);
+                    } else {
+                        parsedExpr += expr[j];
                     }
-                    xEval = static_cast<int>(value);
-                } else if (expr.find("Y") != std::string::npos) {
-                    value = Y;
-                    if (expr.size() > 1) {
-                        if (expr[1] == '+') value += std::stof(expr.substr(2));
-                        else if (expr[1] == '-') value -= std::stof(expr.substr(2));
-                        else if (expr[1] == '*') value *= std::stof(expr.substr(2));
-                        else if (expr[1] == '/') value /= std::stof(expr.substr(2));
+                }
+
+                // Now, evaluate the parsedExpr as a left-to-right sum/sub/mul/div (no operator precedence)
+                float acc = 0.f;
+                char lastOp = 0;
+                size_t idx = 0;
+                while (idx < parsedExpr.size()) {
+                    // Find next operator or end
+                    size_t nextOp = parsedExpr.find_first_of("+-*/", idx);
+                    std::string numStr = parsedExpr.substr(idx, nextOp - idx);
+                    float num = 0.f;
+                    try {
+                        num = std::stof(numStr);
+                    } catch (...) {
+                        num = 0.f;
                     }
+                    if (lastOp == 0) {
+                        acc = num;
+                    } else if (lastOp == '+') {
+                        acc += num;
+                    } else if (lastOp == '-') {
+                        acc -= num;
+                    } else if (lastOp == '*') {
+                        acc *= num;
+                    } else if (lastOp == '/') {
+                        acc /= num;
+                    }
+                    if (nextOp == std::string::npos) break;
+                    lastOp = parsedExpr[nextOp];
+                    idx = nextOp + 1;
+                }
+                value = acc;
+
+                // Y bounds check
+                if (expr.find("Y") != std::string::npos) {
                     if (value > 375 || value < -15) {
                         return "";
                     }
-                } else {
-                    // Just a number
-                    value = std::stof(expr);
                 }
+
                 // Replace with evaluated value (as int)
                 result += std::to_string(static_cast<int>(value));
                 i = end + 1;
@@ -98,21 +125,26 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     // iterate per line
     bool inMetadata = false;
     bool inAddcolor = false;
-    bool inUp = false;
-    bool inDown = false;
+    bool inKValues = false;
     bool inMatches = false;
-    bool inOverride = false;
+    InOverride inOverride = InOverride::None;
     bool inPattern = false;
     ThemeMetadata metadata;
     std::string themeGen = "";
     RepeatingPattern patternGen = RepeatingPattern();
-    std::vector<ThemeMatch> matchPatterns;
+    std::vector<std::vector<ThemeMatch>> matchConditions;
+    std::vector<ThemeMatch> cMPList;
     ThemeMatch cMP = ThemeMatch();
-    std::vector<std::string> upCommands;
-    std::vector<std::string> downCommands;
     std::vector<RepeatingPattern> repeatingPatterns;
 
+    // reset overrideBank values to false
+    overrideBank["override-base"] = false;
+    overrideBank["override-enddown"] = false;
+    overrideBank["override-endup"] = false;
+
     JFPGen::Color sColor = JFPGen::Color();
+    
+    auto biome = ldata.biomes[0];
 
     auto localPath = CCFileUtils::sharedFileUtils();
     std::string themeName = name;
@@ -132,6 +164,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     file.close();
 
     for (const auto& l : lines) {
+        // yes this is quite ugly, but
         if (l == "# metadata #") {
             inMetadata = true;
             continue;
@@ -214,43 +247,92 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             continue;
         }
 
-        if (l == "# override #") {
-            inOverride = true;
+        if (l == "# override base #" || l == "# override #") {
+            inOverride = InOverride::Base;
+            overrideBank["override-base"] = true;
+            continue;
+        } else if (l == "# override enddown #") {
+            inOverride = InOverride::EndDown;
+            overrideBank["override-enddown"] = true;
+            continue;
+        } else if (l == "# override endup #") {
+            inOverride = InOverride::EndUp;
+            overrideBank["override-endup"] = true;
             continue;
         } else if (l == "# end override #") {
-            inOverride = false;
+            inOverride = InOverride::None;
             continue;
         }
-        if (inOverride) {
-            themeGen += l;
+        if (inOverride == InOverride::Base) {
+            themeGen += parseAddBlock(
+                l,
+                0,
+                0,
+                biome.options.maxHeight,
+                biome.options.minHeight,
+                biome.options.corridorHeight
+            );
+            continue;
+        } else if (inOverride == InOverride::EndUp && biome.segments.back().y_swing == 1) {
+            themeGen += parseAddBlock(
+                l,
+                biome.segments.back().coords.first,
+                biome.segments.back().coords.second,
+                biome.options.maxHeight,
+                biome.options.minHeight,
+                biome.options.corridorHeight
+            );
+            continue;
+        } else if (inOverride == InOverride::EndDown && biome.segments.back().y_swing == -1) {
+            themeGen += parseAddBlock(
+                l,
+                biome.segments.back().coords.first,
+                biome.segments.back().coords.second,
+                biome.options.maxHeight,
+                biome.options.minHeight,
+                biome.options.corridorHeight
+            );
             continue;
         }
 
-        if (l == "# up #") {
-            inUp = true;
+        if (l == "# k #") {
+            inKValues = true;
             continue;
-        } else if (l == "# end up #") {
-            inUp = false;
+        } else if (l == "# end k #") {
+            inKValues = false;
             continue;
         }
-        if (inUp) {
-            upCommands.push_back(l);
+        if (inKValues) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                // Trim leading/trailing spaces
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+                
+                kBank[key] = value;
+            }
             continue;
         }
 
-        if (l == "# down #") {
-            inDown = false;
-            continue;
-        } else if (l == "# end down #") {
-            inDown = false;
-            continue;
-        }
-        if (inDown) {
-            downCommands.push_back(l);
-            continue;
-        }
-        if (!l.empty() && l.find("# if corridor ") == 0 && l.back() == '#') {
+        if (!l.empty() && 
+            ((l.find("# if corridor ") == 0 && l.back() == '#') ||
+             (l.find("# else if corridor ") == 0 && l.back() == '#'))) {
             inMatches = true;
+            if (l.find("# if corridor ") == 0) {
+                // Start a new match pattern
+                cMP = ThemeMatch();
+            } else if (l.find("# else if corridor ") == 0) {
+                // Continue the current match pattern
+                if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
+                    cMPList.push_back(cMP);
+                    cMP = ThemeMatch(); // Reset for next match
+                }
+            }
             // Handle corridor match condition here
             // Remove "# if corridor " from beginning and " #" from end
             std::string condition = l.substr(2, l.size() - 4);
@@ -293,20 +375,29 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 if (bracketStart != std::string::npos && bracketEnd != std::string::npos && bracketEnd > bracketStart) {
                     symbols = t.substr(0, bracketStart);
                     std::string offsetStr = t.substr(bracketStart + 1, bracketEnd - bracketStart - 1);
-                    try {
-                        offset = std::stoi(offsetStr);
-                    } catch (...) {
-                        offset = 0;
+
+                    int displacement = 0;
+                    for (size_t idx = bracketEnd + 1; idx < t.size(); ++idx) {
+                        if (t[idx] == '+' || t[idx] == '-') {
+                            displacement++;
+                        }
                     }
+                    offset = displacement;
                 }
 
                 // remove spaces from symbols
-                symbols.erase(remove_if(symbols.begin(), symbols.end(), ::isspace), symbols.end());
-                for (char ch : symbols) {
+                t.erase(remove_if(t.begin(), t.end(), ::isspace), t.end());
+                for (char ch : t) {
                     if (ch == '+') pattern.push_back(1);
                     else if (ch == '-') pattern.push_back(-1);
                 }
 
+                std::string patternStr;
+                for (size_t pi = 0; pi < pattern.size(); ++pi) {
+                    patternStr += std::to_string(pattern[pi]);
+                    if (pi + 1 < pattern.size()) patternStr += ",";
+                }
+                //log::info("Not matches pattern: {} [{}]", patternStr, offset);
                 if (!isNot) {
                     cMP.pattern = pattern;
                     cMP.offset = offset;
@@ -317,17 +408,32 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             }
             continue;
         }
-        if (l == "# end if #") {
+        if (l == "# else #") {
+            // Continue the current match pattern
+            if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
+                cMPList.push_back(cMP);
+                cMP = ThemeMatch(); // Reset for next match
+                cMP.pattern = {};
+                cMP.offset = 0;
+                cMP.notPatterns = {};
+                cMP.notOffsets = {};
+                cMP._else = true; // Mark as else condition
+            }
+            continue;
+        } else if (l == "# end if #") {
             // Store the current match pattern
             inMatches = false;
-            if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
-                matchPatterns.push_back(cMP);
-                cMP = ThemeMatch(); // Reset for next match
+            if (cMP._else || !cMP.pattern.empty() || !cMP.notPatterns.empty()) {
+                cMPList.push_back(cMP);
+                cMP = ThemeMatch();
             }
+            matchConditions.push_back(cMPList);
+            cMPList = std::vector<ThemeMatch>();
             continue;
         }
         if (inMatches) {
             cMP.commands.push_back(l);
+            continue;
         }
 
         if (l == "# pattern #") {
@@ -353,13 +459,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
                 value.erase(value.find_last_not_of(" \t\r\n") + 1);
 
-                if (key == "ID") {
-                    try {
-                        patternGen.id = std::stoi(value);
-                    } catch (...) {
-                        patternGen.id = 0;
-                    }
-                } else if (key == "Data") {
+                if (key == "Data") {
                     patternGen.data = value;
                 } else if (key == "Start") {
                     try {
@@ -382,19 +482,19 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         }
     }
 
-    auto biome = ldata.biomes[0];
 
     const int trueLength = (biome.options.length * 30);
     for (const auto& pattern : repeatingPatterns) {
         int loopCount = std::min((trueLength / pattern.repeat) + 1, 1000);
         int n = pattern.start;
         for (int i = 0; i < loopCount; ++i) {
-            std::string patternStr = "1," + std::to_string(pattern.id) + ",2," +
-                std::to_string(n) + "," + pattern.data;
-            if (patternStr.empty() || patternStr.back() != ';') {
-                patternStr += ';';
-            }
-            themeGen += patternStr;
+            themeGen += parseAddBlock(
+                pattern.data, 
+                n, 0, 
+                biome.options.maxHeight, 
+                biome.options.minHeight, 
+                biome.options.corridorHeight
+            );
             n += pattern.repeat;
         }
     }
@@ -402,15 +502,39 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     for (int i = 0; i < biome.segments.size(); i++) {
 
         // Check all match patterns
-        for (const auto& match : matchPatterns) {
-            if (JFPGen::orientationMatch(biome.segments, i+match.offset+1, match.pattern)) {
-                for (const auto& cmd : match.commands) {
-                    std::string parsed = parseAddBlock(
-                        cmd, biome.segments[i].coords.first, biome.segments[i].coords.second,
-                        biome.options.maxHeight, biome.options.minHeight);
-                    if (!parsed.empty()) {
-                        themeGen += parsed;
+        for (const auto& condition : matchConditions) {
+            for (const auto& match : condition) {
+                bool successfulMatch = false;
+
+                bool notPatternsOk = true;
+                for (int np = 0; np < match.notPatterns.size(); ++np) {
+                    if (JFPGen::orientationMatch(
+                            biome.segments, 
+                            i + match.notOffsets[np] + 1, 
+                            match.notPatterns[np])) {
+                        notPatternsOk = false;
+                        break;
                     }
+                }
+
+                if (notPatternsOk &&
+                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern) ||
+                     (match._else && match.pattern.empty()))) {
+                    
+                    for (const auto& cmd : match.commands) {
+                        std::string parsed = parseAddBlock(
+                            cmd, biome.segments[i].coords.first, biome.segments[i].coords.second,
+                            biome.options.maxHeight, biome.options.minHeight, biome.options.corridorHeight);
+                        if (!parsed.empty()) {
+                            themeGen += parsed;
+                        }
+                    }
+                    successfulMatch = true;
+                }
+
+                // If the match was found, we can break out of the loop
+                if (successfulMatch) {
+                    break;
                 }
             }
         }

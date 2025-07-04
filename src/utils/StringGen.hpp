@@ -26,11 +26,12 @@ namespace JFPGen {
 
 void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
-int convertSpeed(const std::string& speed);
+int convertSpeed(JFPGen::SpeedChange speed);
 
 std::string jfpStringGen(bool compress);
 std::string jfpNewStringGen(LevelData ldata);
 std::string colorStringGen();
+std::string kStringGen();
 
 } // namespace JFPGen
 

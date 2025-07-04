@@ -1,4 +1,5 @@
 #include "JFPMenuLayer.hpp"
+#include "ThemeSelect.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
@@ -67,9 +68,14 @@ bool JFPMenuLayer::init() {
     // title->setScale(1.5f);
     // addChild(title);
 
-    auto corrozSprite = CCSprite::createWithSpriteFrameName("corroz_s.png"_spr);
-    corrozSprite->setID("corroz-sprite"_spr);
-    corrozSprite->setScale(1.7f);
+    auto themeSprite = CircleButtonSprite::createWithSpriteFrameName("snoop_s.png"_spr, 1.f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    themeSprite->setScale(1.1f);
+    auto themeButton = CCMenuItemSpriteExtra::create(
+        themeSprite,
+        this,
+        menu_selector(JFPMenuLayer::onThemeButton)
+    );
+    themeButton->setID("jfp-theme-button"_spr);
 
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName("options_s.png"_spr, 1.f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     optionSprite->setScale(1.1f);
@@ -97,7 +103,6 @@ bool JFPMenuLayer::init() {
         ->setGap(7.f)
     );
     menu->addChild(autoGenButton);
-    menu->addChild(corrozSprite);
     menu->addChild(optionButton);
     addChild(menu);
 
@@ -122,6 +127,16 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
     }
     auto newScene = PlayLayer::scene(level, false, false);
     CCDirector::sharedDirector()->replaceScene(newScene); // seems to work better than pushScene?
+}
+
+void JFPMenuLayer::onThemeButton(CCObject*) {
+    auto themeSelectLayer = GJDropDownLayer::create("Select Theme", 220.f, true);
+    themeSelectLayer->setID("theme-select-layer"_spr);
+    themeSelectLayer->setContentSize({640, 480});
+    themeSelectLayer->setAnchorPoint({0.5f, 0.5f});
+    themeSelectLayer->setPosition({0, 0});
+    themeSelectLayer->addChild(ThemeSelectLayer::create());
+    CCScene::get()->addChild(themeSelectLayer);
 }
 
 CCScene* JFPMenuLayer::scene() {
