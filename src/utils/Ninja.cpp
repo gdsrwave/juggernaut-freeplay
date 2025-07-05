@@ -166,7 +166,13 @@ LevelData generateJFPLevel() {
     std::string corridorRulesStr = Mod::get()->getSettingValue<std::string>("corridor-rules");
     CorridorRules optCorridorRules = CorridorRules::Unrestricted;
     if (corridorRulesStr == "No Spam") optCorridorRules = CorridorRules::NoSpam;
-    else if (corridorRulesStr == "No Spam, No Zigzagging") optCorridorRules = CorridorRules::NoSpamNoZigzag;
+    else if (corridorRulesStr == "NSNZ") optCorridorRules = CorridorRules::NoSpamNoZigzag;
+    else if (corridorRulesStr == "Juggernaut") optCorridorRules = CorridorRules::Juggernaut;
+
+    std::string portalInputsStr = Mod::get()->getSettingValue<std::string>("portal-inputs");
+    PortalInputs optPortalInputs = PortalInputs::Both;
+    if (portalInputsStr == "Releases") optPortalInputs = PortalInputs::Releases;
+    else if (portalInputsStr == "Holds") optPortalInputs = PortalInputs::Holds;
 
     std::string portalsStr = Mod::get()->getSettingValue<std::string>("portals");
     Difficulties optPortals = Difficulties::None;
@@ -195,6 +201,7 @@ LevelData generateJFPLevel() {
     SpeedChange optMaxSpeed = getSpeedChange(maxSpeedStr);
     SpeedChange optMinSpeed = getSpeedChange(minSpeedStr);
     SpeedChange optSpeed = getSpeedChange(speedStr);
+    log::info("{}", static_cast<int>(optSpeed));
     float maxSpeedFloat = convertSpeedToFloat(optMaxSpeed);
     float minSpeedFloat = convertSpeedToFloat(optMinSpeed);
 
@@ -271,10 +278,10 @@ LevelData generateJFPLevel() {
     int spikeOdds = 1;
     int last_tp = 0;
 
-    static bool spikeActive = false;
-    static bool spikeSideHold = false;
-    static int spikeSide = 0;
-    static float currentSpeed = convertSpeedToFloat(optSpeed);
+    bool spikeActive = false;
+    bool spikeSideHold = false;
+    int spikeSide = 0;
+    float currentSpeed = convertSpeedToFloat(optSpeed);
 
     levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
 
@@ -327,11 +334,19 @@ LevelData generateJFPLevel() {
 
     // future prior block to generate lengths of different biomes
 
+    bool specialRules = false;
     Portals currentPortal;
     for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
         currentPortal = Portals::None;
+
+        if ( optCorridorRules == CorridorRules::Juggernaut &&
+            (cY == minHeight+30 || cY == maxHeight-30) &&
+            (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == maxHeight))
+        ) {
+            specialRules = true;
+        }
 
         if (i < 3) {
             y_swing = corridorStart[i];
@@ -363,22 +378,35 @@ LevelData generateJFPLevel() {
             optCorridorRules == CorridorRules::NoSpamNoZigzag && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
         } else if ((
-            optCorridorRules == CorridorRules::NoSpam ||
-            optCorridorRules == CorridorRules::NoSpamNoZigzag
+            optCorridorRules != CorridorRules::Unrestricted
         ) && (
-            orientationMatch(segments, i, antiSpam1) ||
-            (i == 2 && orientationMatch(segments, i, {1, -1}))
+            orientationMatch(segments, i, antiSpam1) &&
+            (optCorridorRules != CorridorRules::Juggernaut ||
+                !(gravity && cY != maxHeight)
+            )
         )) {
             y_swing = -1;
         } else if ((
-            optCorridorRules == CorridorRules::NoSpam ||
-            optCorridorRules == CorridorRules::NoSpamNoZigzag
-        ) && orientationMatch(segments, i, antiSpam2)) {
+            optCorridorRules != CorridorRules::Unrestricted
+        ) && (
+            orientationMatch(segments, i, antiSpam2) &&
+            (optCorridorRules != CorridorRules::Juggernaut ||
+                !(!gravity && cY != minHeight)))) {
             y_swing = 1;
         } else {
             // randomized coinflip condition
-            y_swing = segmentRNG() % 2;
-            if (y_swing == 0) y_swing = -1;
+            if (specialRules) {
+                y_swing = segmentRNG() % 4;
+                if (y_swing > 0) y_swing = 1;
+                else y_swing = -1;
+                if (cY >= maxHeight - 30) {
+                    y_swing *= -1;
+                }
+            } else {
+                // 50/50 corridor direction flip
+                y_swing = segmentRNG() % 2;
+                if (y_swing == 0) y_swing = -1;
+            }
         }
         
         if ((i == 0 && y_swing == 1) || segments[i - 1].y_swing == y_swing) {
@@ -391,6 +419,23 @@ LevelData generateJFPLevel() {
 
         if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
+
+            // portal input type check
+            if (
+                optPortalInputs == PortalInputs::Releases && (
+                    (segments[i - 1].y_swing == 1 && y_swing == -1 && !gravity) ||
+                    (segments[i - 1].y_swing == -1 && y_swing == 1 && gravity)
+                )
+            ) {
+                portalOdds = -1;
+            } else if (
+                optPortalInputs == PortalInputs::Holds && (
+                    (segments[i - 1].y_swing == 1 && y_swing == -1 && gravity) ||
+                    (segments[i - 1].y_swing == -1 && y_swing == 1 && !gravity)
+                )
+            ) {
+                portalOdds = -1;
+            }
             fakePortalOdds = optFakePortals ? (fakePortalRNG() % 12) : 1;
             if (portalOdds == 0 || fakePortalOdds == 0) {
                 //log::info("Portal odds: {} {} {}", portalOdds, cX, cY);

@@ -37,7 +37,8 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Unrestricted = 2
+    Juggernaut = 2,
+    Unrestricted = 3
 };
 
 enum class Difficulties : int {
@@ -52,6 +53,12 @@ enum class Portals : int {
     Gravity = 1,
     Fake = 2,
     Teleportal = 3
+};
+
+enum class PortalInputs : int {
+    Both = 0,
+    Releases = 1,
+    Holds = 2
 };
 
 enum class Biomes : int {

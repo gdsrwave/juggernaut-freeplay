@@ -10,9 +10,6 @@ file(GLOB_RECURSE SOURCES
     src/*.cpp
 )
 
-# Explicitly add the file that defines jfpSoundtrack and jfpSoundtrackSize
-list(APPEND SOURCES src/utils/constants.cpp)
-
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 if (NOT DEFINED ENV{GEODE_SDK})

@@ -95,16 +95,31 @@ bool JFPMenuLayer::init() {
     );
     autoGenButton->setID("auto-generate-level-button"_spr);
 
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(JFPMenuLayer::onInfoButton)
+    );
+    infoBtn->setID("info-button"_spr);
+    infoBtn->setPosition({(windowDim.width/2)-25, (windowDim.height/2)-25});
+    infoBtn->setSizeMult(1.1f);
+    
     auto menu = CCMenu::create();
+    auto menu2 = CCMenu::create();
 
-    menu->setPosition({windowDim.width / 2, windowDim.height / 2 + 50.f});
-    menu->setContentSize({ 300.f, 240.f });
+    menu->setID("center-menu"_spr);
+    menu->setPosition({windowDim.width/2, windowDim.height/2+50.f});
+    menu->setContentSize({300.f, 240.f});
     menu->setLayout(RowLayout::create()
         ->setGap(7.f)
     );
     menu->addChild(autoGenButton);
     menu->addChild(optionButton);
     addChild(menu);
+
+    menu2->setID("inf-menu"_spr);
+    menu2->addChild(infoBtn);
+    addChild(menu2);
 
     menu->updateLayout();
 
@@ -137,6 +152,19 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
     themeSelectLayer->setPosition({0, 0});
     themeSelectLayer->addChild(ThemeSelectLayer::create());
     CCScene::get()->addChild(themeSelectLayer);
+}
+
+void JFPMenuLayer::onInfoButton(CCObject*) {
+    auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
+        "Advanced Random Wave Generation\n\n"
+        "Contributors: Martin C (gdsrwave), Syzzi (theyareonit)\n\n"
+        "Special thanks to early playtesters and believers!\n",
+        "I get it man",
+        nullptr,
+        400.f
+    );
+    infoLayer->setID("jfp-info-layer"_spr);
+    infoLayer->show();
 }
 
 CCScene* JFPMenuLayer::scene() {

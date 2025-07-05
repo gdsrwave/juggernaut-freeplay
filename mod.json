@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.4.0",
+	"version": "v1.4.6",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -74,13 +74,15 @@
 		},
 		"corridor-rules": {
 			"name": "Corridor Rules",
+			"description": "Rules for corridor gen. NSNZ = No Spam, No Zigzagging.",
 			"type": "string",
 			"one-of": [
-				"No Spam, No Zigzagging",
+				"NSNZ",
 				"No Spam",
+				"Juggernaut",
 				"Unrestricted"
 			],
-			"default": "No Spam, No Zigzagging"
+			"default": "NSNZ"
 		},
 		"low-vis": {
 			"name": "Low Visibility",
@@ -103,6 +105,16 @@
 				"Aggressive"
 			],
 			"default": "None"
+		},
+		"portal-inputs": {
+			"name": "Portal Inputs",
+			"type": "string",
+			"one-of": [
+				"Both",
+				"Releases",
+				"Holds"
+			],
+			"default": "Both"
 		},
 		"color-mode": {
 			"name": "Color Mode",

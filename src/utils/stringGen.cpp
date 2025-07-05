@@ -12,7 +12,7 @@
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "constants.hpp"
 #include "StringGen.hpp"
-#include "ThemeGen.hpp"
+#include "Theming.hpp"
 #include "Ninja.hpp"
 
 using namespace geode::prelude;
@@ -315,13 +315,13 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,155,12;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,155,12,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
             std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
             meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},155,12;", fmt::arg("dist", 391+meters*30), fmt::arg("meterLabel", meterLabel));
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},155,12,25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }

@@ -59,6 +59,7 @@ protected:
     void onClick(CCObject*) {
         log::info("Reloading themes...");
         setupJFPDirectories(true);
+        FLAlertLayer::create("JFP", "Successfully reloaded default themes.", "Okay buddy...")->show();
     }
 
     void onCommit() override {}

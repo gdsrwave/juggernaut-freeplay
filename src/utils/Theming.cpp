@@ -1,4 +1,4 @@
-#include "ThemeGen.hpp"
+#include "Theming.hpp"
 #include <string>
 #include <fstream>
 #include <Geode/Geode.hpp>
