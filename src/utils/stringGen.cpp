@@ -17,17 +17,9 @@
 
 using namespace geode::prelude;
 
-// checks if a certain orientation pattern matches the most recent previous orientations
-// essentially this checks if the end of one int [] equals another int []
-
 bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
 
 namespace JFPGen {
-
-
-
-// checks if a certain orientation pattern matches the most recent previous orientations
-// essentially this checks if the end of one int [] equals another int []
 
 static void orientationShift(int prevO[11], int newO) {
 	for (int i = 0; i < 10; i++) {
@@ -226,7 +218,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         if (seg.options.speedChange != SpeedChange::None) {
             int speedID = convertSpeed(seg.options.speedChange);
 
-            int spY = y + corridorHeight / 2 + (corridorHeight / 4) * (seg.y_swing == 1 ? -1 : 1);
+            int spY = y + corridorHeight/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
             int spR = seg.y_swing == 1 ? -45 : 45;
             double speedFactor = 0.5 * (corridorHeight / 60.0);
             level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1,155,1;",

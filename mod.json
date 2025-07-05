@@ -15,7 +15,8 @@
 			]
 		},
 		"files": [
-			"resources/themes/*.jfpt"
+			"resources/themes/*.jfpt",
+			"resources/jfpLoop.mp3"
 		]
 	},
 	"dependencies": {
@@ -74,7 +75,7 @@
 		},
 		"corridor-rules": {
 			"name": "Corridor Rules",
-			"description": "Rules for corridor gen. NSNZ = No Spam, No Zigzagging.",
+			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
 			"type": "string",
 			"one-of": [
 				"NSNZ",

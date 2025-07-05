@@ -26,6 +26,7 @@ using namespace gmd;
 $on_mod(Loaded) {
     try {
         setupJFPDirectories();
+        setupJFPMusic();
     } catch (const std::exception& e) {
         log::error("Error setting up JFP directories: {}", e.what());
     }

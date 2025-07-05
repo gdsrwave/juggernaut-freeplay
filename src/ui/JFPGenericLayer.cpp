@@ -54,6 +54,7 @@ bool JFPGenericLayer::init() {
 }
 
 void JFPGenericLayer::keyBackClicked() {
+    GameManager::sharedState()->playMenuMusic();
     CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 }
 

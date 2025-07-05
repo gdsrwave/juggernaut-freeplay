@@ -13,8 +13,13 @@ class $modify(PlayLayer) {
 	}
 
 	void onQuit() {
+		auto storedState = state;
 		state = JFPGen::AutoJFP::NotInAutoJFP;
 		PlayLayer::onQuit();
+		if (storedState != JFPGen::AutoJFP::NotInAutoJFP && !GameManager::sharedState()->getGameVariable("0122")) {
+			auto bgmPath = CCFileUtils::sharedFileUtils()->getWritablePath() + "jfpLoop.mp3";
+    		FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
+		}
 	}
 
 	void resetLevel() {

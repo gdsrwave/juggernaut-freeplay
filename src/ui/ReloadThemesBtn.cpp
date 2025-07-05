@@ -41,12 +41,20 @@ protected:
         if (!SettingNodeV3::init(setting, width))
             return false;
 
-        auto buttonSprite = ButtonSprite::create("Reload Themes", 0, false, "bigFont.fnt", "GJ_button_04.png", 0, 0.9f);;
-        buttonSprite->setScale(.5f);
-        auto button = CCMenuItemSpriteExtra::create(
-            buttonSprite, this, menu_selector(ReloadThemesBtnNodeV3::onClick)
+        auto folderSprite = ButtonSprite::create("Open Folder", 0, false, "bigFont.fnt", "GJ_button_04.png", 0, 0.75f);;
+        folderSprite->setScale(.5f);
+        auto folderButton = CCMenuItemSpriteExtra::create(
+            folderSprite, this, menu_selector(ReloadThemesBtnNodeV3::onClickFolder)
         );
-        this->getButtonMenu()->addChildAtPosition(button, Anchor::Center);
+        
+        auto reloadSprite = ButtonSprite::create("Reload Themes", 0, false, "bigFont.fnt", "GJ_button_04.png", 0, 0.75f);;
+        reloadSprite->setScale(.5f);
+        auto reloadButton = CCMenuItemSpriteExtra::create(
+            reloadSprite, this, menu_selector(ReloadThemesBtnNodeV3::onClickReload)
+        );
+
+        this->getButtonMenu()->addChildAtPosition(folderButton, Anchor::Left);
+        this->getButtonMenu()->addChildAtPosition(reloadButton, Anchor::Right);
         this->getButtonMenu()->setPosition(getContentSize() / 2);
         this->getButtonMenu()->setAnchorPoint({ .5f, .5f });
         this->getButtonMenu()->updateLayout();
@@ -56,10 +64,35 @@ protected:
         return true;
     }
 
-    void onClick(CCObject*) {
-        log::info("Reloading themes...");
-        setupJFPDirectories(true);
-        FLAlertLayer::create("JFP", "Successfully reloaded default themes.", "Okay buddy...")->show();
+    void onClickFolder(CCObject*) {
+        auto localPath = CCFileUtils::sharedFileUtils();
+        file::openFolder(localPath->getWritablePath() + "jfp\\themes\\");
+    }
+
+    void onClickReload(CCObject*) {
+        
+        std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+        std::vector<std::string> themeFiles;
+        for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
+            auto fileStr = fileName.path().filename().string();
+            if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
+                themeFiles.push_back(fileStr);
+            }
+        }
+        std::string message = "Are you sure you want to reload default themes?\n The following files will be overwritten:\n" +
+            fmt::format("{}", fmt::join(themeFiles, ", "));
+        auto jfpConfirm = createQuickPopup(
+            "JFP",
+            message.c_str(),
+            "No", "Yes",
+            [&](bool b1, bool b2) {
+                if (b2) {
+                    log::info("Reloading themes...");
+                    setupJFPDirectories(true);
+                    FLAlertLayer::create("JFP", "Successfully reloaded default themes.", "OK")->show();
+                };
+            }
+        );
     }
 
     void onCommit() override {}

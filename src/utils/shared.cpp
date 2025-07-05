@@ -14,6 +14,18 @@
 // bring used namespaces to scope
 using namespace geode::prelude;
 
+GJGameLevel* commonLevel = nullptr;
+
+void setupJFPMusic() {
+    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
+    std::string dstPath = appdataDir + "jfpLoop.mp3";
+    if (!std::filesystem::exists(dstPath)) {
+        std::filesystem::copy_file(srcPath, dstPath);
+        log::info("Copied JFP loop: {}", dstPath);
+    };
+}
+
 void setupJFPDirectories(bool bypass = false) {
     auto localPath = CCFileUtils::sharedFileUtils();
     std::string jfpDir = localPath->getWritablePath() + "jfp\\";
@@ -22,7 +34,6 @@ void setupJFPDirectories(bool bypass = false) {
         (void)file::createDirectory(jfpDir);
     }
     std::string themesDir = localPath->getWritablePath() + "jfp\\themes\\";
-    log::info("Themes directory: {}", themesDir);
     // Create the directory if it doesn't exist
     bool contFlag = bypass;
     if (!std::filesystem::is_directory(themesDir)) {
@@ -39,7 +50,7 @@ void setupJFPDirectories(bool bypass = false) {
             if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
                 std::filesystem::path srcPath = srcDir / fileStr;
                 std::string dstPath = themesDir + fileStr;
-                
+
                 try {
                     if (std::filesystem::exists(dstPath)) {
                         if (bypass) {
