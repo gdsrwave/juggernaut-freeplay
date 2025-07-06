@@ -2,9 +2,83 @@
 #include "Ninja.hpp"
 #include <random>
 #include "constants.hpp"
+#include <map>
 
 using namespace geode::prelude;
 JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
+// Use std::vector for colorBank, but provide a pushOrReplaceColor function
+std::vector<JFPGen::Color> colorBank = {
+    JFPGen::Color{1000, {128, 128, 128}, false, 1.0f},
+    JFPGen::Color{1001, {25, 24, 24}, false, 1.0f},
+    JFPGen::Color{1009, {0, 102, 255}, false, 1.0f},
+    JFPGen::Color{1002, {255, 255, 255}, true, 1.0f},
+    JFPGen::Color{1004, {255, 255, 255}, false, 1.0f},
+    JFPGen::Color{1005, {255, 75, 0}, true, 1.0f},
+    JFPGen::Color{1006, {255, 75, 0}, true, 1.0f},
+    JFPGen::Color{101, {0, 0, 0}, false, 1.0f}
+};
+
+void pushColor(const JFPGen::Color& color) {
+    for (auto& c : colorBank) {
+        if (c.slot == color.slot) {
+            c = color;
+            return;
+        }
+    }
+    colorBank.push_back(color);
+}
+
+std::map<std::string, std::string> kBank = {
+    {"kA13", "0"},
+    {"kA15", "0"},
+    {"kA16", "0"},
+    {"kA14", ""},
+    {"kA6", "0"},
+    {"kA7", "7"},
+    {"kA25", "0"},
+    {"kA17", "0"},
+    {"kA18", "0"},
+    {"kS39", "0"},
+    {"kA2", "0"},
+    {"kA3", "0"},
+    {"kA8", "0"},
+    {"kA4", "1"},
+    {"kA9", "0"},
+    {"kA10", "0"},
+    {"kA22", "0"},
+    {"kA23", "0"},
+    {"kA24", "0"},
+    {"kA27", "0"},
+    {"kA40", "0"},
+    {"kA41", "0"},
+    {"kA42", "0"},
+    {"kA28", "0"},
+    {"kA29", "0"},
+    {"kA31", "0"},
+    {"kA32", "0"},
+    {"kA36", "0"},
+    {"kA43", "0"},
+    {"kA44", "0"},
+    {"kA45", "0"},
+    {"kA46", "0"},
+    {"kA33", "0"},
+    {"kA34", "0"},
+    {"kA35", "0"},
+    {"kA37", "0"},
+    {"kA38", "0"},
+    {"kA39", "0"},
+    {"kA19", "0"},
+    {"kA26", "0"},
+    {"kA20", "0"},
+    {"kA21", "0"},
+    {"kA11", "0"}
+};
+
+std::map<std::string, bool> overrideBank = {
+    {"override-base", false},
+    {"override-enddown", false},
+    {"override-endup", false}
+};
 
 namespace JFPGen {
 
@@ -81,7 +155,7 @@ LevelData generateJFPLevel() {
     const bool optFakePortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
     const bool optFuzz = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
     const bool optLowvis = Mod::get()->getSettingValue<bool>("low-vis");
-    const bool optTeleportals = false; // TODO
+    const bool optTeleportals = false; // TODO: Bring Teleportals back
     bool gravity = Mod::get()->getSettingValue<bool>("upside-start");
     std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
     ColorMode optColorMode = ColorMode::Washed;
@@ -92,7 +166,13 @@ LevelData generateJFPLevel() {
     std::string corridorRulesStr = Mod::get()->getSettingValue<std::string>("corridor-rules");
     CorridorRules optCorridorRules = CorridorRules::Unrestricted;
     if (corridorRulesStr == "No Spam") optCorridorRules = CorridorRules::NoSpam;
-    else if (corridorRulesStr == "No Spam, No Zigzagging") optCorridorRules = CorridorRules::NoSpamNoZigzag;
+    else if (corridorRulesStr == "NSNZ") optCorridorRules = CorridorRules::NoSpamNoZigzag;
+    else if (corridorRulesStr == "Juggernaut") optCorridorRules = CorridorRules::Juggernaut;
+
+    std::string portalInputsStr = Mod::get()->getSettingValue<std::string>("portal-inputs");
+    PortalInputs optPortalInputs = PortalInputs::Both;
+    if (portalInputsStr == "Releases") optPortalInputs = PortalInputs::Releases;
+    else if (portalInputsStr == "Holds") optPortalInputs = PortalInputs::Holds;
 
     std::string portalsStr = Mod::get()->getSettingValue<std::string>("portals");
     Difficulties optPortals = Difficulties::None;
@@ -127,7 +207,8 @@ LevelData generateJFPLevel() {
     const double optCorridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 
     const int64_t optLength = Mod::get()->getSettingValue<int64_t>("length");
-    int y_swing = 0, cX = 435, cY = 195;
+    int y_swing = 0, cX = 345, cY = 135;
+    //cY = 75;
     int maxHeight = 195, minHeight = 45;
 
     std::vector<Segment> segments(optLength);
@@ -145,11 +226,12 @@ LevelData generateJFPLevel() {
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
+                    .startingSize = WaveSize::Big,
                     .maxHeight = maxHeight,
                     .minHeight = minHeight,
                     .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
                     .startingGravity = gravity,
-                    .startingSpeed = SpeedChange::Speed3x,
+                    .startingSpeed = optSpeed,
                     .colorMode = optColorMode,
                     .bgColor = {28, 28, 28},
                     .lineColor = {255, 255, 255}
@@ -159,14 +241,14 @@ LevelData generateJFPLevel() {
         }
     };
 
-    // random device setups - used with modulo to generate numbers in a range
+    // random device setups - used with modulo to generate integers in a range
     std::random_device rd;
     unsigned int seed = 0;
     try {
         std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
-        if (!seedStr.empty() && state == AutoJFP::NotInAutoJFP) seed = std::stoul(seedStr);
+        if (!seedStr.empty()) seed = std::stoul(seedStr);
     } catch(const std::exception &e) {
-        return levelData; // Return base level data on error
+        return levelData;
     }
     if (seed == 0) seed = rd();
     levelData.seed = seed;
@@ -176,6 +258,8 @@ LevelData generateJFPLevel() {
     std::mt19937 fakePortalRNG(seed);
     std::mt19937 songRNG(seed);
     std::mt19937 bgRNG(seed);
+    std::mt19937 speedRNG(seed);
+    std::mt19937 spikeRNG(seed);
 
     std::vector<int> antiZigzagMax = {1,-1,1,-1,-1,1,-1,1,1,-1};
     std::vector<int> antiZigzagMin = {-1,1,-1,1,1,-1,1,-1,-1,1};
@@ -187,16 +271,19 @@ LevelData generateJFPLevel() {
     std::vector<int> antiTpspam2 = {1, 1};
     std::vector<int> antiSpeedspam1 = {1, -1};
     std::vector<int> antiSpeedspam2 = {-1, 1};
+    
+    const int corridorStart[3] = {1, 1, -1};
 
     int portalOdds = 1;
     int fakePortalOdds = 1;
     int spikeOdds = 1;
     int last_tp = 0;
 
-    static bool spikeActive = false;
-    static bool spikeSideHold = false;
-    static int spikeSide = 0;
-    static float currentSpeed = convertSpeedToFloat(optSpeed);
+    bool spikeActive = false;
+    bool midCorridorPortal = true;
+    bool spikeSideHold = false;
+    int spikeSide = 0;
+    float currentSpeed = convertSpeedToFloat(optSpeed);
 
     levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
 
@@ -236,7 +323,7 @@ LevelData generateJFPLevel() {
             if (backgroundColor[i] > 255) backgroundColor[i] = 255;
         }
     }
-    // Set the background and line colors in the level data
+
     levelData.biomes[0].options.bgColor[0] = backgroundColor[0];
     levelData.biomes[0].options.bgColor[1] = backgroundColor[1];
     levelData.biomes[0].options.bgColor[2] = backgroundColor[2];
@@ -244,15 +331,30 @@ LevelData generateJFPLevel() {
     levelData.biomes[0].options.lineColor[1] = lineColor[1];
     levelData.biomes[0].options.lineColor[2] = lineColor[2];
 
+    pushColor(JFPGen::Color{1000, backgroundColor, false, 1.0f});
+    pushColor(JFPGen::Color{1004, lineColor, false, 1.0f});
+
+
     // future prior block to generate lengths of different biomes
 
+    bool size = static_cast<bool>(levelData.biomes[0].options.startingSize);
+    bool specialRules = false;
     Portals currentPortal;
     for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
         currentPortal = Portals::None;
 
-        if (last_tp <= 1 && i > 1) {
+        if (optCorridorRules == CorridorRules::Juggernaut &&
+            (cY == minHeight+30 || cY == maxHeight-30) &&
+            (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == maxHeight))
+        ) {
+            specialRules = true;
+        }
+
+        if (i < 3) {
+            y_swing = corridorStart[i];
+        } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
         } else if (
             cY >= maxHeight &&(segments[i - 1].y_swing == 1 ||
@@ -265,7 +367,7 @@ LevelData generateJFPLevel() {
         )) {
             y_swing = -1;
         } else if (
-            cY <= minHeight && (segments[i - 1].y_swing == -1 ||
+            cY <= (size ? minHeight + 30 : minHeight) && (segments[i - 1].y_swing == -1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMin)
@@ -280,34 +382,86 @@ LevelData generateJFPLevel() {
             optCorridorRules == CorridorRules::NoSpamNoZigzag && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
         } else if ((
-            optCorridorRules == CorridorRules::NoSpam ||
-            optCorridorRules == CorridorRules::NoSpamNoZigzag
+            optCorridorRules != CorridorRules::Unrestricted
         ) && (
-            orientationMatch(segments, i, antiSpam1) ||
-            (i == 2 && orientationMatch(segments, i, {1, -1}))
+            orientationMatch(segments, i, antiSpam1) &&
+            (optCorridorRules != CorridorRules::Juggernaut ||
+                !(gravity && cY != maxHeight)
+            )
         )) {
             y_swing = -1;
         } else if ((
-            optCorridorRules == CorridorRules::NoSpam ||
-            optCorridorRules == CorridorRules::NoSpamNoZigzag
-        ) && orientationMatch(segments, i, antiSpam2)) {
+            optCorridorRules != CorridorRules::Unrestricted
+        ) && (
+            orientationMatch(segments, i, antiSpam2) &&
+            (optCorridorRules != CorridorRules::Juggernaut ||
+                !(!gravity && cY != minHeight)))) {
             y_swing = 1;
         } else {
-            // randomized coinflip condition
-            y_swing = segmentRNG() % 2;
-            if (y_swing == 0) y_swing = -1;
+            // special condition used in Juggernaut rules
+            if (specialRules) {
+                y_swing = segmentRNG() % 4;
+                if (y_swing > 0) y_swing = 1;
+                else y_swing = -1;
+                if (cY >= maxHeight - 30) {
+                    y_swing *= -1;
+                }
+            } else {
+                // 50/50 corridor direction flip
+                y_swing = segmentRNG() % 2;
+                if (y_swing == 0) y_swing = -1;
+            }
         }
         
-        if ((i == 0 && y_swing == -1) || segments[i - 1].y_swing == y_swing) {
-            cY += (y_swing * 30);
+        if ((i == 0 && y_swing == 1) || segments[i - 1].y_swing == y_swing) {
+            int mfac = 1;
+            if (size) mfac = 2;
+            cY += mfac * (y_swing * 30);
         }
 
         for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
             volatile auto _ = fakePortalRNG();
         }
-
+        if (i > 0 && optPortals == Difficulties::Aggressive && portalRNG() % 4 == 0) {
+            if (y_swing == 1 &&
+                orientationMatch(segments, i, {1, 1, 1, 1}) &&
+                gravity && midCorridorPortal
+            ) {
+                segments[i-2].options.isPortal = Portals::Gravity;
+                segments[i-2].options.gravity = !segments[i-2].options.gravity;
+                segments[i-1].options.gravity = !segments[i-1].options.gravity;
+                gravity = !gravity;
+                midCorridorPortal = false;
+            } else if (y_swing == -1 &&
+                orientationMatch(segments, i, {-1, -1, -1, -1}) &&
+                !gravity && midCorridorPortal
+            ) {
+                segments[i-2].options.isPortal = Portals::Gravity;
+                segments[i-2].options.gravity = !segments[i-2].options.gravity;
+                segments[i-1].options.gravity = !segments[i-1].options.gravity;
+                gravity = !gravity;
+                midCorridorPortal = false;
+            }
+        }
+        if (!midCorridorPortal && segments[i - 1].y_swing != y_swing) midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
+
+            if (
+                optPortalInputs == PortalInputs::Releases && (
+                    (segments[i - 1].y_swing == 1 && y_swing == -1 && !gravity) ||
+                    (segments[i - 1].y_swing == -1 && y_swing == 1 && gravity)
+                )
+            ) {
+                portalOdds = -1;
+            } else if (
+                optPortalInputs == PortalInputs::Holds && (
+                    (segments[i - 1].y_swing == 1 && y_swing == -1 && gravity) ||
+                    (segments[i - 1].y_swing == -1 && y_swing == 1 && !gravity)
+                )
+            ) {
+                portalOdds = -1;
+            }
             fakePortalOdds = optFakePortals ? (fakePortalRNG() % 12) : 1;
             if (portalOdds == 0 || fakePortalOdds == 0) {
                 //log::info("Portal odds: {} {} {}", portalOdds, cX, cY);
@@ -324,7 +478,7 @@ LevelData generateJFPLevel() {
             ) &&
             maxSpeedFloat > minSpeedFloat
         ) {
-            speedOdds = portalRNG() % speedOddsMap.at(cspeedStr); // You can adjust the odds as needed
+            speedOdds = speedRNG() % speedOddsMap.at(cspeedStr); // You can adjust the odds as needed
             if (speedOdds == 0) {
                 double speedFactor = 0.5 * (optCorridorHeight / 60.0);
                 int spY = cY + optCorridorHeight / 2 + (optCorridorHeight / 4) * ((segments[i].y_swing == 1) ? -1 : 1);
@@ -334,7 +488,7 @@ LevelData generateJFPLevel() {
 
                 for (int tries = 0; tries < 10 && newSpeed == currentSpeed; ++tries) {
                     if (maxSpeedFloat == 0.5) break;
-                    newSpeed = minSpeedMod + (songRNG() % (static_cast<int>(maxSpeedFloat - minSpeedMod + 1)));
+                    newSpeed = minSpeedMod + (speedRNG() % (static_cast<int>(maxSpeedFloat - minSpeedMod + 1)));
                     if (newSpeed == 0) newSpeed = 0.5;
                 }
                 SpeedChange newSpeedEnum = convertFloatSpeedEnum(newSpeed);
@@ -345,17 +499,17 @@ LevelData generateJFPLevel() {
 
         if (optSpikes && segments[i - 1].y_swing != y_swing) {
             spikeSideHold = false;
-            spikeOdds = segmentRNG() % 6;
+            spikeOdds = spikeRNG() % 6;
             if (spikeOdds == 0) {
                 if (spikeActive) spikeSideHold = true;
                 spikeActive = true;
-                if (!spikeSideHold) spikeSide = segmentRNG() % 2;
+                if (!spikeSideHold) spikeSide = spikeRNG() % 2;
             } else {
                 spikeActive = false;
             }
         }
 
-        if (spikeActive) {
+        if (optSpikes && spikeActive) {
             segments[i].options.isSpikeM = true;
         }
 
@@ -401,7 +555,7 @@ LevelData generateJFPLevel() {
             int portalOdds = portalRNG() % ((last_tp < 40) ? (50 - last_tp) : 10);
             if (portalOdds == 0) {
                 segments[i].options.isPortal = Portals::Teleportal;
-                last_tp = 0; // reset teleportal counter
+                last_tp = 0;
             }
         }
         if (last_tp < 40) last_tp += 1;

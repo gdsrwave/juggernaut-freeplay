@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.3.1",
+	"version": "v1.4.7",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -13,7 +13,11 @@
 			"jfp": [
 				"resources/*.png"
 			]
-		}
+		},
+		"files": [
+			"resources/themes/*.jfpt",
+			"resources/jfpLoop.mp3"
+		]
 	},
 	"dependencies": {
 		"hjfod.gmd-api": {
@@ -71,13 +75,15 @@
 		},
 		"corridor-rules": {
 			"name": "Corridor Rules",
+			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
 			"type": "string",
 			"one-of": [
-				"No Spam, No Zigzagging",
+				"NSNZ",
 				"No Spam",
+				"Juggernaut",
 				"Unrestricted"
 			],
-			"default": "No Spam, No Zigzagging"
+			"default": "NSNZ"
 		},
 		"low-vis": {
 			"name": "Low Visibility",
@@ -100,6 +106,16 @@
 				"Aggressive"
 			],
 			"default": "None"
+		},
+		"portal-inputs": {
+			"name": "Portal Inputs",
+			"type": "string",
+			"one-of": [
+				"Both",
+				"Releases",
+				"Holds"
+			],
+			"default": "Both"
 		},
 		"color-mode": {
 			"name": "Color Mode",
@@ -166,6 +182,20 @@
 			"name": "Start Upside Down",
 			"type": "bool",
 			"default": false
+		},
+        "themes-title": {
+            "type": "title",
+            "name": "Theming"
+        },
+		"active-theme": {
+			"name": "Theme",
+			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
+			"type": "string",
+			"default": ""
+		},
+		"reload-themes": {
+			"name": "",
+			"type": "custom:reload-themes"
 		},
         "meta-title": {
             "type": "title",

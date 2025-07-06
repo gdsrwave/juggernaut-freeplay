@@ -2,7 +2,7 @@
 #include "Geode/binding/FLAlertLayer.hpp"
 #include "Geode/utils/cocos.hpp"
 
-// JFPGenericLayer.cpp (and all subsequent layer source files) take reference from Cvolton/BetterInfo
+// JFPGenericLayer.cpp takes reference from Cvolton/BetterInfo
 // https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
 JFPGenericLayer* JFPGenericLayer::create() {
@@ -54,6 +54,7 @@ bool JFPGenericLayer::init() {
 }
 
 void JFPGenericLayer::keyBackClicked() {
+    GameManager::sharedState()->playMenuMusic();
     CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
 }
 

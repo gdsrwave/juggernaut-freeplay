@@ -16,8 +16,7 @@ enum class AutoJFP : int {
     PlayingLevel = 4,
 };
 
-extern const std::string levelBaseSeg1;
-extern const std::string levelBaseSeg2;
+extern const std::string levelBaseSeg;
 extern const std::string levelStartingBase;
 extern const std::string lowVis;
 

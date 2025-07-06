@@ -8,14 +8,23 @@
 #include <Geode/utils/file.hpp>
 #include <random>
 #include <cmath>
+#include <filesystem>
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include "utils/constants.hpp"
 #include "utils/StringGen.hpp"
 #include "ui/JFPMenuLayer.hpp"
+#include "utils/shared.hpp"
 
-// bring used namespaces to scope
 using namespace geode::prelude;
 using namespace gmd;
 
 
+$on_mod(Loaded) {
+    try {
+        setupJFPDirectories();
+        setupJFPMusic();
+    } catch (const std::exception& e) {
+        log::error("Error setting up JFP directories: {}", e.what());
+    }
+}

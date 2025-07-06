@@ -2,6 +2,11 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include "constants.hpp"
+#include <map>
+
+
+extern JFPGen::AutoJFP state;
 
 namespace JFPGen {
 
@@ -23,6 +28,11 @@ enum class Visibility : int {
     Hidden = 2
 };
 
+enum class WaveSize : int {
+    Big = 0,
+    Mini = 1
+};
+
 enum class ColorMode : int {
     Washed = 0,
     AllColors = 1,
@@ -33,7 +43,8 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Unrestricted = 2
+    Juggernaut = 2,
+    Unrestricted = 3
 };
 
 enum class Difficulties : int {
@@ -48,6 +59,12 @@ enum class Portals : int {
     Gravity = 1,
     Fake = 2,
     Teleportal = 3
+};
+
+enum class PortalInputs : int {
+    Both = 0,
+    Releases = 1,
+    Holds = 2
 };
 
 enum class Biomes : int {
@@ -79,6 +96,7 @@ struct Segment {
 struct BiomeOptions {
     int length;
     int corridorHeight;
+    WaveSize startingSize;
     int maxHeight;
     int minHeight;
     Visibility visibility = Visibility::Standard;
@@ -105,6 +123,15 @@ struct LevelData {
     std::vector<Biome> biomes;
 };
 
+struct Color {
+    int slot = 13;
+    std::array<int, 3> rgb = {255, 255, 255};
+    bool blending = false;
+    float opacity = 1.f;
+    int copyColor = -1;
+    std::string special = "";
+};
+
 int convertFloatSpeed(float speed);
 SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
@@ -115,3 +142,9 @@ bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::
 LevelData generateJFPLevel();
 
 }
+
+extern std::map<std::string, std::string> kBank;
+extern std::map<std::string, bool> overrideBank;
+extern std::vector<JFPGen::Color> colorBank;
+
+void pushColor(const JFPGen::Color& color);
