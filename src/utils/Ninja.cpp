@@ -422,27 +422,26 @@ LevelData generateJFPLevel() {
         for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
             volatile auto _ = fakePortalRNG();
         }
-
-        if (i > 0 &&
-            optPortals == Difficulties::Aggressive && y_swing == 1 &&
-            orientationMatch(segments, i, {1, 1, 1, 1}) &&
-            gravity && midCorridorPortal
-        ) {
-            segments[i-2].options.isPortal = Portals::Gravity;
-            segments[i-2].options.gravity = !segments[i-2].options.gravity;
-            segments[i-1].options.gravity = !segments[i-1].options.gravity;
-            gravity = !gravity;
-            midCorridorPortal = false;
-        } else if (i > 0 &&
-            optPortals == Difficulties::Aggressive && y_swing == -1 &&
-            orientationMatch(segments, i, {-1, -1, -1, -1}) &&
-            !gravity && midCorridorPortal
-        ) {
-            segments[i-2].options.isPortal = Portals::Gravity;
-            segments[i-2].options.gravity = !segments[i-2].options.gravity;
-            segments[i-1].options.gravity = !segments[i-1].options.gravity;
-            gravity = !gravity;
-            midCorridorPortal = false;
+        if (i > 0 && optPortals == Difficulties::Aggressive && portalRNG() % 4 == 0) {
+            if (y_swing == 1 &&
+                orientationMatch(segments, i, {1, 1, 1, 1}) &&
+                gravity && midCorridorPortal
+            ) {
+                segments[i-2].options.isPortal = Portals::Gravity;
+                segments[i-2].options.gravity = !segments[i-2].options.gravity;
+                segments[i-1].options.gravity = !segments[i-1].options.gravity;
+                gravity = !gravity;
+                midCorridorPortal = false;
+            } else if (y_swing == -1 &&
+                orientationMatch(segments, i, {-1, -1, -1, -1}) &&
+                !gravity && midCorridorPortal
+            ) {
+                segments[i-2].options.isPortal = Portals::Gravity;
+                segments[i-2].options.gravity = !segments[i-2].options.gravity;
+                segments[i-1].options.gravity = !segments[i-1].options.gravity;
+                gravity = !gravity;
+                midCorridorPortal = false;
+            }
         }
         if (!midCorridorPortal && segments[i - 1].y_swing != y_swing) midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
