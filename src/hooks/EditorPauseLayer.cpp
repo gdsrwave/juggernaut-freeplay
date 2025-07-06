@@ -17,18 +17,24 @@ class $modify(EditorPauseLayer) {
     void onSave(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
             FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+        } else {
+            EditorPauseLayer::onSave(obj);
         }
     }
 
     void onSaveAndPlay(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
             FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+        } else {
+            EditorPauseLayer::onSaveAndPlay(obj);
         }
     }
 
     void onSaveAndExit(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
             FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+        } else {
+            EditorPauseLayer::onSaveAndExit(obj);
         }
     }
 };
