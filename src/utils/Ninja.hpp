@@ -5,6 +5,7 @@
 #include "constants.hpp"
 #include <map>
 
+
 extern JFPGen::AutoJFP state;
 
 namespace JFPGen {
@@ -122,7 +123,6 @@ struct LevelData {
     std::vector<Biome> biomes;
 };
 
-// Represents a color in RGBA format
 struct Color {
     int slot = 13;
     std::array<int, 3> rgb = {255, 255, 255};

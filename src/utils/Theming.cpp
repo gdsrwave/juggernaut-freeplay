@@ -11,33 +11,31 @@ using namespace geode::prelude;
 namespace ThemeGen {
 
 std::array<int, 3> hexToColor(const std::string& hex) {
-    std::array<int, 3> color = {255, 255, 255}; // Default to white
+    std::array<int, 3> color = {255, 255, 255};
     if (hex.size() == 7 && hex[0] == '#') {
         try {
-            color[0] = std::stoi(hex.substr(1, 2), nullptr, 16); // red
-            color[1] = std::stoi(hex.substr(3, 2), nullptr, 16); // green
-            color[2] = std::stoi(hex.substr(5, 2), nullptr, 16); // blue
-        } catch (const std::invalid_argument&) {
-            // Leave as default
-        }
+            color[0] = std::stoi(hex.substr(1, 2), nullptr, 16);
+            color[1] = std::stoi(hex.substr(3, 2), nullptr, 16);
+            color[2] = std::stoi(hex.substr(5, 2), nullptr, 16);
+        } catch (const std::invalid_argument&) {}
     }
     return color;
 }
 
 std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHeight, int minHeight, int corridorHeight) {
 
-    // Remove "Add Block" prefix if present
+    // remove legacy prefix
     if (addBlockLine.empty()) return "";
     const std::string prefix = "Add Block";
     auto pos = addBlockLine.find(prefix);
     if (pos != std::string::npos) {
         addBlockLine = addBlockLine.substr(pos + prefix.length());
     }
-    // Trim leading/trailing spaces
+
     addBlockLine.erase(0, addBlockLine.find_first_not_of(" \t\r\n"));
     addBlockLine.erase(addBlockLine.find_last_not_of(" \t\r\n") + 1);
 
-    // Find and evaluate bracketed expressions
+    // eval bracketed arithmetic
     std::string result;
     size_t i = 0;
     while (i < addBlockLine.size()) {
@@ -45,12 +43,11 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
             size_t end = addBlockLine.find(']', i);
             if (end != std::string::npos) {
                 std::string expr = addBlockLine.substr(i + 1, end - i - 1);
-                // Remove spaces
+
                 expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
                 float value = 0.f;
 
-                // Support for [X+C+60] and similar
-                // Replace X, Y, C with their values
+                // throw in xpos, ypos, corridorheight values
                 std::string parsedExpr;
                 for (size_t j = 0; j < expr.size(); ++j) {
                     if (expr[j] == 'X') {
@@ -95,18 +92,16 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
                 }
                 value = acc;
 
-                // Y bounds check
+                // TODO: rework this section - it's intended to cut around the field of view to prevent obj hell
                 if (expr.find("Y") != std::string::npos) {
                     if (value > 375 || value < -15) {
                         return "";
                     }
                 }
 
-                // Replace with evaluated value (as int)
                 result += std::to_string(static_cast<int>(value));
                 i = end + 1;
             } else {
-                // Malformed, just copy
                 result += addBlockLine[i++];
             }
         } else {
@@ -114,7 +109,6 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
         }
     }
 
-    // Add semicolon if not present
     if (!result.empty() && result.back() != ';') {
         result += ';';
     }
@@ -122,22 +116,21 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
 }
 
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) {
-    // iterate per line
     bool inMetadata = false;
     bool inAddcolor = false;
     bool inKValues = false;
     bool inMatches = false;
-    InOverride inOverride = InOverride::None;
     bool inPattern = false;
-    ThemeMetadata metadata;
-    std::string themeGen = "";
+    InOverride inOverride = InOverride::None;
+
     RepeatingPattern patternGen = RepeatingPattern();
+    ThemeMatch cMP = ThemeMatch();
+    ThemeMetadata metadata;
     std::vector<std::vector<ThemeMatch>> matchConditions;
     std::vector<ThemeMatch> cMPList;
-    ThemeMatch cMP = ThemeMatch();
     std::vector<RepeatingPattern> repeatingPatterns;
+    std::string themeGen = "";
 
-    // reset overrideBank values to false
     overrideBank["override-base"] = false;
     overrideBank["override-enddown"] = false;
     overrideBank["override-endup"] = false;
@@ -164,7 +157,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     file.close();
 
     for (const auto& l : lines) {
-        // yes this is quite ugly, but
+        // TODO: rework into a switch case or a neater conditional
         if (l == "# metadata #") {
             inMetadata = true;
             continue;
@@ -178,7 +171,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 std::string key = l.substr(0, pos);
                 std::string value = l.substr(pos + 1);
 
-                // Trim leading/trailing spaces
                 key.erase(0, key.find_first_not_of(" \t\r\n"));
                 key.erase(key.find_last_not_of(" \t\r\n") + 1);
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
@@ -210,7 +202,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 std::string key = l.substr(0, pos);
                 std::string value = l.substr(pos + 1);
 
-                // Trim leading/trailing spaces
                 key.erase(0, key.find_first_not_of(" \t\r\n"));
                 key.erase(key.find_last_not_of(" \t\r\n") + 1);
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
@@ -238,7 +229,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     try {
                         sColor.opacity = std::stof(value);
                     } catch (const std::invalid_argument&) {
-                        sColor.opacity = 1.0f; // Default opacity
+                        sColor.opacity = 1.0f;
                     }
                 } else if (key == "Special") {
                     sColor.special = value;
@@ -308,7 +299,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 std::string key = l.substr(0, pos);
                 std::string value = l.substr(pos + 1);
 
-                // Trim leading/trailing spaces
                 key.erase(0, key.find_first_not_of(" \t\r\n"));
                 key.erase(key.find_last_not_of(" \t\r\n") + 1);
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
@@ -320,21 +310,18 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         }
 
         if (!l.empty() && 
-            ((l.find("# if corridor ") == 0 && l.back() == '#') ||
-             (l.find("# else if corridor ") == 0 && l.back() == '#'))) {
+                ((l.find("# if corridor ") == 0 && l.back() == '#') ||
+                (l.find("# else if corridor ") == 0 && l.back() == '#'))) {
             inMatches = true;
             if (l.find("# if corridor ") == 0) {
-                // Start a new match pattern
                 cMP = ThemeMatch();
             } else if (l.find("# else if corridor ") == 0) {
-                // Continue the current match pattern
                 if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
                     cMPList.push_back(cMP);
-                    cMP = ThemeMatch(); // Reset for next match
+                    cMP = ThemeMatch();
                 }
             }
-            // Handle corridor match condition here
-            // Remove "# if corridor " from beginning and " #" from end
+
             std::string condition = l.substr(2, l.size() - 4);
             std::vector<std::string> tokens;
             size_t start = 0, end = 0;
@@ -346,7 +333,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
             for (const auto& token : tokens) {
                 std::string t = token;
-                // Trim
+
                 t.erase(0, t.find_first_not_of(" \t\r\n"));
                 t.erase(t.find_last_not_of(" \t\r\n") + 1);
 
@@ -362,11 +349,10 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     continue;
                 }
 
-                // trim
                 t.erase(0, t.find_first_not_of(" \t\r\n"));
                 t.erase(t.find_last_not_of(" \t\r\n") + 1);
 
-                // parse pattern/offset
+                // parse y_swing from brackets
                 std::vector<int> pattern;
                 int offset = 0;
                 size_t bracketStart = t.find('[');
@@ -385,7 +371,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     offset = displacement;
                 }
 
-                // remove spaces from symbols
                 t.erase(remove_if(t.begin(), t.end(), ::isspace), t.end());
                 for (char ch : t) {
                     if (ch == '+') pattern.push_back(1);
@@ -397,7 +382,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     patternStr += std::to_string(pattern[pi]);
                     if (pi + 1 < pattern.size()) patternStr += ",";
                 }
-                //log::info("Not matches pattern: {} [{}]", patternStr, offset);
+
                 if (!isNot) {
                     cMP.pattern = pattern;
                     cMP.offset = offset;
@@ -409,20 +394,19 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             continue;
         }
         if (l == "# else #") {
-            // Continue the current match pattern
             if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
                 cMPList.push_back(cMP);
-                cMP = ThemeMatch(); // Reset for next match
+                cMP = ThemeMatch();
                 cMP.pattern = {};
                 cMP.offset = 0;
                 cMP.notPatterns = {};
                 cMP.notOffsets = {};
-                cMP._else = true; // Mark as else condition
+                cMP._else = true;
             }
             continue;
         } else if (l == "# end if #") {
-            // Store the current match pattern
             inMatches = false;
+
             if (cMP._else || !cMP.pattern.empty() || !cMP.notPatterns.empty()) {
                 cMPList.push_back(cMP);
                 cMP = ThemeMatch();
@@ -443,7 +427,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             inPattern = false;
             if (!patternGen.data.empty()) {
                 repeatingPatterns.push_back(patternGen);
-                patternGen = RepeatingPattern(); // Reset for next pattern
+                patternGen = RepeatingPattern();
             }
             continue;
         }
@@ -453,7 +437,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 std::string key = l.substr(0, pos);
                 std::string value = l.substr(pos + 1);
 
-                // Trim leading/trailing spaces
                 key.erase(0, key.find_first_not_of(" \t\r\n"));
                 key.erase(key.find_last_not_of(" \t\r\n") + 1);
                 value.erase(0, value.find_first_not_of(" \t\r\n"));
@@ -471,7 +454,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     try {
                         patternGen.repeat = std::stoi(value);
                         if (patternGen.repeat < 1) {
-                            patternGen.repeat = 1; // Ensure minimum repeat value
+                            patternGen.repeat = 1;
                         }
                     } catch (...) {
                         patternGen.repeat = 30;
@@ -501,7 +484,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
     for (int i = 0; i < biome.segments.size(); i++) {
 
-        // Check all match patterns
         for (const auto& condition : matchConditions) {
             for (const auto& match : condition) {
                 bool successfulMatch = false;
@@ -532,38 +514,13 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     successfulMatch = true;
                 }
 
-                // If the match was found, we can break out of the loop
                 if (successfulMatch) {
                     break;
                 }
             }
         }
     }
-
-    // std::vector<std::string> jfptFiles;
-    // for (const auto& entry : std::filesystem::directory_iterator(fp)) {
-    //     if (entry.is_regular_file() && entry.path().extension() == ".jfpt") {
-    //         jfptFiles.push_back(entry.path().string());
-    //     }
-    // }
-    // if (jfptFiles.empty()) {
-    //     return "";
-    // }
-
-    // open 
-
-    // metadata/end metadata parse and info capture
-
-    // add color channel capture
-
-    // corridor matches conditionals (store in data structure) or just "corridor" if no conditions
-
-    // repeating patterns
-
-    // overrides (cubeobjects, visibility, ending, extra stuff etc.)
-
-
-    // loop through leveldata.biomes, tile based on theme characteristics
+    
     return themeGen;
 }
 

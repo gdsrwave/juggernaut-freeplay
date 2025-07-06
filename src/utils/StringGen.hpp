@@ -33,7 +33,7 @@ std::string jfpNewStringGen(LevelData ldata);
 std::string colorStringGen();
 std::string kStringGen();
 
-} // namespace JFPGen
+}
 
 
 #ifndef JFPSTATE

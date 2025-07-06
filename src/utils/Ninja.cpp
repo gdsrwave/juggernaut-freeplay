@@ -155,7 +155,7 @@ LevelData generateJFPLevel() {
     const bool optFakePortals = Mod::get()->getSettingValue<bool>("fake-gravity-portals");
     const bool optFuzz = Mod::get()->getSettingValue<bool>("fuzzy-spikes");
     const bool optLowvis = Mod::get()->getSettingValue<bool>("low-vis");
-    const bool optTeleportals = false; // TODO
+    const bool optTeleportals = false; // TODO: Bring Teleportals back
     bool gravity = Mod::get()->getSettingValue<bool>("upside-start");
     std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
     ColorMode optColorMode = ColorMode::Washed;
@@ -241,14 +241,14 @@ LevelData generateJFPLevel() {
         }
     };
 
-    // random device setups - used with modulo to generate numbers in a range
+    // random device setups - used with modulo to generate integers in a range
     std::random_device rd;
     unsigned int seed = 0;
     try {
         std::string seedStr = Mod::get()->getSettingValue<std::string>("seed");
         if (!seedStr.empty()) seed = std::stoul(seedStr);
     } catch(const std::exception &e) {
-        return levelData; // Return base level data on error
+        return levelData;
     }
     if (seed == 0) seed = rd();
     levelData.seed = seed;
@@ -323,7 +323,7 @@ LevelData generateJFPLevel() {
             if (backgroundColor[i] > 255) backgroundColor[i] = 255;
         }
     }
-    // Set the background and line colors in the level data
+
     levelData.biomes[0].options.bgColor[0] = backgroundColor[0];
     levelData.biomes[0].options.bgColor[1] = backgroundColor[1];
     levelData.biomes[0].options.bgColor[2] = backgroundColor[2];
@@ -398,7 +398,7 @@ LevelData generateJFPLevel() {
                 !(!gravity && cY != minHeight)))) {
             y_swing = 1;
         } else {
-            // randomized coinflip condition
+            // special condition used in Juggernaut rules
             if (specialRules) {
                 y_swing = segmentRNG() % 4;
                 if (y_swing > 0) y_swing = 1;
@@ -447,7 +447,6 @@ LevelData generateJFPLevel() {
         if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
 
-            // portal input type check
             if (
                 optPortalInputs == PortalInputs::Releases && (
                     (segments[i - 1].y_swing == 1 && y_swing == -1 && !gravity) ||
@@ -556,7 +555,7 @@ LevelData generateJFPLevel() {
             int portalOdds = portalRNG() % ((last_tp < 40) ? (50 - last_tp) : 10);
             if (portalOdds == 0) {
                 segments[i].options.isPortal = Portals::Teleportal;
-                last_tp = 0; // reset teleportal counter
+                last_tp = 0;
             }
         }
         if (last_tp < 40) last_tp += 1;

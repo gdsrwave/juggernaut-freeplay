@@ -6,8 +6,6 @@
 
 namespace ThemeGen {
 
-
-// Represents a theme with a name and a set of colors
 struct Theme {
     std::string name;
 };
@@ -23,7 +21,7 @@ struct ThemeMetadata {
 };
 
 struct ThemeMatch {
-    std::vector<int> pattern; // TODO: make this a list of list of ints
+    std::vector<int> pattern;
     std::vector<std::vector<int>> notPatterns;
     int offset;
     std::vector<int> notOffsets;
@@ -50,12 +48,10 @@ enum class InOverride : int {
     Speed = 8
 };
 
-// Generates a theme based on a seed or preset and level data
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 
-// Utility to convert hex color string to Color
 std::array<int, 3> hexToColor(const std::string& hex);
 
-} // namespace ThemeGen
+}

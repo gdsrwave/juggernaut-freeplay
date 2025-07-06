@@ -66,7 +66,7 @@ bool JFPMenuLayer::init() {
     understandableSprite->setZOrder(-1);
     addChild(understandableSprite);
 
-    // auto title = CCLabelBMFont::create("JFP Menu", "goldFont.fnt");
+    // auto title = CCLabelBMFont::create("Seed", "goldFont.fnt");
     // title->setPosition({windowDim.width / 2, windowDim.height / 2 + 100.f});
     // title->setColor({255, 255, 255});
     // title->setScale(1.5f);
@@ -105,7 +105,6 @@ bool JFPMenuLayer::init() {
         menu_selector(JFPMenuLayer::onInfoButton)
     );
     infoBtn->setID("info-button"_spr);
-    //infoBtn->setPosition({(windowDim.width/2)-25, (windowDim.height/2)-25});
     infoBtn->setSizeMult(1.1f);
 
     auto garageBtn = CCMenuItemSpriteExtra::create(
@@ -134,7 +133,6 @@ bool JFPMenuLayer::init() {
     menu2->setPosition({216, 265});
     menu2->addChild(garageBtn);
     menu2->addChild(infoBtn);
-    //menu2->setPosition({(windowDim.width/2)-25.f, (windowDim.height/2)-25.f});
     menu2->setLayout(RowLayout::create()
         ->setGap(7.f)
     );
@@ -149,8 +147,6 @@ bool JFPMenuLayer::init() {
 
 void JFPMenuLayer::onOptionButton(CCObject*) {
     openSettingsPopup(Mod::get());
-    // auto searchLayer = LevelSearchLayer::scene(0);
-    // CCDirector::sharedDirector()->pushScene(searchLayer);
 }
 
 void JFPMenuLayer::keyBackClicked() {

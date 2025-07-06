@@ -152,6 +152,8 @@ std::string jfpNewStringGen(LevelData ldata) {
         x = seg.coords.first;
         y = seg.coords.second;
         y_swing = seg.y_swing;
+
+        // Slopes
         if (biome.options.startingSize == WaveSize::Mini) {
             level += fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
                 fmt::arg("x", x),
@@ -178,7 +180,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             );
         }
 
-        // Corners
+        // Corner-Pieces
         std::string cornerBuild = "";
         if (i > 1 && cornerPieces) {
             if (biome.segments[i - 1].y_swing == 1 && y_swing == -1) {
@@ -198,7 +200,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             level += cornerBuild;
         }
 
-        // Gravity portals
+        // Gravity-Portals
         if (seg.options.isPortal == Portals::Gravity) {
             double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
             int portalNormal = corridorHeight / 10;
@@ -234,7 +236,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             level += portalBuild;
         }
 
-        // Speed changes
+        // Speed-Changes
         if (seg.options.speedChange != SpeedChange::None) {
             int speedID = convertSpeed(seg.options.speedChange);
 
@@ -250,7 +252,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             );
         }
 
-        // Corridor spikes
+        // Corridor-Spikes
         if (seg.options.isSpikeM) {
             spikeSide = seg.options.spikeSide;
             int xS = x - 6;
@@ -290,7 +292,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         }
     }
     
-    // Ending Connectors
+    // Ending-Connectors
     if (
         biome.segments.back().y_swing == 1 && !overrideBank["override-endup"] ||
         biome.segments.back().y_swing == -1 && !overrideBank["override-enddown"]
@@ -314,7 +316,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         }
     }
 
-    // Meter marks
+    // Meter-Marks
     const bool marks = Mod::get()->getSettingValue<bool>("marks");
     const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
     std::string metermarksStr = "";
@@ -345,6 +347,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         level += lowVis;
     }
 
+    // Upside-Start
     if (biome.options.startingGravity) {
         level += "1,11,2,299,3,99,6,45,32,0.57;";
     }

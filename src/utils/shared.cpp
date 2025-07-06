@@ -11,7 +11,6 @@
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 
-// bring used namespaces to scope
 using namespace geode::prelude;
 
 GJGameLevel* commonLevel = nullptr;
@@ -34,7 +33,7 @@ void setupJFPDirectories(bool bypass = false) {
         (void)file::createDirectory(jfpDir);
     }
     std::string themesDir = localPath->getWritablePath() + "jfp\\themes\\";
-    // Create the directory if it doesn't exist
+    
     bool contFlag = bypass;
     if (!std::filesystem::is_directory(themesDir)) {
         (void)file::createDirectory(themesDir);

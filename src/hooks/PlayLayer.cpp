@@ -92,6 +92,7 @@ class $modify(PlayLayer) {
 			PlayLayer::updateProgressbar();
 			return;
 		}
+		
 		const std::string& progressText = m_percentageLabel->getString();
 		int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345);
 		int length = Mod::get()->getSettingValue<int>("length");
@@ -105,8 +106,7 @@ class $modify(PlayLayer) {
 			playerMeters = 0;
 		} else {
 			playerMeters = playerMeters / 30;
-			if (playerMeters < 0) playerMeters = 0; // prevent negative meters
-			// temp solution
+			if (playerMeters < 0) playerMeters = 0;
 			if (playerMeters > length) {
 				playerMeters = length;
 			}

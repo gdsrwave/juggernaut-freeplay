@@ -9,13 +9,13 @@
 #include <cmath>
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
+#include <Geode/modify/CreatorLayer.hpp>
 #include "../ui/JFPMenuLayer.hpp"
 #include "../utils/StringGen.hpp"
 
-// bring used namespaces to scope
 using namespace geode::prelude;
 
-#include <Geode/modify/CreatorLayer.hpp>
+
 class $modify(GenerateLevelLayer, CreatorLayer) {
 
 	bool init() {

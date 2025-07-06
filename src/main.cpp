@@ -16,11 +16,8 @@
 #include "ui/JFPMenuLayer.hpp"
 #include "utils/shared.hpp"
 
-// bring used namespaces to scope
 using namespace geode::prelude;
 using namespace gmd;
-
-
 
 
 $on_mod(Loaded) {
