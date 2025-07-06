@@ -196,7 +196,7 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
 void JFPMenuLayer::onInfoButton(CCObject*) {
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
         "Advanced Random Wave Generation\n\n"
-        "Contributors:\nMartin C. (gdsrwave)\ntheyareonit\n\n"
+        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
         "Special thanks to the Geode community and to early playtesters!\n",
         "I get it man",
         nullptr,

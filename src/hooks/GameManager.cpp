@@ -9,7 +9,8 @@ using namespace geode::prelude;
 class $modify(GameManager) {
     void returnToLastScene(GJGameLevel* p0) {
         if (jfpActive) {
-            CCDirector::sharedDirector()->replaceScene(JFPMenuLayer::scene());
+		    auto jlTransition = CCTransitionFade::create(0.5, JFPMenuLayer::scene());
+            CCDirector::sharedDirector()->replaceScene(jlTransition);
 
             jfpActive = false;
         } else {
