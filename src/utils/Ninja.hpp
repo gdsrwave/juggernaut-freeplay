@@ -27,6 +27,11 @@ enum class Visibility : int {
     Hidden = 2
 };
 
+enum class WaveSize : int {
+    Big = 0,
+    Mini = 1
+};
+
 enum class ColorMode : int {
     Washed = 0,
     AllColors = 1,
@@ -90,6 +95,7 @@ struct Segment {
 struct BiomeOptions {
     int length;
     int corridorHeight;
+    WaveSize startingSize;
     int maxHeight;
     int minHeight;
     Visibility visibility = Visibility::Standard;

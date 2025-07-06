@@ -201,7 +201,6 @@ LevelData generateJFPLevel() {
     SpeedChange optMaxSpeed = getSpeedChange(maxSpeedStr);
     SpeedChange optMinSpeed = getSpeedChange(minSpeedStr);
     SpeedChange optSpeed = getSpeedChange(speedStr);
-    log::info("{}", static_cast<int>(optSpeed));
     float maxSpeedFloat = convertSpeedToFloat(optMaxSpeed);
     float minSpeedFloat = convertSpeedToFloat(optMinSpeed);
 
@@ -209,6 +208,7 @@ LevelData generateJFPLevel() {
 
     const int64_t optLength = Mod::get()->getSettingValue<int64_t>("length");
     int y_swing = 0, cX = 345, cY = 135;
+    //cY = 75;
     int maxHeight = 195, minHeight = 45;
 
     std::vector<Segment> segments(optLength);
@@ -226,6 +226,7 @@ LevelData generateJFPLevel() {
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
+                    .startingSize = WaveSize::Big,
                     .maxHeight = maxHeight,
                     .minHeight = minHeight,
                     .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
@@ -279,6 +280,7 @@ LevelData generateJFPLevel() {
     int last_tp = 0;
 
     bool spikeActive = false;
+    bool midCorridorPortal = true;
     bool spikeSideHold = false;
     int spikeSide = 0;
     float currentSpeed = convertSpeedToFloat(optSpeed);
@@ -332,8 +334,10 @@ LevelData generateJFPLevel() {
     pushColor(JFPGen::Color{1000, backgroundColor, false, 1.0f});
     pushColor(JFPGen::Color{1004, lineColor, false, 1.0f});
 
+
     // future prior block to generate lengths of different biomes
 
+    bool size = static_cast<bool>(levelData.biomes[0].options.startingSize);
     bool specialRules = false;
     Portals currentPortal;
     for (int i = 0; i < optLength; i++) {
@@ -341,7 +345,7 @@ LevelData generateJFPLevel() {
         y_swing = 0;
         currentPortal = Portals::None;
 
-        if ( optCorridorRules == CorridorRules::Juggernaut &&
+        if (optCorridorRules == CorridorRules::Juggernaut &&
             (cY == minHeight+30 || cY == maxHeight-30) &&
             (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == maxHeight))
         ) {
@@ -363,7 +367,7 @@ LevelData generateJFPLevel() {
         )) {
             y_swing = -1;
         } else if (
-            cY <= minHeight && (segments[i - 1].y_swing == -1 ||
+            cY <= (size ? minHeight + 30 : minHeight) && (segments[i - 1].y_swing == -1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMin)
@@ -410,13 +414,37 @@ LevelData generateJFPLevel() {
         }
         
         if ((i == 0 && y_swing == 1) || segments[i - 1].y_swing == y_swing) {
-            cY += (y_swing * 30);
+            int mfac = 1;
+            if (size) mfac = 2;
+            cY += mfac * (y_swing * 30);
         }
 
         for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
             volatile auto _ = fakePortalRNG();
         }
 
+        if (i > 0 &&
+            optPortals == Difficulties::Aggressive && y_swing == 1 &&
+            orientationMatch(segments, i, {1, 1, 1, 1}) &&
+            gravity && midCorridorPortal
+        ) {
+            segments[i-2].options.isPortal = Portals::Gravity;
+            segments[i-2].options.gravity = !segments[i-2].options.gravity;
+            segments[i-1].options.gravity = !segments[i-1].options.gravity;
+            gravity = !gravity;
+            midCorridorPortal = false;
+        } else if (i > 0 &&
+            optPortals == Difficulties::Aggressive && y_swing == -1 &&
+            orientationMatch(segments, i, {-1, -1, -1, -1}) &&
+            !gravity && midCorridorPortal
+        ) {
+            segments[i-2].options.isPortal = Portals::Gravity;
+            segments[i-2].options.gravity = !segments[i-2].options.gravity;
+            segments[i-1].options.gravity = !segments[i-1].options.gravity;
+            gravity = !gravity;
+            midCorridorPortal = false;
+        }
+        if (!midCorridorPortal && segments[i - 1].y_swing != y_swing) midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None && segments[i - 1].y_swing != y_swing) {
             portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
 
