@@ -3,7 +3,9 @@
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
+#include <Geode/utils/general.hpp>
 #include "../utils/shared.hpp"
+#include "../utils/Ninja.hpp"
 
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
@@ -66,11 +68,15 @@ bool JFPMenuLayer::init() {
     understandableSprite->setZOrder(-1);
     addChild(understandableSprite);
 
-    // auto title = CCLabelBMFont::create("Seed", "goldFont.fnt");
-    // title->setPosition({windowDim.width / 2, windowDim.height / 2 + 100.f});
-    // title->setColor({255, 255, 255});
-    // title->setScale(1.5f);
-    // addChild(title);
+    std::string displaySeed = "Seed: " + (globalSeed ? std::to_string(globalSeed) : "N/A");
+    auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "goldFont.fnt");
+    auto seedCopyBtn = CCMenuItemSpriteExtra::create(
+        seedTxt,
+        this,
+        menu_selector(JFPMenuLayer::onCopySeed)
+    );
+    seedCopyBtn->setID("jfp-seed-button"_spr);
+    seedCopyBtn->setSizeMult(1.1f);
 
     auto themeSprite = CircleButtonSprite::createWithSpriteFrameName("snoop_s.png"_spr, 1.f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     themeSprite->setScale(1.1f);
@@ -117,6 +123,7 @@ bool JFPMenuLayer::init() {
     
     auto menu = CCMenu::create();
     auto menu2 = CCMenu::create();
+    auto menu3 = CCMenu::create();
 
     menu->setID("center-menu"_spr);
     menu->setPosition({windowDim.width/2, windowDim.height/2+50.f});
@@ -140,13 +147,31 @@ bool JFPMenuLayer::init() {
     garageBtn->setPositionY(garageBtn->getPositionY()-14.f);
     addChild(menu2);
 
+    menu3->setLayout(ColumnLayout::create()
+        ->setGap(5.f)
+    );
+    menu3->setPosition({windowDim.width / 2, windowDim.height / 2 - 10.f});
+    menu3->setScale(0.7f);
+    menu3->addChild(seedCopyBtn);
+    addChild(menu3);
+
     menu->updateLayout();
+    menu3->updateLayout();
 
     return true;
 }
 
 void JFPMenuLayer::onOptionButton(CCObject*) {
     openSettingsPopup(Mod::get());
+}
+
+void JFPMenuLayer::onCopySeed(CCObject*) {
+    if(globalSeed) {
+        clipboard::write(std::to_string(globalSeed));
+        Notification::create("Copied to clipboard", NotificationIcon::None, 0.5f)->show();
+    } else {
+        Notification::create("No seed has been generated!", NotificationIcon::Error, 0.5f)->show();
+    }
 }
 
 void JFPMenuLayer::keyBackClicked() {
@@ -193,7 +218,7 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
         "Advanced Random Wave Generation\n\n"
         "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
-        "Special thanks to the Geode community and to early playtesters!\n",
+        "Special thanks to the Geode community and to early playtesters; you made this possible!\n",
         "I get it man",
         nullptr,
         400.f

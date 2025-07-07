@@ -34,17 +34,11 @@
             "type": "title",
             "name": "Generation"
         },
-		"speed": {
-			"name": "Speed",
+		"seed": {
+			"name": "RNG Seed",
+			"description": "Set seed for level generation (0 for random)",
 			"type": "string",
-			"one-of": [
-				"0.5x",
-				"1x",
-				"2x",
-				"3x",
-				"4x"
-			],
-			"default": "3x"
+			"default": ""
 		},
 		"length": {
 			"name": "Length",
@@ -52,11 +46,78 @@
 			"type": "int",
 			"default": 400
 		},
-		"seed": {
-			"name": "RNG Seed",
-			"description": "Set seed for level generation (0 for random)",
+		"corridor-rules": {
+			"name": "Corridor Rules",
+			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
 			"type": "string",
-			"default": ""
+			"one-of": [
+				"NSNZ",
+				"No Spam",
+				"Juggernaut",
+				"Unrestricted"
+			],
+			"default": "NSNZ"
+		},
+		"corridor-height": {
+			"name": "Corridor Height (units)",
+			"description":  "1 block = 30 units. In JFP, length is measured in meters and height in units.",
+			"type": "float",
+			"default": 60
+		},
+		"corridor-widening": {
+			"name": "Bigwave Corridor Widening",
+			"description": "Widen the big wave corridor's bounds to the screen edges.",
+			"type": "bool",
+			"default": false
+		},
+		"miniwave-widening": {
+			"name": "Miniwave Corridor Widening",
+			"description": "Widen the miniwave corridor's bounds to 1 block off-screen.",
+			"type": "bool",
+			"default": false
+		},
+		"size-title": {
+			"name": "Wave Size",
+			"type": "title"
+		},
+		"starting-size": {
+			"name": "Starting Size",
+			"type": "string",
+			"one-of": [
+				"Big",
+				"Mini"
+			],
+			"default": "Big"
+		},
+		"wave-size": {
+			"name": "Size Portals",
+			"type": "bool",
+			"default": false
+		},
+		"transition type": {
+			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
+			"name": "Size Transition Type",
+			"type": "string",
+			"one-of": [
+				"Type A",
+				"Type B"
+			],
+			"default": "Type A"
+		},
+		"size-scheme": {
+			"name": "Placement Scheme",
+			"description": "Standard sets an equal chance for both big and miniwave portals, while Heavy options skew the odds one way.",
+			"type": "string",
+			"one-of": [
+				"Standard",
+				"Big Heavy",
+				"Mini Heavy"
+			],
+			"default": "Standard"
+		},
+		"cosmetic-title": {
+			"name": "Cosmetic",
+			"type": "title"
 		},
 		"marks": {
 			"name": "Meter Marks",
@@ -73,49 +134,10 @@
 			"type": "bool",
 			"default": false
 		},
-		"corridor-rules": {
-			"name": "Corridor Rules",
-			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
-			"type": "string",
-			"one-of": [
-				"NSNZ",
-				"No Spam",
-				"Juggernaut",
-				"Unrestricted"
-			],
-			"default": "NSNZ"
-		},
 		"low-vis": {
 			"name": "Low Visibility",
 			"type": "bool",
 			"default": false
-		},
-		"corridor-height": {
-			"name": "Corridor Height (units)",
-			"description":  "1 block = 30 units. In JFP, length is measured in meters and height in units.",
-			"type": "float",
-			"default": 60
-		},
-		"portals": {
-			"name": "Gravity Portal Spawning",
-			"type": "string",
-			"one-of": [
-				"None",
-				"Light",
-				"Balanced",
-				"Aggressive"
-			],
-			"default": "None"
-		},
-		"portal-inputs": {
-			"name": "Portal Inputs",
-			"type": "string",
-			"one-of": [
-				"Both",
-				"Releases",
-				"Holds"
-			],
-			"default": "Both"
 		},
 		"color-mode": {
 			"name": "Color Mode",
@@ -128,15 +150,21 @@
 			],
 			"default": "Washed"
 		},
-		"corridor-spikes": {
-			"name": "Corridor Spikes",
-			"type": "bool",
-			"default": false
+		"speed-title": {
+			"name": "Speed Changes",
+			"type": "title"
 		},
-		"fuzzy-spikes": {
-			"name": "Fuzzy Spikes",
-			"type": "bool",
-			"default": false
+		"speed": {
+			"name": "Speed",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "3x"
 		},
 		"changing-speed": {
 			"name": "Speed Changes",
@@ -173,6 +201,21 @@
 			],
 			"default": "4x"
 		},
+		"portal-title": {
+			"name": "Portals",
+			"type": "title"
+		},
+		"portals": {
+			"name": "Gravity Portal Spawning",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
+		},
 		"fake-gravity-portals": {
 			"name": "Fake Gravity Portals",
 			"type": "bool",
@@ -183,9 +226,33 @@
 			"type": "bool",
 			"default": false
 		},
+		"portal-inputs": {
+			"name": "Portal Inputs",
+			"type": "string",
+			"one-of": [
+				"Both",
+				"Releases",
+				"Holds"
+			],
+			"default": "Both"
+		},
+		"hazards-title": {
+			"name": "Hazards",
+			"type": "title"
+		},
+		"corridor-spikes": {
+			"name": "Corridor Spikes",
+			"type": "bool",
+			"default": false
+		},
+		"fuzzy-spikes": {
+			"name": "Fuzzy Spikes",
+			"type": "bool",
+			"default": false
+		},
         "themes-title": {
-            "type": "title",
-            "name": "Theming"
+            "name": "Theming",
+            "type": "title"
         },
 		"active-theme": {
 			"name": "Theme",

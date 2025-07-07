@@ -141,7 +141,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         args.push_back(fmt::arg("ch_4", 255 + corridorHeight));
         args.push_back(fmt::arg("ch_5", 285 + corridorHeight));
         std::string startingConnectors = fmt::vformat(
-            levelStartingBase,
+            opts.startingSize == WaveSize::Mini ? levelStartingBase2 : levelStartingBase,
             args
         );
         level += startingConnectors;
@@ -163,7 +163,7 @@ std::string jfpNewStringGen(LevelData ldata) {
 
             level += fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
                 fmt::arg("x", x),
-                fmt::arg("yC", y + 15 + corridorHeight),
+                fmt::arg("yC", y - 15 + corridorHeight + (opts.startingSize == WaveSize::Big ? 30 : 0)),
                 fmt::arg("flip", y_swing > 0 ? 1 : 0)
             );
         } else {
@@ -175,7 +175,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             
             level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
                 fmt::arg("x", x),
-                fmt::arg("yC", y + corridorHeight),
+                fmt::arg("yC", y + corridorHeight - (opts.startingSize == WaveSize::Mini ? 30 : 0)),
                 fmt::arg("rot", y_swing > 0 ? 180 : 270)
             );
         }
@@ -243,7 +243,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             int spY = y + corridorHeight/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
             int spR = seg.y_swing == 1 ? -45 : 45;
             double speedFactor = 0.5 * (corridorHeight / 60.0);
-            level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1,155,1;",
+            level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1;",
                     fmt::arg("speedID", speedID),
                     fmt::arg("x", x - 15),
                     fmt::arg("y", spY),
@@ -281,7 +281,7 @@ std::string jfpNewStringGen(LevelData ldata) {
 
         if (seg.options.isFuzzy) {
             std::string colorMod = (biome.options.colorMode == ColorMode::NightMode) ? "21,1004,41,1,43,0a1a0.60a0a0," : "";
-            level += fmt::format("1,1717,2,{x},3,{y},{colorMod}6,{r1},64,1,67,1,155,7;1,1717,2,{x},3,{yC},{colorMod}6,{r2},64,1,67,1,155,7;",
+            level += fmt::format("1,1717,2,{x},3,{y},{colorMod}6,{r1},64,1,67,1;1,1717,2,{x},3,{yC},{colorMod}6,{r2},64,1,67,1;",
                 fmt::arg("x", x),
                 fmt::arg("y", y),
                 fmt::arg("yC", y + corridorHeight),
@@ -304,7 +304,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         } else {
             yT -= 30;
         }
-        while (yT <= (opts.maxHeight + corridorHeight + 30)) {
+        while (yT <= (opts.maxHeight + 30)) {
             xT += 30;
             yT += 30;
             level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
@@ -329,13 +329,13 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,155,12,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
             std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
             meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},155,12,25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }
@@ -348,9 +348,9 @@ std::string jfpNewStringGen(LevelData ldata) {
     }
 
     // Upside-Start
-    if (biome.options.startingGravity) {
-        level += "1,11,2,299,3,99,6,45,32,0.57;";
-    }
+    if (biome.options.startingGravity) level += "1,11,2,299,3,99,6,45,32,0.57;";
+    // Mini start
+    if (biome.options.startingSize == WaveSize::Mini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
     
     // log::info("LevelData: name={}", ldata.name);
     // log::info("Biomes: {}", ldata.biomes.size());

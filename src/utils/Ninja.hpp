@@ -28,9 +28,9 @@ enum class Visibility : int {
     Hidden = 2
 };
 
-enum class WaveSize : int {
-    Big = 0,
-    Mini = 1
+enum class WaveSize : bool {
+    Big = false,
+    Mini = true
 };
 
 enum class ColorMode : int {
@@ -85,6 +85,8 @@ struct SegmentOptions {
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;
+    bool isMini = false;
+    bool isTransition = false;
 };
 
 struct Segment {
@@ -146,5 +148,6 @@ LevelData generateJFPLevel();
 extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
+extern unsigned int globalSeed;
 
 void pushColor(const JFPGen::Color& color);

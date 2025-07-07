@@ -28,6 +28,8 @@ void pushColor(const JFPGen::Color& color) {
     colorBank.push_back(color);
 }
 
+unsigned int globalSeed = 0;
+
 std::map<std::string, std::string> kBank = {
     {"kA13", "0"},
     {"kA15", "0"},
@@ -186,6 +188,10 @@ LevelData generateJFPLevel() {
     else if (cspeedStr == "Balanced") optChangingSpeed = Difficulties::Balanced;
     else if (cspeedStr == "Aggressive") optChangingSpeed = Difficulties::Aggressive;
 
+    std::string ssizeStr = Mod::get()->getSettingValue<std::string>("starting-size");
+    WaveSize optStartingSize = WaveSize::Big;
+    if (ssizeStr == "Mini") optStartingSize = WaveSize::Mini;
+
     auto getSpeedChange = [](const std::string& speedStr) -> SpeedChange {
         if (speedStr == "0.5x") return SpeedChange::Speed05x;
         else if (speedStr == "1x") return SpeedChange::Speed1x;
@@ -208,8 +214,13 @@ LevelData generateJFPLevel() {
 
     const int64_t optLength = Mod::get()->getSettingValue<int64_t>("length");
     int y_swing = 0, cX = 345, cY = 135;
-    //cY = 75;
-    int maxHeight = 195, minHeight = 45;
+    int maxHeight = 255, minHeight = 45;
+
+    if (optStartingSize == WaveSize::Mini) cY -= 30;
+    if (Mod::get()->getSettingValue<bool>("corridor-widening")) {
+        maxHeight += 30;
+        minHeight -= 30;
+    }
 
     std::vector<Segment> segments(optLength);
 
@@ -226,7 +237,7 @@ LevelData generateJFPLevel() {
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
-                    .startingSize = WaveSize::Big,
+                    .startingSize = optStartingSize,
                     .maxHeight = maxHeight,
                     .minHeight = minHeight,
                     .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
@@ -252,6 +263,7 @@ LevelData generateJFPLevel() {
     }
     if (seed == 0) seed = rd();
     levelData.seed = seed;
+    globalSeed = seed;
 
     std::mt19937 segmentRNG(seed);
     std::mt19937 portalRNG(seed);
@@ -283,6 +295,7 @@ LevelData generateJFPLevel() {
     bool midCorridorPortal = true;
     bool spikeSideHold = false;
     int spikeSide = 0;
+    int relMaxHeight = maxHeight - optCorridorHeight;
     float currentSpeed = convertSpeedToFloat(optSpeed);
 
     levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
@@ -346,18 +359,20 @@ LevelData generateJFPLevel() {
         currentPortal = Portals::None;
 
         if (optCorridorRules == CorridorRules::Juggernaut &&
-            (cY == minHeight+30 || cY == maxHeight-30) &&
-            (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == maxHeight))
+            (cY == minHeight+30 || cY == relMaxHeight-30) &&
+            (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == relMaxHeight))
         ) {
             specialRules = true;
         }
 
-        if (i < 3) {
+        if (optStartingSize == WaveSize::Big && i < 3) {
             y_swing = corridorStart[i];
+        } else if (optStartingSize == WaveSize::Mini && i == 0) {
+            y_swing = 1;
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
         } else if (
-            cY >= maxHeight &&(segments[i - 1].y_swing == 1 ||
+            cY >= relMaxHeight &&(segments[i - 1].y_swing == 1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMax)
@@ -386,7 +401,7 @@ LevelData generateJFPLevel() {
         ) && (
             orientationMatch(segments, i, antiSpam1) &&
             (optCorridorRules != CorridorRules::Juggernaut ||
-                !(gravity && cY != maxHeight)
+                !(gravity && cY != relMaxHeight)
             )
         )) {
             y_swing = -1;
@@ -403,7 +418,7 @@ LevelData generateJFPLevel() {
                 y_swing = segmentRNG() % 4;
                 if (y_swing > 0) y_swing = 1;
                 else y_swing = -1;
-                if (cY >= maxHeight - 30) {
+                if (cY >= relMaxHeight - 30) {
                     y_swing *= -1;
                 }
             } else {
@@ -527,7 +542,9 @@ LevelData generateJFPLevel() {
                 .cornerPieces = (optCorridorRules == CorridorRules::Unrestricted),
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? convertFloatSpeedEnum(currentSpeed) : SpeedChange::None,
-                .isFuzzy = segments[i].options.isFuzzy
+                .isFuzzy = segments[i].options.isFuzzy,
+                .isMini = static_cast<bool>(optStartingSize),
+                .isTransition = false
             }
         };
         // log::info(
