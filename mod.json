@@ -89,14 +89,14 @@
 			],
 			"default": "Big"
 		},
-		"wave-size": {
-			"name": "Size Portals",
+		"changing-size": {
+			"name": "Size Portal Spawning",
 			"type": "bool",
 			"default": false
 		},
-		"transition type": {
-			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
+		"transition-type": {
 			"name": "Size Transition Type",
+			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
 			"type": "string",
 			"one-of": [
 				"Type A",
@@ -149,6 +149,11 @@
 				"Night Mode"
 			],
 			"default": "Washed"
+		},
+		"hide-icon": {
+			"name": "Hide Icon",
+			"type": "bool",
+			"default": false
 		},
 		"speed-title": {
 			"name": "Speed Changes",

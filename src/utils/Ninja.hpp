@@ -28,11 +28,6 @@ enum class Visibility : int {
     Hidden = 2
 };
 
-enum class WaveSize : bool {
-    Big = false,
-    Mini = true
-};
-
 enum class ColorMode : int {
     Washed = 0,
     AllColors = 1,
@@ -85,8 +80,7 @@ struct SegmentOptions {
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;
-    bool isMini = false;
-    bool isTransition = false;
+    bool mini = false;
 };
 
 struct Segment {
@@ -98,7 +92,7 @@ struct Segment {
 struct BiomeOptions {
     int length;
     int corridorHeight;
-    WaveSize startingSize;
+    bool startingMini;
     int maxHeight;
     int minHeight;
     Visibility visibility = Visibility::Standard;
@@ -107,6 +101,7 @@ struct BiomeOptions {
     ColorMode colorMode = ColorMode::Washed;
     int bgColor[3] = {0, 0, 0};
     int lineColor[3] = {255, 255, 255};
+    bool sizeTransitionTypeA = true;
 };
 
 struct Biome {

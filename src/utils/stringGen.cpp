@@ -120,6 +120,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed))
     );
     const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
+    const bool hideIcon = Mod::get()->getSettingValue<bool>("hide-icon");
     
     std::string level;
     if(!overrideBank["override-base"]) level += levelBaseSeg;
@@ -141,7 +142,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         args.push_back(fmt::arg("ch_4", 255 + corridorHeight));
         args.push_back(fmt::arg("ch_5", 285 + corridorHeight));
         std::string startingConnectors = fmt::vformat(
-            opts.startingSize == WaveSize::Mini ? levelStartingBase2 : levelStartingBase,
+            opts.startingMini ? levelStartingBase2 : levelStartingBase,
             args
         );
         level += startingConnectors;
@@ -154,7 +155,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         y_swing = seg.y_swing;
 
         // Slopes
-        if (biome.options.startingSize == WaveSize::Mini) {
+        if (seg.options.mini) {
             level += fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
                 fmt::arg("x", x),
                 fmt::arg("y", y - 15),
@@ -163,7 +164,7 @@ std::string jfpNewStringGen(LevelData ldata) {
 
             level += fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
                 fmt::arg("x", x),
-                fmt::arg("yC", y - 15 + corridorHeight + (opts.startingSize == WaveSize::Big ? 30 : 0)),
+                fmt::arg("yC", y - 15 + corridorHeight + (!seg.options.mini ? 30 : 0)),
                 fmt::arg("flip", y_swing > 0 ? 1 : 0)
             );
         } else {
@@ -175,7 +176,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             
             level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
                 fmt::arg("x", x),
-                fmt::arg("yC", y + corridorHeight - (opts.startingSize == WaveSize::Mini ? 30 : 0)),
+                fmt::arg("yC", y + corridorHeight - (seg.options.mini ? 30 : 0)),
                 fmt::arg("rot", y_swing > 0 ? 180 : 270)
             );
         }
@@ -200,40 +201,87 @@ std::string jfpNewStringGen(LevelData ldata) {
             level += cornerBuild;
         }
 
-        // Gravity-Portals
-        if (seg.options.isPortal == Portals::Gravity) {
-            double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
-            int portalNormal = corridorHeight / 10;
-            int portalPos = corridorHeight / 4;
-            int portalID = seg.options.gravity ? 11 : 10;
+        // Size-Portals
+        if (i > 0 && seg.options.mini != biome.segments[i - 1].options.mini)
+            if (biome.options.sizeTransitionTypeA) {
 
-            int portalOrientation = y_swing;
-            int mpf = 0;
-            if (y_swing == biome.segments[i - 1].y_swing) {
-                portalOrientation *= -1;
-                mpf += 30 * portalOrientation;
+            } else {
+                float yP = y + corridorHeight / 2.0f;
+                if (seg.y_swing == 1) {
+                    if (seg.options.mini) {
+                        yP -= 45;
+                    } else {
+                        yP -= 15;
+                    }
+                } else {
+                    yP += 15;
+                }
+                float scaleP = (corridorHeight / 90.f) * 0.8;
+                float xP = x - 15 + 10 * scaleP;
+                
+                int portalID = seg.options.mini ? 101 : 99;
+                
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},32,{scale},64,1,67,1;",
+                fmt::arg("portalID", portalID),
+                fmt::arg("xP", xP),
+                fmt::arg("yP", yP),
+                fmt::arg("scale", scaleP));
+                level += portalBuild;
             }
 
-            std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
-            fmt::arg("portalID", portalID),
-            fmt::arg("xP", x-15-portalNormal+portalPos),
-            fmt::arg("yP", y+mpf+(portalOrientation == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
-            fmt::arg("rPdeg", (portalOrientation == 1 ? 45 : -45)),
-            fmt::arg("scale", portalFactor / 2.5));
-            level += portalBuild;
-        } else if (seg.options.isPortal == Portals::Fake) {
-            double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
-            int portalNormal = corridorHeight / 10;
-            int portalPos = corridorHeight / 4;
-            int portalID = seg.options.gravity ? 10 : 11;
+        // Gravity-Portals
+        if (seg.options.mini) {
+            if (seg.options.isPortal == Portals::Gravity || seg.options.isPortal == Portals::Fake) {
+                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+                int portalNormal = corridorHeight / 10;
+                int portalPos = corridorHeight / 4;
+                int portalID;
+                if (seg.options.isPortal == Portals::Fake) portalID = seg.options.gravity ? 10 : 11;
+                else portalID = seg.options.gravity ? 11 : 10;
 
-            std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
-            fmt::arg("portalID", portalID),
-            fmt::arg("xP", x-15-portalNormal+portalPos),
-            fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
-            fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
-            fmt::arg("scale", portalFactor / 2.5));
-            level += portalBuild;
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+                fmt::arg("portalID", portalID),
+                fmt::arg("xP", x-15-portalNormal+portalPos),
+                fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-45 : corridorHeight+15-portalNormal-portalPos)),
+                fmt::arg("rPdeg", (y_swing == 1 ? 26.565 : -26.565)),
+                fmt::arg("scale", portalFactor / 2.5));
+                level += portalBuild;
+            }
+        } else {
+            if (seg.options.isPortal == Portals::Gravity) {
+                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+                int portalNormal = corridorHeight / 10;
+                int portalPos = corridorHeight / 4;
+                int portalID = seg.options.gravity ? 11 : 10;
+
+                int portalOrientation = y_swing;
+                int mpf = 0;
+                if (y_swing == biome.segments[i - 1].y_swing) {
+                    portalOrientation *= -1;
+                    mpf += 30 * portalOrientation;
+                }
+
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+                fmt::arg("portalID", portalID),
+                fmt::arg("xP", x-15-portalNormal+portalPos),
+                fmt::arg("yP", y+mpf+(portalOrientation == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
+                fmt::arg("rPdeg", (portalOrientation == 1 ? 45 : -45)),
+                fmt::arg("scale", portalFactor / 2.5));
+                level += portalBuild;
+            } else if (seg.options.isPortal == Portals::Fake) {
+                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
+                int portalNormal = corridorHeight / 10;
+                int portalPos = corridorHeight / 4;
+                int portalID = seg.options.gravity ? 10 : 11;
+
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+                fmt::arg("portalID", portalID),
+                fmt::arg("xP", x-15-portalNormal+portalPos),
+                fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
+                fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
+                fmt::arg("scale", portalFactor / 2.5));
+                level += portalBuild;
+            }
         }
 
         // Speed-Changes
@@ -293,26 +341,47 @@ std::string jfpNewStringGen(LevelData ldata) {
     }
     
     // Ending-Connectors
+    bool endingMini = biome.segments.back().options.mini;
     if (
         biome.segments.back().y_swing == 1 && !overrideBank["override-endup"] ||
         biome.segments.back().y_swing == -1 && !overrideBank["override-enddown"]
     ) {
         auto lastSegment = biome.segments[biome.segments.size() - 1];
         int xB = lastSegment.coords.first, yB = lastSegment.coords.second, xT = xB, yT = yB + corridorHeight;
-        if (!biome.segments.empty() && lastSegment.y_swing == 1) {
-            yB += 30;
+        if (endingMini) {
+            if (lastSegment.y_swing == 1) {
+                yB += 45;
+                yT -= 15;
+            } else {
+                yT -= 75;
+                yB -= 15;
+            }
+            while (yT <= (opts.maxHeight + 30)) {
+                xT += 30;
+                yT += 60;
+                level += fmt::format("1,1339,2,{x},3,{y},5,1,6,-90,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
+            }
+            while (yB >= (opts.minHeight)) {
+                xB += 30;
+                yB -= 60;
+                level += fmt::format("1,1339,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
+            }
         } else {
-            yT -= 30;
-        }
-        while (yT <= (opts.maxHeight + 30)) {
-            xT += 30;
-            yT += 30;
-            level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
-        }
-        while (yB >= (opts.minHeight)) {
-            xB += 30;
-            yB -= 30;
-            level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
+            if (lastSegment.y_swing == 1) {
+                yB += 30;
+            } else {
+                yT -= 30;
+            }
+            while (yT <= (opts.maxHeight + 30)) {
+                xT += 30;
+                yT += 30;
+                level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
+            }
+            while (yB >= (opts.minHeight)) {
+                xB += 30;
+                yB -= 30;
+                level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
+            }
         }
     }
 
@@ -350,7 +419,9 @@ std::string jfpNewStringGen(LevelData ldata) {
     // Upside-Start
     if (biome.options.startingGravity) level += "1,11,2,299,3,99,6,45,32,0.57;";
     // Mini start
-    if (biome.options.startingSize == WaveSize::Mini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
+    if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
+    // hide icon
+    if (hideIcon) level += "1,1612,2,375,3,285,36,1;";
     
     // log::info("LevelData: name={}", ldata.name);
     // log::info("Biomes: {}", ldata.biomes.size());

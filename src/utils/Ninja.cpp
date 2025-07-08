@@ -159,6 +159,7 @@ LevelData generateJFPLevel() {
     const bool optLowvis = Mod::get()->getSettingValue<bool>("low-vis");
     const bool optTeleportals = false; // TODO: Bring Teleportals back
     bool gravity = Mod::get()->getSettingValue<bool>("upside-start");
+
     std::string colorModeStr = Mod::get()->getSettingValue<std::string>("color-mode");
     ColorMode optColorMode = ColorMode::Washed;
     if (colorModeStr == "All Colors") optColorMode = ColorMode::AllColors;
@@ -189,8 +190,13 @@ LevelData generateJFPLevel() {
     else if (cspeedStr == "Aggressive") optChangingSpeed = Difficulties::Aggressive;
 
     std::string ssizeStr = Mod::get()->getSettingValue<std::string>("starting-size");
-    WaveSize optStartingSize = WaveSize::Big;
-    if (ssizeStr == "Mini") optStartingSize = WaveSize::Mini;
+    bool mini = false;
+    if (ssizeStr == "Mini") mini = true;
+    bool changingSize = Mod::get()->getSettingValue<bool>("changing-size");
+
+    std::string scTypeStr = Mod::get()->getSettingValue<std::string>("transition-type");
+    bool typeA = true;
+    if (scTypeStr == "Type B") typeA = false;
 
     auto getSpeedChange = [](const std::string& speedStr) -> SpeedChange {
         if (speedStr == "0.5x") return SpeedChange::Speed05x;
@@ -216,7 +222,7 @@ LevelData generateJFPLevel() {
     int y_swing = 0, cX = 345, cY = 135;
     int maxHeight = 255, minHeight = 45;
 
-    if (optStartingSize == WaveSize::Mini) cY -= 30;
+    if (mini) cY -= 30;
     if (Mod::get()->getSettingValue<bool>("corridor-widening")) {
         maxHeight += 30;
         minHeight -= 30;
@@ -237,7 +243,7 @@ LevelData generateJFPLevel() {
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
-                    .startingSize = optStartingSize,
+                    .startingMini = mini,
                     .maxHeight = maxHeight,
                     .minHeight = minHeight,
                     .visibility = Mod::get()->getSettingValue<bool>("low-vis") ? Visibility::Low : Visibility::Standard,
@@ -245,7 +251,8 @@ LevelData generateJFPLevel() {
                     .startingSpeed = optSpeed,
                     .colorMode = optColorMode,
                     .bgColor = {28, 28, 28},
-                    .lineColor = {255, 255, 255}
+                    .lineColor = {255, 255, 255},
+                    .sizeTransitionTypeA = typeA
                 },
                 .segments = segments
             }
@@ -272,6 +279,7 @@ LevelData generateJFPLevel() {
     std::mt19937 bgRNG(seed);
     std::mt19937 speedRNG(seed);
     std::mt19937 spikeRNG(seed);
+    std::mt19937 sizeRNG(seed);
 
     std::vector<int> antiZigzagMax = {1,-1,1,-1,-1,1,-1,1,1,-1};
     std::vector<int> antiZigzagMin = {-1,1,-1,1,1,-1,1,-1,-1,1};
@@ -290,6 +298,7 @@ LevelData generateJFPLevel() {
     int fakePortalOdds = 1;
     int spikeOdds = 1;
     int last_tp = 0;
+    int lastSize = 0;
 
     bool spikeActive = false;
     bool midCorridorPortal = true;
@@ -297,6 +306,8 @@ LevelData generateJFPLevel() {
     int spikeSide = 0;
     int relMaxHeight = maxHeight - optCorridorHeight;
     float currentSpeed = convertSpeedToFloat(optSpeed);
+    bool specialRules = false;
+    Portals currentPortal;
 
     levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
 
@@ -350,9 +361,6 @@ LevelData generateJFPLevel() {
 
     // future prior block to generate lengths of different biomes
 
-    bool size = static_cast<bool>(levelData.biomes[0].options.startingSize);
-    bool specialRules = false;
-    Portals currentPortal;
     for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
@@ -365,9 +373,9 @@ LevelData generateJFPLevel() {
             specialRules = true;
         }
 
-        if (optStartingSize == WaveSize::Big && i < 3) {
+        if (i < 3 && !mini) {
             y_swing = corridorStart[i];
-        } else if (optStartingSize == WaveSize::Mini && i == 0) {
+        } else if (i == 0 && mini) {
             y_swing = 1;
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
@@ -382,7 +390,7 @@ LevelData generateJFPLevel() {
         )) {
             y_swing = -1;
         } else if (
-            cY <= (size ? minHeight + 30 : minHeight) && (segments[i - 1].y_swing == -1 ||
+            cY <= (mini ? minHeight + 30 : minHeight) && (segments[i - 1].y_swing == -1 ||
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMin)
@@ -427,17 +435,36 @@ LevelData generateJFPLevel() {
                 if (y_swing == 0) y_swing = -1;
             }
         }
+
+        if (i > 0 && changingSize && lastSize > 2 &&
+                sizeRNG() % std::max(10, 50 - lastSize) == 0) {
+            mini = !mini;
+            lastSize = 0;
+        }
+
+        // special type B transitional cases
+        if (!typeA && segments[i - 1].options.mini != mini) {
+            if (mini) {
+                if (segments[i - 1].y_swing == -1) cY += 30;
+            } else {
+                if (segments[i - 1].y_swing == -1) cY -= 30;
+            }
+        }
         
         if ((i == 0 && y_swing == 1) || segments[i - 1].y_swing == y_swing) {
             int mfac = 1;
-            if (size) mfac = 2;
+            if (mini) {
+                mfac = 2;
+            }
             cY += mfac * (y_swing * 30);
         }
+
+        lastSize++;
 
         for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
             volatile auto _ = fakePortalRNG();
         }
-        if (i > 0 && optPortals == Difficulties::Aggressive && portalRNG() % 4 == 0) {
+        if (i > 0 && !mini && optPortals == Difficulties::Aggressive && portalRNG() % 4 == 0) {
             if (y_swing == 1 &&
                 orientationMatch(segments, i, {1, 1, 1, 1}) &&
                 gravity && midCorridorPortal
@@ -543,8 +570,7 @@ LevelData generateJFPLevel() {
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? convertFloatSpeedEnum(currentSpeed) : SpeedChange::None,
                 .isFuzzy = segments[i].options.isFuzzy,
-                .isMini = static_cast<bool>(optStartingSize),
-                .isTransition = false
+                .mini = mini
             }
         };
         // log::info(
