@@ -216,7 +216,7 @@ LevelData generateJFPLevel() {
     float maxSpeedFloat = convertSpeedToFloat(optMaxSpeed);
     float minSpeedFloat = convertSpeedToFloat(optMinSpeed);
 
-    const double optCorridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
+    double optCorridorHeight = Mod::get()->getSettingValue<double>("corridor-height");
 
     const int64_t optLength = Mod::get()->getSettingValue<int64_t>("length");
     int y_swing = 0, cX = 345, cY = 135;
@@ -437,9 +437,16 @@ LevelData generateJFPLevel() {
         }
 
         if (i > 0 && changingSize && lastSize > 2 &&
+                (!typeA || !(!mini && y_swing == -1 && segments[i - 1].y_swing == -1 && cY <= minHeight + 30)) &&
                 sizeRNG() % std::max(10, 50 - lastSize) == 0) {
             mini = !mini;
             lastSize = 0;
+        }
+
+        if (i > 0 && typeA && mini && !segments[i - 1].options.mini) {
+            relMaxHeight -= 30;
+        } else if (i > 0 && typeA && !mini && segments[i - 1].options.mini) {
+            relMaxHeight += 30;
         }
 
         // special type B transitional cases
@@ -539,7 +546,7 @@ LevelData generateJFPLevel() {
             }
         }
 
-        if (optSpikes && segments[i - 1].y_swing != y_swing) {
+        if (optSpikes && segments[i - 1].y_swing != y_swing && currentPortal == Portals::None) {
             spikeSideHold = false;
             spikeOdds = spikeRNG() % 6;
             if (spikeOdds == 0) {

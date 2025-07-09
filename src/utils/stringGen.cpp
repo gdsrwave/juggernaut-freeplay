@@ -131,7 +131,8 @@ std::string jfpNewStringGen(LevelData ldata) {
     int x = biome.x_initial;
     int y = biome.y_initial;
     int y_swing = 0;
-    int corridorHeight = opts.corridorHeight;
+    const int corridorHeight = opts.corridorHeight;
+    const int corridorHeightM = biome.options.sizeTransitionTypeA ? corridorHeight + 30 : corridorHeight;
     bool spikeSide = false;
 
     if(!overrideBank["override-base"]) {
@@ -148,38 +149,83 @@ std::string jfpNewStringGen(LevelData ldata) {
         level += startingConnectors;
     }
 
+    int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
+
     for (int64_t i = 0; i < biome.segments.size(); i++) {
         const auto& seg = biome.segments[i];
         x = seg.coords.first;
         y = seg.coords.second;
         y_swing = seg.y_swing;
+        bool mini = seg.options.mini;
+
+        if (mini) currentCH = corridorHeightM;
+        else currentCH = corridorHeight;
 
         // Slopes
-        if (seg.options.mini) {
-            level += fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("y", y - 15),
-                fmt::arg("flip", y_swing > 0 ? 1 : 0)
-            );
+        std::string mFSlope = fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("y", y - 15),
+            fmt::arg("flip", y_swing > 0 ? 1 : 0)
+        );
+        std::string mCSlope = fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("yC", y - 15 + corridorHeightM),
+            fmt::arg("flip", y_swing > 0 ? 1 : 0)
+        );
+        std::string bFSlope = fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("y", y),
+            fmt::arg("rot", y_swing > 0 ? 0 : 90)
+        );
+        std::string bCSlope = fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
+            fmt::arg("x", x),
+            fmt::arg("yC", y + corridorHeight),
+            fmt::arg("rot", y_swing > 0 ? 180 : 270)
+        );
 
-            level += fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("yC", y - 15 + corridorHeight + (!seg.options.mini ? 30 : 0)),
-                fmt::arg("flip", y_swing > 0 ? 1 : 0)
-            );
+        if (biome.options.sizeTransitionTypeA && mini != biome.segments[i + 1].options.mini) {
+            if ((mini && y_swing == 1) || (!mini && y_swing == -1)) {
+                level += mFSlope;
+                level += bCSlope;
+            } else if ((mini && y_swing == -1) || (!mini && y_swing == 1)) {
+                level += bFSlope;
+                level += mCSlope;
+            }
         } else {
-            level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("y", y),
-                fmt::arg("rot", y_swing > 0 ? 0 : 90)
-            );
-            
-            level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("yC", y + corridorHeight - (seg.options.mini ? 30 : 0)),
-                fmt::arg("rot", y_swing > 0 ? 180 : 270)
-            );
+            if (mini) {
+                level += mFSlope;
+                level += mCSlope;
+            } else {
+                level += bFSlope;
+                level += bCSlope;
+            }
         }
+
+        // if (mini) {
+        //     level += fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
+        //         fmt::arg("x", x),
+        //         fmt::arg("y", y - 15),
+        //         fmt::arg("flip", y_swing > 0 ? 1 : 0)
+        //     );
+        // } else if (mini) {
+        //     level += fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
+        //         fmt::arg("x", x),
+        //         fmt::arg("yC", y - 15 + corridorHeightM),
+        //         fmt::arg("flip", y_swing > 0 ? 1 : 0)
+        //     );
+        // } else if () {
+        //     level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
+        //         fmt::arg("x", x),
+        //         fmt::arg("y", y),
+        //         fmt::arg("rot", y_swing > 0 ? 0 : 90)
+        //     );
+            
+        //     level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
+        //         fmt::arg("x", x),
+        //         fmt::arg("yC", y + corridorHeight),
+        //         fmt::arg("rot", y_swing > 0 ? 180 : 270)
+        //     );
+        // }
 
         // Corner-Pieces
         std::string cornerBuild = "";
@@ -201,85 +247,88 @@ std::string jfpNewStringGen(LevelData ldata) {
             level += cornerBuild;
         }
 
-        // Size-Portals
-        if (i > 0 && seg.options.mini != biome.segments[i - 1].options.mini)
-            if (biome.options.sizeTransitionTypeA) {
-
-            } else {
-                float yP = y + corridorHeight / 2.0f;
-                if (seg.y_swing == 1) {
-                    if (seg.options.mini) {
-                        yP -= 45;
-                    } else {
-                        yP -= 15;
-                    }
-                } else {
-                    yP += 15;
-                }
-                float scaleP = (corridorHeight / 90.f) * 0.8;
-                float xP = x - 15 + 10 * scaleP;
-                
-                int portalID = seg.options.mini ? 101 : 99;
-                
-                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},32,{scale},64,1,67,1;",
-                fmt::arg("portalID", portalID),
-                fmt::arg("xP", xP),
-                fmt::arg("yP", yP),
-                fmt::arg("scale", scaleP));
-                level += portalBuild;
-            }
-
         // Gravity-Portals
-        if (seg.options.mini) {
-            if (seg.options.isPortal == Portals::Gravity || seg.options.isPortal == Portals::Fake) {
-                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
-                int portalNormal = corridorHeight / 10;
-                int portalPos = corridorHeight / 4;
-                int portalID;
-                if (seg.options.isPortal == Portals::Fake) portalID = seg.options.gravity ? 10 : 11;
-                else portalID = seg.options.gravity ? 11 : 10;
+        int xP, yP;
+        float rPdeg, scaleP;
+        if (seg.options.isPortal == Portals::Gravity || seg.options.isPortal == Portals::Fake) {
+            double portalFactor = ((double)currentCH / 60.0) * 1.414;
+            int portalNormal = currentCH / 10;
+            int portalPos = currentCH / 4;
+            int portalID;
+            if (seg.options.isPortal == Portals::Fake) portalID = seg.options.gravity ? 10 : 11;
+            else portalID = seg.options.gravity ? 11 : 10;
 
-                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
-                fmt::arg("portalID", portalID),
-                fmt::arg("xP", x-15-portalNormal+portalPos),
-                fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-45 : corridorHeight+15-portalNormal-portalPos)),
-                fmt::arg("rPdeg", (y_swing == 1 ? 26.565 : -26.565)),
-                fmt::arg("scale", portalFactor / 2.5));
-                level += portalBuild;
-            }
-        } else {
-            if (seg.options.isPortal == Portals::Gravity) {
-                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
-                int portalNormal = corridorHeight / 10;
-                int portalPos = corridorHeight / 4;
-                int portalID = seg.options.gravity ? 11 : 10;
+            xP = x - 15 - portalNormal + portalPos;
+            yP = y + (y_swing == 1 ? portalNormal + portalPos - 15 : currentCH + 15 - portalNormal - portalPos);
+            if (mini && y_swing == 1) yP -= 30;
+            rPdeg = (mini ? 26.565 : 45) * y_swing;
+            scaleP = portalFactor / 2.5;
+            if (currentCH > 60) scaleP *= 0.85;
 
-                int portalOrientation = y_swing;
-                int mpf = 0;
-                if (y_swing == biome.segments[i - 1].y_swing) {
-                    portalOrientation *= -1;
-                    mpf += 30 * portalOrientation;
+            std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+            fmt::arg("portalID", portalID),
+            fmt::arg("xP", x-15-portalNormal+portalPos),
+            fmt::arg("yP", yP),
+            fmt::arg("rPdeg", rPdeg),
+            fmt::arg("scale", scaleP));
+            level += portalBuild;
+        }
+
+        // Size-Portals
+        if (i > 0 && mini != biome.segments[i - 1].options.mini) {
+            if (biome.options.sizeTransitionTypeA) {
+                float ySP, xSP, rSP, scaleSP;
+                if (seg.options.isPortal == Portals::None) {
+                    xSP = x - 26;
+                    ySP = biome.segments[i - 1].coords.second + 15 + (corridorHeight - 30) / 2;
+                    rSP = (std::atan((corridorHeight - 30.f) / 30.f) * 180/3.1415 - 90) * biome.segments[i - 1].y_swing;
+                    scaleSP = std::sqrt(std::pow((corridorHeight - 30), 2) + 900) / 90.f;
+                } else {
+                    xSP = xP;
+                    ySP = yP;
+                    rSP = rPdeg;
+                    scaleSP = scaleP;
                 }
-
-                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+                
+                int portalID = mini ? 101 : 99;
+                
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
                 fmt::arg("portalID", portalID),
-                fmt::arg("xP", x-15-portalNormal+portalPos),
-                fmt::arg("yP", y+mpf+(portalOrientation == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
-                fmt::arg("rPdeg", (portalOrientation == 1 ? 45 : -45)),
-                fmt::arg("scale", portalFactor / 2.5));
+                fmt::arg("xP", xSP),
+                fmt::arg("yP", ySP),
+                fmt::arg("rP", rSP),
+                fmt::arg("scale", scaleSP));
                 level += portalBuild;
-            } else if (seg.options.isPortal == Portals::Fake) {
-                double portalFactor = ((double)corridorHeight / 60.0) * 1.414;
-                int portalNormal = corridorHeight / 10;
-                int portalPos = corridorHeight / 4;
-                int portalID = seg.options.gravity ? 10 : 11;
-
-                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+            } else {
+                float ySP, xSP, rSP = 0, scaleSP;
+                if (seg.options.isPortal == Portals::None) {
+                    ySP = y + currentCH / 2.0f;
+                    if (seg.y_swing == 1) {
+                        if (mini) {
+                            ySP -= 45;
+                        } else {
+                            ySP -= 15;
+                        }
+                    } else {
+                        ySP += 15;
+                    }
+                    scaleSP = (currentCH / 90.f) * 0.8;
+                    xSP = x - 15 + 13 * scaleSP;
+                } else {
+                    xSP = xP;
+                    ySP = yP;
+                    rSP = rPdeg;
+                    scaleSP = scaleP;
+                }
+                
+                int portalID = mini ? 101 : 99;
+                
+                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
                 fmt::arg("portalID", portalID),
-                fmt::arg("xP", x-15-portalNormal+portalPos),
-                fmt::arg("yP", y+(y_swing == 1 ? portalNormal+portalPos-15 : corridorHeight+15-portalNormal-portalPos)),
-                fmt::arg("rPdeg", (y_swing == 1 ? 45 : -45)),
-                fmt::arg("scale", portalFactor / 2.5));
+                fmt::arg("xP", xSP),
+                fmt::arg("yP", ySP),
+                fmt::arg("rP", rSP),
+                fmt::arg("scale", scaleSP));
                 level += portalBuild;
             }
         }
@@ -288,9 +337,9 @@ std::string jfpNewStringGen(LevelData ldata) {
         if (seg.options.speedChange != SpeedChange::None) {
             int speedID = convertSpeed(seg.options.speedChange);
 
-            int spY = y + corridorHeight/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
+            int spY = y + currentCH/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
             int spR = seg.y_swing == 1 ? -45 : 45;
-            double speedFactor = 0.5 * (corridorHeight / 60.0);
+            double speedFactor = 0.5 * (currentCH / 60.0);
             level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1;",
                     fmt::arg("speedID", speedID),
                     fmt::arg("x", x - 15),
@@ -308,33 +357,56 @@ std::string jfpNewStringGen(LevelData ldata) {
                 xS = x + 6;
             }
             int yS = y + 6;
+            if (mini) yS -= 4;
             if ((y_swing == 1 && !spikeSide) || (y_swing == -1 && spikeSide)) {
-                yS = y + corridorHeight - 6;
+                yS = y + currentCH - 6;
+                if (mini) yS += 4;
             }
-            int rS = 45;
+
+            // this has to use rotations, spikes don't support being flipped
+            float scaleS = 1.f;
+            float rOffset = 45.f;
+            if (mini) {
+                yS -= 15;
+                scaleS = 0.7f;
+                rOffset = 63.435f;
+                if (!spikeSide) xS -= 1;
+                else xS += 1;
+            }
+            int rS = rOffset;
             if (y_swing == 1 && !spikeSide) {
-                rS = 135;
+                rS = 180 - rOffset;
             } else if (y_swing == 1 && spikeSide) {
-                rS = -45;
+                rS = -rOffset;
             } else if (y_swing == -1 && spikeSide) {
-                rS = -135;
+                rS = -180 + rOffset;
             }
-            std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1;",
+            std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1,32,{scaleS};",
                 fmt::arg("xS", xS),
                 fmt::arg("yS", yS),
-                fmt::arg("rS", rS)
+                fmt::arg("rS", rS),
+                fmt::arg("scaleS", scaleS)
             );
             level += spikeBuild;
         }
 
         if (seg.options.isFuzzy) {
             std::string colorMod = (biome.options.colorMode == ColorMode::NightMode) ? "21,1004,41,1,43,0a1a0.60a0a0," : "";
-            level += fmt::format("1,1717,2,{x},3,{y},{colorMod}6,{r1},64,1,67,1;1,1717,2,{x},3,{yC},{colorMod}6,{r2},64,1,67,1;",
-                fmt::arg("x", x),
-                fmt::arg("y", y),
-                fmt::arg("yC", y + corridorHeight),
-                fmt::arg("r1", (y_swing == 1 ? 0 : 90)),
-                fmt::arg("r2", (y_swing == 1 ? 180 : 270)),
+            std::string flip = "";
+            if (y_swing == -1 && !mini) {
+                flip = "4,1,";
+            } else if (y_swing == 1 && mini) {
+                flip = "5,1,";
+            }
+
+            level += fmt::format("1,{fuzzID},2,{xF},3,{yF},{colorMod}{flip}{rF}64,1,67,1;1,{fuzzID},2,{xF},3,{yC},{colorMod}{rF2}{flip}64,1,67,1;",
+                fmt::arg("fuzzID", mini ? 1718 : 1717),
+                fmt::arg("xF", x),
+                fmt::arg("yF", y - (mini ? 15 : 0)),
+                fmt::arg("yC", y + currentCH - (mini ? 15 : 0)),
+                fmt::arg("rF", mini ? "6,90," : ""),
+                fmt::arg("rF2", mini ? "6,-90," : "6,180,"),
+                fmt::arg("flip", flip),
                 fmt::arg("colorMod", colorMod)
             );
         }
@@ -347,7 +419,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         biome.segments.back().y_swing == -1 && !overrideBank["override-enddown"]
     ) {
         auto lastSegment = biome.segments[biome.segments.size() - 1];
-        int xB = lastSegment.coords.first, yB = lastSegment.coords.second, xT = xB, yT = yB + corridorHeight;
+        int xB = lastSegment.coords.first, yB = lastSegment.coords.second, xT = xB, yT = yB + currentCH;
         if (endingMini) {
             if (lastSegment.y_swing == 1) {
                 yB += 45;
