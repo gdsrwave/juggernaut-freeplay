@@ -132,7 +132,7 @@ std::string jfpNewStringGen(LevelData ldata) {
     int y = biome.y_initial;
     int y_swing = 0;
     const int corridorHeight = opts.corridorHeight;
-    const int corridorHeightM = biome.options.sizeTransitionTypeA ? corridorHeight + 30 : corridorHeight;
+    const int corridorHeightM = biome.options.typeA ? corridorHeight + 30 : corridorHeight;
     bool spikeSide = false;
 
     int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
@@ -189,49 +189,28 @@ std::string jfpNewStringGen(LevelData ldata) {
             fmt::arg("rot", y_swing > 0 ? 180 : 270)
         );
 
-        if (i < biome.segments.size() - 1 && biome.options.sizeTransitionTypeA && mini != biome.segments[i + 1].options.mini) {
+        bool fMini = false, cMini = false;
+        if (i < biome.segments.size() - 1 && biome.options.typeA && mini != biome.segments[i + 1].options.mini) {
             if ((mini && y_swing == 1) || (!mini && y_swing == -1)) {
-                level += mFSlope;
-                level += bCSlope;
+                fMini = true;
             } else if ((mini && y_swing == -1) || (!mini && y_swing == 1)) {
-                level += bFSlope;
-                level += mCSlope;
+                cMini = true;
             }
-        } else {
-            if (mini) {
-                level += mFSlope;
-                level += mCSlope;
-            } else {
-                level += bFSlope;
-                level += bCSlope;
-            }
+        } else if (mini) {
+            fMini = true;
+            cMini = true;
         }
 
-        // if (mini) {
-        //     level += fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
-        //         fmt::arg("x", x),
-        //         fmt::arg("y", y - 15),
-        //         fmt::arg("flip", y_swing > 0 ? 1 : 0)
-        //     );
-        // } else if (mini) {
-        //     level += fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
-        //         fmt::arg("x", x),
-        //         fmt::arg("yC", y - 15 + corridorHeightM),
-        //         fmt::arg("flip", y_swing > 0 ? 1 : 0)
-        //     );
-        // } else if () {
-        //     level += fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
-        //         fmt::arg("x", x),
-        //         fmt::arg("y", y),
-        //         fmt::arg("rot", y_swing > 0 ? 0 : 90)
-        //     );
-            
-        //     level += fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
-        //         fmt::arg("x", x),
-        //         fmt::arg("yC", y + corridorHeight),
-        //         fmt::arg("rot", y_swing > 0 ? 180 : 270)
-        //     );
-        // }
+        if (fMini) {
+            level += mFSlope;
+        } else {
+            level += bFSlope;
+        }
+        if (cMini) {
+            level += mCSlope;
+        } else {
+            level += bCSlope;
+        }
 
         // Corner-Pieces
         std::string cornerBuild = "";
@@ -287,7 +266,7 @@ std::string jfpNewStringGen(LevelData ldata) {
 
         // Size-Portals
         if (i > 0 && mini != biome.segments[i - 1].options.mini) {
-            if (biome.options.sizeTransitionTypeA) {
+            if (biome.options.typeA) {
                 float ySP, xSP, rSP, scaleSP;
                 if (seg.options.isPortal == Portals::None) {
                     xSP = x - 26;
@@ -334,13 +313,12 @@ std::string jfpNewStringGen(LevelData ldata) {
                 
                 int portalID = mini ? 101 : 99;
                 
-                std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
+                level +=  fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
                 fmt::arg("portalID", portalID),
                 fmt::arg("xP", xSP),
                 fmt::arg("yP", ySP),
                 fmt::arg("rP", rSP),
                 fmt::arg("scale", scaleSP));
-                level += portalBuild;
             }
         }
 
@@ -349,8 +327,9 @@ std::string jfpNewStringGen(LevelData ldata) {
             int speedID = convertSpeed(seg.options.speedChange);
 
             int spY = y + currentCH/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
-            int spR = seg.y_swing == 1 ? -45 : 45;
-            double speedFactor = 0.5 * (currentCH / 60.0);
+            if (mini && seg.y_swing == 1) spY -= 30;
+            int spR = (mini ? 63.435 : 45) * -seg.y_swing;
+            float speedFactor = (mini ? 0.3 : 0.5) * (currentCH / 60.0);
             level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1;",
                     fmt::arg("speedID", speedID),
                     fmt::arg("x", x - 15),
@@ -392,32 +371,46 @@ std::string jfpNewStringGen(LevelData ldata) {
             } else if (y_swing == -1 && spikeSide) {
                 rS = -180 + rOffset;
             }
-            std::string spikeBuild = fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1,32,{scaleS};",
+            level += fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1,32,{scaleS};",
                 fmt::arg("xS", xS),
                 fmt::arg("yS", yS),
                 fmt::arg("rS", rS),
                 fmt::arg("scaleS", scaleS)
             );
-            level += spikeBuild;
         }
 
+        // fuzzy spikes
         if (seg.options.isFuzzy) {
             std::string colorMod = (biome.options.colorMode == ColorMode::NightMode) ? "21,1004,41,1,43,0a1a0.60a0a0," : "";
-            std::string flip = "";
-            if (y_swing == -1 && !mini) {
-                flip = "4,1,";
-            } else if (y_swing == 1 && mini) {
-                flip = "5,1,";
+            std::string fFlip = "", cFlip = "";
+            if (y_swing == -1 && !fMini) {
+                fFlip = "4,1,";
+            } else if (y_swing == 1 && fMini) {
+                fFlip = "5,1,";
+            }
+            if (y_swing == -1 && !cMini) {
+                cFlip = "4,1,";
+            } else if (y_swing == 1 && cMini) {
+                cFlip = "5,1,";
             }
 
-            level += fmt::format("1,{fuzzID},2,{xF},3,{yF},{colorMod}{flip}{rF}64,1,67,1;1,{fuzzID},2,{xF},3,{yC},{colorMod}{rF2}{flip}64,1,67,1;",
-                fmt::arg("fuzzID", mini ? 1718 : 1717),
+            int yF = y - (fMini ? 15 : 0);
+            int yC = y + currentCH - (cMini ? 15 : 0);
+            if (biome.options.typeA && y_swing == 1) {
+                if (!cMini && fMini) yC -= 30;
+                if (!fMini && cMini) yC += 30;
+            }
+
+            level += fmt::format("1,{ffuzzID},2,{xF},3,{yF},{colorMod}{fFlip}{rF}64,1,67,1;1,{cfuzzID},2,{xF},3,{yC},{colorMod}{rC}{cFlip}64,1,67,1;",
+                fmt::arg("ffuzzID", fMini ? 1718 : 1717),
+                fmt::arg("cfuzzID", cMini ? 1718 : 1717),
                 fmt::arg("xF", x),
-                fmt::arg("yF", y - (mini ? 15 : 0)),
-                fmt::arg("yC", y + currentCH - (mini ? 15 : 0)),
-                fmt::arg("rF", mini ? "6,90," : ""),
-                fmt::arg("rF2", mini ? "6,-90," : "6,180,"),
-                fmt::arg("flip", flip),
+                fmt::arg("yF", yF),
+                fmt::arg("yC", yC),
+                fmt::arg("rF", fMini ? "6,90," : ""),
+                fmt::arg("rC", cMini ? "6,-90," : "6,180,"),
+                fmt::arg("fFlip", fFlip),
+                fmt::arg("cFlip", cFlip),
                 fmt::arg("colorMod", colorMod)
             );
         }
@@ -500,7 +493,10 @@ std::string jfpNewStringGen(LevelData ldata) {
     }
 
     // Upside-Start
-    if (biome.options.startingGravity) level += "1,11,2,299,3,99,6,45,32,0.57;";
+    if (biome.options.startingGravity) {
+        if (biome.options.startingMini) level += "1,11,2,307,3,35,6,26.7,32,0.57;";
+        else level += "1,11,2,299,3,99,6,45,32,0.57;";
+    }
     // Mini start
     if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
     // hide icon

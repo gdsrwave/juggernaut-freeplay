@@ -28,8 +28,6 @@ void pushColor(const JFPGen::Color& color) {
     colorBank.push_back(color);
 }
 
-unsigned int globalSeed = 0;
-
 std::map<std::string, std::string> kBank = {
     {"kA13", "0"},
     {"kA15", "0"},
@@ -230,7 +228,8 @@ LevelData generateJFPLevel() {
         cY -= 90;
         cX -= 30;
     }
-    if (Mod::get()->getSettingValue<bool>("corridor-widening")) {
+    const bool cw = Mod::get()->getSettingValue<bool>("corridor-widening");
+    if (cw) {
         maxHeight += 30;
         minHeight -= 30;
     }
@@ -259,7 +258,7 @@ LevelData generateJFPLevel() {
                     .colorMode = optColorMode,
                     .bgColor = {28, 28, 28},
                     .lineColor = {255, 255, 255},
-                    .sizeTransitionTypeA = typeA
+                    .typeA = typeA
                 },
                 .segments = segments
             }
@@ -277,7 +276,7 @@ LevelData generateJFPLevel() {
     }
     if (seed == 0) seed = rd();
     levelData.seed = seed;
-    globalSeed = seed;
+    Mod::get()->setSavedValue<unsigned int>("global-seed", seed);
 
     std::mt19937 segmentRNG(seed);
     std::mt19937 portalRNG(seed);
@@ -445,11 +444,23 @@ LevelData generateJFPLevel() {
         }
 
         if (i > 0 && changingSize && lastSize > 2 &&
-                (!typeA || !(!mini && y_swing == segments[i - 1].y_swing && (cY <= minHeight + 30 || cY >= relMaxHeight - 30))) &&
+                (
+                    (
+                        typeA &&
+                        !(!mini && y_swing == segments[i - 1].y_swing && (cY <= minHeight + 30 || cY >= relMaxHeight - 30))
+                    ) ||
+                    (
+                        !typeA &&
+                        !(mini && cw && y_swing != segments[i - 1].y_swing && (cY <= minHeight || cY >= relMaxHeight))
+                    )
+                ) &&
                 sizeRNG() % std::max(10, 50 - lastSize) == 0) {
             mini = !mini;
             lastSize = 0;
-            if (typeA) segments[i - 1].options.isTransition = true;
+            if (typeA) {
+                segments[i - 1].options.isTransition = true;
+                segments[i - 1].options.isSpikeM = false;
+            }
         }
 
         if (i > 0 && typeA && mini && !segments[i - 1].options.mini) {

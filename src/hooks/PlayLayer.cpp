@@ -49,6 +49,11 @@ class $modify(PlayLayer) {
 		dir->getRunningScene()->visit();
 		rt->end();
 
+    	Mod::get()->setSavedValue<unsigned int>(
+			"total-played",
+			Mod::get()->getSavedValue<unsigned int>("total-played", 0) + 1
+		);
+
 		scene->addChild(rt);
 		dir->replaceScene(scene);
 		

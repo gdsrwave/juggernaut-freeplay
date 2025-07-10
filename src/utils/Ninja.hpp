@@ -102,7 +102,7 @@ struct BiomeOptions {
     ColorMode colorMode = ColorMode::Washed;
     int bgColor[3] = {0, 0, 0};
     int lineColor[3] = {255, 255, 255};
-    bool sizeTransitionTypeA = true;
+    bool typeA = true;
 };
 
 struct Biome {
@@ -145,6 +145,5 @@ LevelData generateJFPLevel();
 extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
-extern unsigned int globalSeed;
 
 void pushColor(const JFPGen::Color& color);

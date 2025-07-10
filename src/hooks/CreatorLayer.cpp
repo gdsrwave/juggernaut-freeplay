@@ -38,11 +38,32 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
 		return true;
 	}
 
-	void onJFPButton(CCObject*) {
-		//openSettingsPopup(Mod::get());
+	void onJFPConfirm() {
 		auto jfpLayer = JFPMenuLayer::scene();
 		auto jlTransition = CCTransitionFade::create(0.5, jfpLayer);
 		CCDirector::sharedDirector()->pushScene(jlTransition);
+	}
+
+	void onJFPButton(CCObject*) {
+		//openSettingsPopup(Mod::get());
+
+		const char* warningMsg = "JFP is still in active development.\n\nBy clicking below, you acknowledge that this mod could lead to crashes and instability (particularly when exiting the game) and are choosing to continue anyway.\n\nRemember to back up your data!";
+
+		if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+			createQuickPopup(
+				"JFP",
+				warningMsg,
+				"I Understand", nullptr,
+				[&](bool b1, auto) {
+					if (b1) {
+						Mod::get()->setSavedValue<bool>("ackDisclaimer", "true");
+						onJFPConfirm();
+					}
+				}
+			);
+		} else {
+			onJFPConfirm();
+		}
 	}
 
 	static GJGameLevel* createGameLevel() {

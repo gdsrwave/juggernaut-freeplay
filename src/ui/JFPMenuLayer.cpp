@@ -68,6 +68,7 @@ bool JFPMenuLayer::init() {
     understandableSprite->setZOrder(-1);
     addChild(understandableSprite);
 
+    unsigned int globalSeed = Mod::get()->getSavedValue<unsigned int>("global-seed", 0);
     std::string displaySeed = "Seed: " + (globalSeed ? std::to_string(globalSeed) : "N/A");
     auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "goldFont.fnt");
     auto seedCopyBtn = CCMenuItemSpriteExtra::create(
@@ -157,7 +158,7 @@ bool JFPMenuLayer::init() {
 
     menu->updateLayout();
     menu3->updateLayout();
-
+    
     return true;
 }
 
@@ -166,6 +167,7 @@ void JFPMenuLayer::onOptionButton(CCObject*) {
 }
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
+    unsigned int globalSeed = Mod::get()->getSavedValue<unsigned int>("global-seed", 0);
     if(globalSeed) {
         clipboard::write(std::to_string(globalSeed));
         Notification::create("Copied to clipboard", NotificationIcon::None, 0.5f)->show();
@@ -193,8 +195,17 @@ void JFPMenuLayer::onGarageButton(CCObject*) {
 
 void JFPMenuLayer::onAutoGenButton(CCObject*) {
     if (state != JFPGen::AutoJFP::NotInAutoJFP) return;
+    if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+        FLAlertLayer::create("JFP", "Please accept the disclaimer to continue!", "OK")->show();
+        return;
+    } 
     jfpActive = true;
     state = JFPGen::AutoJFP::JustStarted;
+    Mod::get()->setSavedValue<unsigned int>(
+        "total-played",
+        Mod::get()->getSavedValue<unsigned int>("total-played", 0) + 1
+    );
+
     auto level = createGameLevel();
     if (!level) {
         state = JFPGen::AutoJFP::NotInAutoJFP;
@@ -215,10 +226,15 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
 }
 
 void JFPMenuLayer::onInfoButton(CCObject*) {
+    std::string playCt = std::to_string(
+        Mod::get()->getSavedValue<unsigned int>("total-played", 0)
+    );
+    std::string message = "Advanced Random Wave Generation\n\n"
+                        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
+                        "Special thanks to the Geode community and to early playtesters; you made this possible!\n"
+                        "Total Rounds Played: " + playCt;
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
-        "Advanced Random Wave Generation\n\n"
-        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
-        "Special thanks to the Geode community and to early playtesters; you made this possible!\n",
+        message.c_str(),
         "I get it man",
         nullptr,
         400.f

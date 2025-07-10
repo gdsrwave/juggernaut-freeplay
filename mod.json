@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.4.7",
+	"version": "v1.5.0",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -64,18 +64,6 @@
 			"type": "float",
 			"default": 60
 		},
-		"corridor-widening": {
-			"name": "Bigwave Corridor Widening",
-			"description": "Widen the big wave corridor's bounds to the screen edges.",
-			"type": "bool",
-			"default": false
-		},
-		"miniwave-widening": {
-			"name": "Miniwave Corridor Widening",
-			"description": "Widen the miniwave corridor's bounds to 1 block off-screen.",
-			"type": "bool",
-			"default": false
-		},
 		"basic-title": {
 			"name": "Basic Options",
 			"type": "title"
@@ -90,12 +78,12 @@
 			"default": "Big"
 		},
 		"changing-size": {
-			"name": "Changing Wave Size",
+			"name": "Size Changes",
 			"type": "bool",
 			"default": false
 		},
 		"speed": {
-			"name": "Speed",
+			"name": "Starting Speed",
 			"type": "string",
 			"one-of": [
 				"0.5x",
@@ -262,16 +250,11 @@
 			],
 			"default": "Type A"
 		},
-		"size-scheme": {
-			"name": "Placement Scheme",
-			"description": "Standard sets an equal chance for both big and miniwave portals, while Heavy options skew the odds one way.",
-			"type": "string",
-			"one-of": [
-				"Standard",
-				"Big Heavy",
-				"Mini Heavy"
-			],
-			"default": "Standard"
+		"corridor-widening": {
+			"name": "Corridor Widening",
+			"description": "Widen the wave corridor's bounds to the screen edges.",
+			"type": "bool",
+			"default": false
 		},
         "meta-title": {
             "type": "title",
