@@ -11,7 +11,6 @@
 #include <filesystem>
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include "utils/constants.hpp"
 #include "utils/StringGen.hpp"
 #include "ui/JFPMenuLayer.hpp"
 #include "utils/shared.hpp"

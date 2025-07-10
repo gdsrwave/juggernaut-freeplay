@@ -10,7 +10,7 @@
 #include <fmt/core.h>
 #include <fmt/args.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include "constants.hpp"
+#include "shared.hpp"
 #include "StringGen.hpp"
 #include "Theming.hpp"
 #include "Ninja.hpp"

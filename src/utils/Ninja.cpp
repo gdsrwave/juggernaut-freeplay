@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include "Ninja.hpp"
 #include <random>
-#include "constants.hpp"
+#include "shared.hpp"
 #include <map>
 
 using namespace geode::prelude;
