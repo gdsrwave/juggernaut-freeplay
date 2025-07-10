@@ -120,16 +120,20 @@ float convertSpeedToFloat(SpeedChange speed) {
     }
 }
 
-bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern) {
+bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern,
+        bool strictMini) {
     if (idx < static_cast<int>(pattern.size())) return false;
+    int y_swing = 0;
     for (int i = 0; i < pattern.size(); i++) {
-        if (segments[idx - pattern.size() + i].y_swing != pattern[i]) {
-            return false;
-        }
+        auto seg = segments[idx - pattern.size() + i];
+        y_swing = seg.y_swing;
+        if (strictMini && seg.options.mini) y_swing *= 2;
+        if ((strictMini && seg.options.isTransition) || y_swing != pattern[i]) return false;
     }
     return true;
 }
 
+// legacy
 bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
     if (pattern.size()>11) return false;
     for(int i = 0; i < pattern.size(); i++) {
@@ -222,7 +226,10 @@ LevelData generateJFPLevel() {
     int y_swing = 0, cX = 345, cY = 135;
     int maxHeight = 255, minHeight = 45;
 
-    if (mini) cY -= 30;
+    if (mini) {
+        cY -= 90;
+        cX -= 30;
+    }
     if (Mod::get()->getSettingValue<bool>("corridor-widening")) {
         maxHeight += 30;
         minHeight -= 30;
@@ -304,7 +311,8 @@ LevelData generateJFPLevel() {
     bool midCorridorPortal = true;
     bool spikeSideHold = false;
     int spikeSide = 0;
-    int relMaxHeight = maxHeight - optCorridorHeight;
+    int relMaxHeight = maxHeight - (optCorridorHeight);
+    if (mini && typeA) relMaxHeight -= 30;
     float currentSpeed = convertSpeedToFloat(optSpeed);
     bool specialRules = false;
     Portals currentPortal;
@@ -375,7 +383,7 @@ LevelData generateJFPLevel() {
 
         if (i < 3 && !mini) {
             y_swing = corridorStart[i];
-        } else if (i == 0 && mini) {
+        } else if (i < 2 && mini) {
             y_swing = 1;
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
@@ -437,10 +445,11 @@ LevelData generateJFPLevel() {
         }
 
         if (i > 0 && changingSize && lastSize > 2 &&
-                (!typeA || !(!mini && y_swing == -1 && segments[i - 1].y_swing == -1 && cY <= minHeight + 30)) &&
+                (!typeA || !(!mini && y_swing == segments[i - 1].y_swing && (cY <= minHeight + 30 || cY >= relMaxHeight - 30))) &&
                 sizeRNG() % std::max(10, 50 - lastSize) == 0) {
             mini = !mini;
             lastSize = 0;
+            if (typeA) segments[i - 1].options.isTransition = true;
         }
 
         if (i > 0 && typeA && mini && !segments[i - 1].options.mini) {
@@ -577,7 +586,8 @@ LevelData generateJFPLevel() {
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? convertFloatSpeedEnum(currentSpeed) : SpeedChange::None,
                 .isFuzzy = segments[i].options.isFuzzy,
-                .mini = mini
+                .mini = mini,
+                .isTransition = false
             }
         };
         // log::info(

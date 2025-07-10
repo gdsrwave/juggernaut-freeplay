@@ -135,21 +135,27 @@ std::string jfpNewStringGen(LevelData ldata) {
     const int corridorHeightM = biome.options.sizeTransitionTypeA ? corridorHeight + 30 : corridorHeight;
     bool spikeSide = false;
 
+    int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
+
     if(!overrideBank["override-base"]) {
         fmt::dynamic_format_arg_store<fmt::format_context> args;
-        args.push_back(fmt::arg("ch_1", 225 + corridorHeight));
-        args.push_back(fmt::arg("ch_2", 165 + corridorHeight));
-        args.push_back(fmt::arg("ch_3", 195 + corridorHeight));
-        args.push_back(fmt::arg("ch_4", 255 + corridorHeight));
-        args.push_back(fmt::arg("ch_5", 285 + corridorHeight));
+        if (opts.startingMini) {
+            args.push_back(fmt::arg("ch_1", 90 + currentCH));
+            args.push_back(fmt::arg("ch_2", 150 + currentCH));
+            args.push_back(fmt::arg("ch_3", 210 + currentCH));
+        } else {
+            args.push_back(fmt::arg("ch_1", 225 + currentCH));
+            args.push_back(fmt::arg("ch_2", 165 + currentCH));
+            args.push_back(fmt::arg("ch_3", 195 + currentCH));
+            args.push_back(fmt::arg("ch_4", 255 + currentCH));
+            args.push_back(fmt::arg("ch_5", 285 + currentCH));
+        }
         std::string startingConnectors = fmt::vformat(
             opts.startingMini ? levelStartingBase2 : levelStartingBase,
             args
         );
         level += startingConnectors;
     }
-
-    int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
 
     for (int64_t i = 0; i < biome.segments.size(); i++) {
         const auto& seg = biome.segments[i];
@@ -183,7 +189,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             fmt::arg("rot", y_swing > 0 ? 180 : 270)
         );
 
-        if (biome.options.sizeTransitionTypeA && mini != biome.segments[i + 1].options.mini) {
+        if (i < biome.segments.size() - 1 && biome.options.sizeTransitionTypeA && mini != biome.segments[i + 1].options.mini) {
             if ((mini && y_swing == 1) || (!mini && y_swing == -1)) {
                 level += mFSlope;
                 level += bCSlope;
@@ -230,21 +236,26 @@ std::string jfpNewStringGen(LevelData ldata) {
         // Corner-Pieces
         std::string cornerBuild = "";
         if (i > 1 && cornerPieces) {
+            int yOffset = mini ? 30 : 0;
+            int cnry = 0;
+            std::string flip = "";
+
             if (biome.segments[i - 1].y_swing == 1 && y_swing == -1) {
-                cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,-180;1,473,2,{cnr2x},3,{cnry},6,-90,64,1,67,1;",
-                fmt::arg("cnr1x", x - 30),
-                fmt::arg("cnr2x", x),
-                fmt::arg("cnry", y + corridorHeight + 30));
-            } else if (
-                (biome.segments[i - 1].y_swing == -1 && y_swing == 1) ||
-                (i == 0 && y_swing == 1)
-            ) {
-                cornerBuild = fmt::format("1,473,2,{cnr1x},3,{cnry},6,90;1,473,2,{cnr2x},3,{cnry},64,1,67,1;",
-                fmt::arg("cnr1x", x - 30),
-                fmt::arg("cnr2x", x),
-                fmt::arg("cnry", y - 30));
+                cnry = y + currentCH + 30;
+                flip += "4,1,";
+            } else if (biome.segments[i - 1].y_swing == -1 && y_swing == 1) {
+                cnry = y - 30 - yOffset;
             }
-            level += cornerBuild;
+            if (cnry) {
+                cornerBuild = fmt::format("1,{cnrID},2,{cnr1x},3,{cnry},{flip}6,90;1,{cnrID},2,{cnr2x},3,{cnry},6,90,5,1,{flip}64,1,67,1;",
+                    fmt::arg("cnrID", mini ? 474 : 473),
+                    fmt::arg("cnr1x", x - 30),
+                    fmt::arg("cnr2x", x),
+                    fmt::arg("cnry", cnry),
+                    fmt::arg("flip", flip)
+                );
+                level += cornerBuild;
+            }
         }
 
         // Gravity-Portals
@@ -282,7 +293,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                     xSP = x - 26;
                     ySP = biome.segments[i - 1].coords.second + 15 + (corridorHeight - 30) / 2;
                     rSP = (std::atan((corridorHeight - 30.f) / 30.f) * 180/3.1415 - 90) * biome.segments[i - 1].y_swing;
-                    scaleSP = std::sqrt(std::pow((corridorHeight - 30), 2) + 900) / 90.f;
+                    scaleSP = std::sqrt(std::pow((corridorHeight - 30), 2) + 900) / 110.f;
                 } else {
                     xSP = xP;
                     ySP = yP;

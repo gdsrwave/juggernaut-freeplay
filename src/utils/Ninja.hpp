@@ -81,6 +81,7 @@ struct SegmentOptions {
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;
     bool mini = false;
+    bool isTransition = false;
 };
 
 struct Segment {
@@ -134,7 +135,8 @@ SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
-bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern);
+bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern,
+    bool strictMini = false);
 
 LevelData generateJFPLevel();
 

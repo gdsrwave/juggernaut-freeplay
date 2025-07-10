@@ -76,12 +76,12 @@
 			"type": "bool",
 			"default": false
 		},
-		"size-title": {
-			"name": "Wave Size",
+		"basic-title": {
+			"name": "Basic Options",
 			"type": "title"
 		},
 		"starting-size": {
-			"name": "Starting Size",
+			"name": "Starting Wave Size",
 			"type": "string",
 			"one-of": [
 				"Big",
@@ -90,33 +90,60 @@
 			"default": "Big"
 		},
 		"changing-size": {
-			"name": "Size Portal Spawning",
+			"name": "Changing Wave Size",
 			"type": "bool",
 			"default": false
 		},
-		"transition-type": {
-			"name": "Size Transition Type",
-			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
+		"speed": {
+			"name": "Speed",
 			"type": "string",
 			"one-of": [
-				"Type A",
-				"Type B"
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
 			],
-			"default": "Type A"
+			"default": "3x"
 		},
-		"size-scheme": {
-			"name": "Placement Scheme",
-			"description": "Standard sets an equal chance for both big and miniwave portals, while Heavy options skew the odds one way.",
+		"changing-speed": {
+			"name": "Speed Changes",
 			"type": "string",
 			"one-of": [
-				"Standard",
-				"Big Heavy",
-				"Mini Heavy"
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
 			],
-			"default": "Standard"
+			"default": "None"
+		},
+		"portals": {
+			"name": "Gravity Portal Spawning",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
+		},
+        "themes-title": {
+            "name": "Theming",
+            "type": "title"
+        },
+		"active-theme": {
+			"name": "Theme",
+			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
+			"type": "string",
+			"default": ""
+		},
+		"reload-themes": {
+			"name": "",
+			"type": "custom:reload-themes"
 		},
 		"cosmetic-title": {
-			"name": "Cosmetic",
+			"name": "Visual",
 			"type": "title"
 		},
 		"marks": {
@@ -155,71 +182,9 @@
 			"type": "bool",
 			"default": false
 		},
-		"speed-title": {
-			"name": "Speed Changes",
-			"type": "title"
-		},
-		"speed": {
-			"name": "Speed",
-			"type": "string",
-			"one-of": [
-				"0.5x",
-				"1x",
-				"2x",
-				"3x",
-				"4x"
-			],
-			"default": "3x"
-		},
-		"changing-speed": {
-			"name": "Speed Changes",
-			"type": "string",
-			"one-of": [
-				"None",
-				"Light",
-				"Balanced",
-				"Aggressive"
-			],
-			"default": "None"
-		},
-		"min-speed": {
-			"name": "Min Speed",
-			"type": "string",
-			"one-of": [
-				"0.5x",
-				"1x",
-				"2x",
-				"3x",
-				"4x"
-			],
-			"default": "0.5x"
-		},
-		"max-speed": {
-			"name": "Max Speed",
-			"type": "string",
-			"one-of": [
-				"0.5x",
-				"1x",
-				"2x",
-				"3x",
-				"4x"
-			],
-			"default": "4x"
-		},
 		"portal-title": {
 			"name": "Portals",
 			"type": "title"
-		},
-		"portals": {
-			"name": "Gravity Portal Spawning",
-			"type": "string",
-			"one-of": [
-				"None",
-				"Light",
-				"Balanced",
-				"Aggressive"
-			],
-			"default": "None"
 		},
 		"fake-gravity-portals": {
 			"name": "Fake Gravity Portals",
@@ -255,19 +220,58 @@
 			"type": "bool",
 			"default": false
 		},
-        "themes-title": {
-            "name": "Theming",
-            "type": "title"
-        },
-		"active-theme": {
-			"name": "Theme",
-			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
-			"type": "string",
-			"default": ""
+		"speed-title": {
+			"name": "Speed Changes",
+			"type": "title"
 		},
-		"reload-themes": {
-			"name": "",
-			"type": "custom:reload-themes"
+		"min-speed": {
+			"name": "Min Speed",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "0.5x"
+		},
+		"max-speed": {
+			"name": "Max Speed",
+			"type": "string",
+			"one-of": [
+				"0.5x",
+				"1x",
+				"2x",
+				"3x",
+				"4x"
+			],
+			"default": "4x"
+		},
+		"size-title": {
+			"name": "Size Changes",
+			"type": "title"
+		},
+		"transition-type": {
+			"name": "Size Transition Type",
+			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
+			"type": "string",
+			"one-of": [
+				"Type A",
+				"Type B"
+			],
+			"default": "Type A"
+		},
+		"size-scheme": {
+			"name": "Placement Scheme",
+			"description": "Standard sets an equal chance for both big and miniwave portals, while Heavy options skew the odds one way.",
+			"type": "string",
+			"one-of": [
+				"Standard",
+				"Big Heavy",
+				"Mini Heavy"
+			],
+			"default": "Standard"
 		},
         "meta-title": {
             "type": "title",

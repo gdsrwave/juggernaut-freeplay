@@ -364,7 +364,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                     int displacement = 0;
                     for (size_t idx = bracketEnd + 1; idx < t.size(); ++idx) {
-                        if (t[idx] == '+' || t[idx] == '-') {
+                        if (t[idx] == '+' || t[idx] == '-' || t[idx] == '/' || t[idx] == '\\') {
                             displacement++;
                         }
                     }
@@ -375,6 +375,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 for (char ch : t) {
                     if (ch == '+') pattern.push_back(1);
                     else if (ch == '-') pattern.push_back(-1);
+                    else if (ch == '/') pattern.push_back(2);
+                    else if (ch == '\\') pattern.push_back(-2);
                 }
 
                 std::string patternStr;
@@ -500,7 +502,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 }
 
                 if (notPatternsOk &&
-                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern) ||
+                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern, true) ||
                      (match._else && match.pattern.empty()))) {
                     
                     for (const auto& cmd : match.commands) {
