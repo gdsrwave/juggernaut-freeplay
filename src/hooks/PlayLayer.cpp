@@ -49,9 +49,9 @@ class $modify(PlayLayer) {
 		dir->getRunningScene()->visit();
 		rt->end();
 
-    	Mod::get()->setSavedValue<unsigned int>(
+    	Mod::get()->setSavedValue<uint32_t>(
 			"total-played",
-			Mod::get()->getSavedValue<unsigned int>("total-played", 0) + 1
+			Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1
 		);
 
 		scene->addChild(rt);

@@ -43,7 +43,7 @@ static int convertSpeed(SpeedChange speed) {
     }
 }
 
-std::string jfpPackString(const std::string& level, unsigned int seed, int song, bool compress) {
+std::string jfpPackString(const std::string& level, uint32_t seed, int song, bool compress) {
 
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);

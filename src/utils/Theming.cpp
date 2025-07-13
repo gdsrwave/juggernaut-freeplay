@@ -61,12 +61,11 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
                     }
                 }
 
-                // Now, evaluate the parsedExpr as a left-to-right sum/sub/mul/div (no operator precedence)
+                // evaluate the parsedExpr as a left-to-right sum/sub/mul/div (no operator precedence)
                 float acc = 0.f;
                 char lastOp = 0;
                 size_t idx = 0;
                 while (idx < parsedExpr.size()) {
-                    // Find next operator or end
                     size_t nextOp = parsedExpr.find_first_of("+-*/", idx);
                     std::string numStr = parsedExpr.substr(idx, nextOp - idx);
                     float num = 0.f;

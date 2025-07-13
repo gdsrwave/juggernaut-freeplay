@@ -38,7 +38,7 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Juggernaut = 2,
+    Experimental = 2,
     Unrestricted = 3
 };
 
@@ -62,14 +62,15 @@ enum class PortalInputs : int {
     Holds = 2
 };
 
-enum class Biomes : int {
+enum class JFPBiome : int {
     Juggernaut = 0,
     DeathFactory = 1,
     SawField = 2,
     SpikeRain = 3,
     NeironExGaming = 4,
     Campfire = 5,
-    DeathCWaveBuff = 6
+    DeathCWaveBuff = 6,
+    RandomPart = 7
 };
 
 struct SegmentOptions {
@@ -108,7 +109,7 @@ struct BiomeOptions {
 struct Biome {
     int x_initial;
     int y_initial;
-    Biomes type;
+    JFPBiome type;
     std::string theme;
     int song;
     BiomeOptions options;
@@ -117,7 +118,7 @@ struct Biome {
 
 struct LevelData {
     std::string name;
-    unsigned int seed;
+    uint32_t seed;
     std::vector<Biome> biomes;
 };
 

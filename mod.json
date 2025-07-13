@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.5.0",
+	"version": "v1.5.1",
 	"id": "jcack.jfp",
 	"name": "jfp",
 	"developer": "jcack",
@@ -52,8 +52,8 @@
 			"type": "string",
 			"one-of": [
 				"NSNZ",
-				"No Spam",
-				"Juggernaut",
+				"NS",
+				"Experimental",
 				"Unrestricted"
 			],
 			"default": "NSNZ"
@@ -82,7 +82,7 @@
 			"type": "bool",
 			"default": false
 		},
-		"speed": {
+		"starting-speed": {
 			"name": "Starting Speed",
 			"type": "string",
 			"one-of": [
@@ -251,8 +251,8 @@
 			"default": "Type A"
 		},
 		"corridor-widening": {
-			"name": "Corridor Widening",
-			"description": "Widen the wave corridor's bounds to the screen edges.",
+			"name": "Widen Playfield Bounds",
+			"description": "Widen the wave playing field's bounds to the screen edges.",
 			"type": "bool",
 			"default": false
 		},
