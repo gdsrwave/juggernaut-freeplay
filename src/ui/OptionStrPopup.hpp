@@ -18,3 +18,4 @@ public:
 
     void clickImport(CCObject*);
 };
+

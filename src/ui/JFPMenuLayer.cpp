@@ -71,7 +71,7 @@ bool JFPMenuLayer::init() {
     addChild(understandableSprite);
 
     uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
-    std::string displaySeed = "Seed: " + (globalSeed ? std::to_string(globalSeed) : "N/A");
+    std::string displaySeed = "Last Seed: " + (globalSeed ? std::to_string(globalSeed) : "N/A");
     auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "goldFont.fnt");
     seedTxt->setScale(0.9f);
     auto seedCopyBtn = CCMenuItemSpriteExtra::create(

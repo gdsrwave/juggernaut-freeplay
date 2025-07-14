@@ -4,10 +4,10 @@
 		"win": "2.2074"
 	},
 	"version": "v1.5.1",
-	"id": "jcack.jfp",
-	"name": "jfp",
-	"developer": "jcack",
-	"description": "test",
+	"id": "gdsrwave.jfp",
+	"name": "JFP",
+	"developer": "gdsrwave",
+	"description": "Advanced Random Wave Generation",
 	"resources": {
 		"spritesheets": {
 			"jfp": [
@@ -29,6 +29,11 @@
 			"version": ">=v1.20.0"
 		}
 	},
+	"tags": [
+		"gameplay",
+		"content",
+		"utility"
+	],
 	"settings": {
         "gen-title": {
             "type": "title",

@@ -24,4 +24,5 @@ struct PackedEntry {
 
 std::string exportSettings(const std::vector<PackedEntry>& entries);
 void importSettings(std::string packed);
+int readStoredNum(const std::vector<uint8_t>& bytes, int offset, int size);
 std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome);
