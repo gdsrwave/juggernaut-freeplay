@@ -2,7 +2,7 @@
 #include <utility>
 #include <string>
 #include <vector>
-#include "constants.hpp"
+#include "shared.hpp"
 #include <map>
 
 
@@ -28,11 +28,6 @@ enum class Visibility : int {
     Hidden = 2
 };
 
-enum class WaveSize : int {
-    Big = 0,
-    Mini = 1
-};
-
 enum class ColorMode : int {
     Washed = 0,
     AllColors = 1,
@@ -43,7 +38,7 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Juggernaut = 2,
+    Experimental = 2,
     Unrestricted = 3
 };
 
@@ -67,14 +62,15 @@ enum class PortalInputs : int {
     Holds = 2
 };
 
-enum class Biomes : int {
+enum class JFPBiome : int {
     Juggernaut = 0,
     DeathFactory = 1,
     SawField = 2,
     SpikeRain = 3,
     NeironExGaming = 4,
     Campfire = 5,
-    DeathCWaveBuff = 6
+    DeathCWaveBuff = 6,
+    RandomPart = 7
 };
 
 struct SegmentOptions {
@@ -85,6 +81,8 @@ struct SegmentOptions {
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;
+    bool mini = false;
+    bool isTransition = false;
 };
 
 struct Segment {
@@ -96,7 +94,7 @@ struct Segment {
 struct BiomeOptions {
     int length;
     int corridorHeight;
-    WaveSize startingSize;
+    bool startingMini;
     int maxHeight;
     int minHeight;
     Visibility visibility = Visibility::Standard;
@@ -105,12 +103,13 @@ struct BiomeOptions {
     ColorMode colorMode = ColorMode::Washed;
     int bgColor[3] = {0, 0, 0};
     int lineColor[3] = {255, 255, 255};
+    bool typeA = true;
 };
 
 struct Biome {
     int x_initial;
     int y_initial;
-    Biomes type;
+    JFPBiome type;
     std::string theme;
     int song;
     BiomeOptions options;
@@ -119,7 +118,7 @@ struct Biome {
 
 struct LevelData {
     std::string name;
-    unsigned int seed;
+    uint32_t seed;
     std::vector<Biome> biomes;
 };
 
@@ -137,7 +136,8 @@ SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
-bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern);
+bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern,
+    bool strictMini = false);
 
 LevelData generateJFPLevel();
 

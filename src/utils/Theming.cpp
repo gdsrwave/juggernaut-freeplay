@@ -61,12 +61,11 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y, int maxHei
                     }
                 }
 
-                // Now, evaluate the parsedExpr as a left-to-right sum/sub/mul/div (no operator precedence)
+                // evaluate the parsedExpr as a left-to-right sum/sub/mul/div (no operator precedence)
                 float acc = 0.f;
                 char lastOp = 0;
                 size_t idx = 0;
                 while (idx < parsedExpr.size()) {
-                    // Find next operator or end
                     size_t nextOp = parsedExpr.find_first_of("+-*/", idx);
                     std::string numStr = parsedExpr.substr(idx, nextOp - idx);
                     float num = 0.f;
@@ -364,7 +363,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                     int displacement = 0;
                     for (size_t idx = bracketEnd + 1; idx < t.size(); ++idx) {
-                        if (t[idx] == '+' || t[idx] == '-') {
+                        if (t[idx] == '+' || t[idx] == '-' || t[idx] == '/' || t[idx] == '\\') {
                             displacement++;
                         }
                     }
@@ -375,6 +374,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 for (char ch : t) {
                     if (ch == '+') pattern.push_back(1);
                     else if (ch == '-') pattern.push_back(-1);
+                    else if (ch == '/') pattern.push_back(2);
+                    else if (ch == '\\') pattern.push_back(-2);
                 }
 
                 std::string patternStr;
@@ -500,7 +501,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 }
 
                 if (notPatternsOk &&
-                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern) ||
+                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern, true) ||
                      (match._else && match.pattern.empty()))) {
                     
                     for (const auto& cmd : match.commands) {

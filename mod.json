@@ -3,11 +3,11 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.4.7",
-	"id": "jcack.jfp",
-	"name": "jfp",
-	"developer": "jcack",
-	"description": "test",
+	"version": "v1.5.3",
+	"id": "gdsrwave.jfp",
+	"name": "JFP",
+	"developer": "gdsrwave",
+	"description": "Advanced Random Wave Generation",
 	"resources": {
 		"spritesheets": {
 			"jfp": [
@@ -29,13 +29,66 @@
 			"version": ">=v1.20.0"
 		}
 	},
+	"tags": [
+		"gameplay",
+		"content",
+		"utility"
+	],
 	"settings": {
         "gen-title": {
             "type": "title",
             "name": "Generation"
         },
-		"speed": {
-			"name": "Speed",
+		"seed": {
+			"name": "RNG Seed",
+			"description": "Set seed for level generation (0 for random)",
+			"type": "string",
+			"default": ""
+		},
+		"length": {
+			"name": "Length",
+			"description": "The length of the level generated in m (1 block = 1 m). In JFP, length is measured in meters and height in units.",
+			"type": "int",
+			"default": 400
+		},
+		"corridor-rules": {
+			"name": "Corridor Rules",
+			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
+			"type": "string",
+			"one-of": [
+				"NSNZ",
+				"NS",
+				"Experimental",
+				"Unrestricted"
+			],
+			"default": "NSNZ"
+		},
+		"corridor-height": {
+			"name": "Corridor Height (units)",
+			"description":  "1 block = 30 units. In JFP, length is measured in meters and height in units.",
+			"type": "float",
+			"default": 60
+		},
+		"basic-title": {
+			"name": "Basic Options",
+			"type": "title"
+		},
+		"starting-size": {
+			"name": "Starting Wave Size",
+			"type": "string",
+			"one-of": [
+				"Big",
+				"Mini"
+			],
+			"default": "Big"
+		},
+		"changing-size": {
+			"name": "Size Changes",
+			"type": "bool",
+			"default": false
+		},
+		"starting-speed": {
+			"name": "Starting Speed",
 			"type": "string",
 			"one-of": [
 				"0.5x",
@@ -46,17 +99,45 @@
 			],
 			"default": "3x"
 		},
-		"length": {
-			"name": "Length",
-			"description": "The length of the level generated in m (1 block = 1 m). In JFP, length is measured in meters and height in units.",
-			"type": "int",
-			"default": 400
+		"changing-speed": {
+			"name": "Speed Changes",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
 		},
-		"seed": {
-			"name": "RNG Seed",
-			"description": "Set seed for level generation (0 for random)",
+		"portals": {
+			"name": "Gravity Portal Spawning",
+			"type": "string",
+			"one-of": [
+				"None",
+				"Light",
+				"Balanced",
+				"Aggressive"
+			],
+			"default": "None"
+		},
+        "themes-title": {
+            "name": "Theming",
+            "type": "title"
+        },
+		"active-theme": {
+			"name": "Theme",
+			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
 			"type": "string",
 			"default": ""
+		},
+		"reload-themes": {
+			"name": "",
+			"type": "custom:reload-themes"
+		},
+		"cosmetic-title": {
+			"name": "Visual",
+			"type": "title"
 		},
 		"marks": {
 			"name": "Meter Marks",
@@ -73,49 +154,10 @@
 			"type": "bool",
 			"default": false
 		},
-		"corridor-rules": {
-			"name": "Corridor Rules",
-			"description": "Rules for corridor gen. NSNZ, or No Spam, No Zigzagging, is currently the standard.",
-			"type": "string",
-			"one-of": [
-				"NSNZ",
-				"No Spam",
-				"Juggernaut",
-				"Unrestricted"
-			],
-			"default": "NSNZ"
-		},
 		"low-vis": {
 			"name": "Low Visibility",
 			"type": "bool",
 			"default": false
-		},
-		"corridor-height": {
-			"name": "Corridor Height (units)",
-			"description":  "1 block = 30 units. In JFP, length is measured in meters and height in units.",
-			"type": "float",
-			"default": 60
-		},
-		"portals": {
-			"name": "Gravity Portal Spawning",
-			"type": "string",
-			"one-of": [
-				"None",
-				"Light",
-				"Balanced",
-				"Aggressive"
-			],
-			"default": "None"
-		},
-		"portal-inputs": {
-			"name": "Portal Inputs",
-			"type": "string",
-			"one-of": [
-				"Both",
-				"Releases",
-				"Holds"
-			],
-			"default": "Both"
 		},
 		"color-mode": {
 			"name": "Color Mode",
@@ -128,6 +170,39 @@
 			],
 			"default": "Washed"
 		},
+		"hide-icon": {
+			"name": "Hide Icon",
+			"type": "bool",
+			"default": false
+		},
+		"portal-title": {
+			"name": "Portals",
+			"type": "title"
+		},
+		"fake-gravity-portals": {
+			"name": "Fake Gravity Portals",
+			"type": "bool",
+			"default": false
+		},
+		"upside-start": {
+			"name": "Start Upside Down",
+			"type": "bool",
+			"default": false
+		},
+		"portal-inputs": {
+			"name": "Portal Inputs",
+			"type": "string",
+			"one-of": [
+				"Both",
+				"Releases",
+				"Holds"
+			],
+			"default": "Both"
+		},
+		"hazards-title": {
+			"name": "Hazards",
+			"type": "title"
+		},
 		"corridor-spikes": {
 			"name": "Corridor Spikes",
 			"type": "bool",
@@ -138,16 +213,9 @@
 			"type": "bool",
 			"default": false
 		},
-		"changing-speed": {
+		"speed-title": {
 			"name": "Speed Changes",
-			"type": "string",
-			"one-of": [
-				"None",
-				"Light",
-				"Balanced",
-				"Aggressive"
-			],
-			"default": "None"
+			"type": "title"
 		},
 		"min-speed": {
 			"name": "Min Speed",
@@ -173,29 +241,25 @@
 			],
 			"default": "4x"
 		},
-		"fake-gravity-portals": {
-			"name": "Fake Gravity Portals",
-			"type": "bool",
-			"default": false
+		"size-title": {
+			"name": "Size Changes",
+			"type": "title"
 		},
-		"upside-start": {
-			"name": "Start Upside Down",
-			"type": "bool",
-			"default": false
-		},
-        "themes-title": {
-            "type": "title",
-            "name": "Theming"
-        },
-		"active-theme": {
-			"name": "Theme",
-			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
+		"transition-type": {
+			"name": "Size Transition Type",
+			"description": "Type A (default) generates miniwave corridors 1 block wider than big wave corridors, and vice-versa, similarly to Random Wave. Type B generates both with the same corridor height, similarly to CorroZ.",
 			"type": "string",
-			"default": ""
+			"one-of": [
+				"Type A",
+				"Type B"
+			],
+			"default": "Type A"
 		},
-		"reload-themes": {
-			"name": "",
-			"type": "custom:reload-themes"
+		"corridor-widening": {
+			"name": "Widen Playfield Bounds",
+			"description": "Widen the wave playing field's bounds to the screen edges.",
+			"type": "bool",
+			"default": false
 		},
         "meta-title": {
             "type": "title",

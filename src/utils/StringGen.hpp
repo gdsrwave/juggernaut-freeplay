@@ -17,7 +17,7 @@
 #include <string>
 #include <array>
 #include <utility>
-#include "constants.hpp"
+#include "shared.hpp"
 #include "Ninja.hpp"
 
 using namespace geode::prelude;

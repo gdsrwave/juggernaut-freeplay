@@ -14,6 +14,14 @@ class $modify(EditorPauseLayer) {
         EditorPauseLayer::onExitEditor(obj);
     }
 
+    void onExitNoSave(CCObject* obj) {
+        if (state != JFPGen::AutoJFP::NotInAutoJFP) {
+            EditorPauseLayer::onExitEditor(obj);
+        } else {
+            EditorPauseLayer::onExitNoSave(obj);
+        }
+    }
+
     void onSave(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
             FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();

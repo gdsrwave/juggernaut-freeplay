@@ -3,7 +3,11 @@
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
+#include <Geode/utils/general.hpp>
 #include "../utils/shared.hpp"
+#include "../utils/Ninja.hpp"
+#include "../utils/OptionStr.hpp"
+#include "OptionStrPopup.hpp"
 
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
@@ -66,11 +70,42 @@ bool JFPMenuLayer::init() {
     understandableSprite->setZOrder(-1);
     addChild(understandableSprite);
 
-    // auto title = CCLabelBMFont::create("Seed", "goldFont.fnt");
-    // title->setPosition({windowDim.width / 2, windowDim.height / 2 + 100.f});
-    // title->setColor({255, 255, 255});
-    // title->setScale(1.5f);
-    // addChild(title);
+    uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
+    std::string displaySeed = "Last Seed: " + (globalSeed ? std::to_string(globalSeed) : "N/A");
+    auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "goldFont.fnt");
+    seedTxt->setScale(0.9f);
+    auto seedCopyBtn = CCMenuItemSpriteExtra::create(
+        seedTxt,
+        this,
+        menu_selector(JFPMenuLayer::onCopySeed)
+    );
+    seedCopyBtn->setID("jfp-seed-button"_spr);
+    seedCopyBtn->setSizeMult(1.1f);
+
+    auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+    std::string displayOptStr = "Options: " + exportSettings(settings);
+    m_optText = CCLabelBMFont::create(displayOptStr.c_str(), "goldFont.fnt");
+    m_optText->setScale(0.9f);
+    auto optCopyBtn = CCMenuItemSpriteExtra::create(
+        m_optText,
+        this,
+        menu_selector(JFPMenuLayer::onCopyOpt)
+    );
+    optCopyBtn->setID("jfp-options-btn"_spr);
+    optCopyBtn->setSizeMult(0.9f);
+
+    auto optMenu = CCMenu::create();
+    auto optRefreshBtnSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+    optRefreshBtnSpr->setScale(0.5f);
+    auto optRefreshBtn = CCMenuItemSpriteExtra::create(optRefreshBtnSpr, this, menu_selector(JFPMenuLayer::onOptRefresh));
+    optMenu->setLayout(RowLayout::create()
+        ->setGap(2.f)
+    );
+    optMenu->addChild(optCopyBtn);
+    optMenu->addChild(optRefreshBtn);
+    optMenu->updateLayout();
+
+    // auto optTxt = CCLabelBMFont::create("", "goldFont.fnt");
 
     auto themeSprite = CircleButtonSprite::createWithSpriteFrameName("snoop_s.png"_spr, 1.f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     themeSprite->setScale(1.1f);
@@ -107,6 +142,22 @@ bool JFPMenuLayer::init() {
     infoBtn->setID("info-button"_spr);
     infoBtn->setSizeMult(1.1f);
 
+    auto importBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("importIcon_001.png"_spr),
+        this,
+        menu_selector(JFPMenuLayer::onImportButton)
+    );
+    importBtn->setID("import-opt-button"_spr);
+    importBtn->setSizeMult(1.1f);
+
+    auto urBtnMenu = CCMenu::create();
+    urBtnMenu->setLayout(ColumnLayout::create()
+        ->setGap(5.f)
+    );
+    urBtnMenu->addChild(importBtn);
+    urBtnMenu->addChild(infoBtn);
+    urBtnMenu->updateLayout();
+
     auto garageBtn = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("garageRope_001.png"),
         this,
@@ -117,6 +168,7 @@ bool JFPMenuLayer::init() {
     
     auto menu = CCMenu::create();
     auto menu2 = CCMenu::create();
+    auto menu3 = CCMenu::create();
 
     menu->setID("center-menu"_spr);
     menu->setPosition({windowDim.width/2, windowDim.height/2+50.f});
@@ -130,23 +182,54 @@ bool JFPMenuLayer::init() {
 
     menu2->setID("inf-menu"_spr);
     menu2->setAnchorPoint({0, 0});
-    menu2->setPosition({216, 265});
+    menu2->setPosition({214, 125});
     menu2->addChild(garageBtn);
-    menu2->addChild(infoBtn);
+    menu2->addChild(urBtnMenu);
     menu2->setLayout(RowLayout::create()
         ->setGap(7.f)
     );
     menu2->updateLayout();
-    garageBtn->setPositionY(garageBtn->getPositionY()-14.f);
     addChild(menu2);
 
-    menu->updateLayout();
+    menu3->setLayout(ColumnLayout::create()
+        ->setGap(5.f)
+    );
+    menu3->setPosition({windowDim.width / 2, windowDim.height / 2 - 10.f});
+    menu3->setScale(0.7f);
+    menu3->addChild(optMenu);
+    menu3->addChild(seedCopyBtn);
+    addChild(menu3);
 
+    menu->updateLayout();
+    menu3->updateLayout();
+    
     return true;
 }
 
 void JFPMenuLayer::onOptionButton(CCObject*) {
     openSettingsPopup(Mod::get());
+}
+
+void JFPMenuLayer::onCopySeed(CCObject*) {
+    uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
+    if(globalSeed) {
+        clipboard::write(std::to_string(globalSeed));
+        Notification::create("Copied to clipboard", NotificationIcon::None, 0.5f)->show();
+    } else {
+        Notification::create("No seed has been generated!", NotificationIcon::Error, 0.5f)->show();
+    }
+}
+
+void JFPMenuLayer::onCopyOpt(CCObject*) {
+    auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+    clipboard::write(exportSettings(settings));
+    Notification::create("Copied to clipboard", NotificationIcon::None, 0.5f)->show();
+}
+
+void JFPMenuLayer::onOptRefresh(CCObject*) {
+    auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+    std::string displayOptStr = "Options: " + exportSettings(settings);
+    m_optText->setCString(displayOptStr.c_str());
 }
 
 void JFPMenuLayer::keyBackClicked() {
@@ -168,8 +251,17 @@ void JFPMenuLayer::onGarageButton(CCObject*) {
 
 void JFPMenuLayer::onAutoGenButton(CCObject*) {
     if (state != JFPGen::AutoJFP::NotInAutoJFP) return;
+    if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+        FLAlertLayer::create("JFP", "Please accept the disclaimer to continue!", "OK")->show();
+        return;
+    } 
     jfpActive = true;
     state = JFPGen::AutoJFP::JustStarted;
+    Mod::get()->setSavedValue<uint32_t>(
+        "total-played",
+        Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1
+    );
+
     auto level = createGameLevel();
     if (!level) {
         state = JFPGen::AutoJFP::NotInAutoJFP;
@@ -190,16 +282,25 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
 }
 
 void JFPMenuLayer::onInfoButton(CCObject*) {
+    std::string playCt = std::to_string(
+        Mod::get()->getSavedValue<uint32_t>("total-played", 0)
+    );
+    std::string message = "Advanced Random Wave Generation\n\n"
+                        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
+                        "Special thanks to the Geode community and to early playtesters; you made this possible!\n"
+                        "Total Rounds Played: " + playCt;
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
-        "Advanced Random Wave Generation\n\n"
-        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
-        "Special thanks to the Geode community and to early playtesters!\n",
+        message.c_str(),
         "I get it man",
         nullptr,
         400.f
     );
     infoLayer->setID("jfp-info-layer"_spr);
     infoLayer->show();
+}
+
+void JFPMenuLayer::onImportButton(CCObject*) {
+    OptionStrPopup::create("")->show();
 }
 
 CCScene* JFPMenuLayer::scene() {
