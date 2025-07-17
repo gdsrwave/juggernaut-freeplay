@@ -18,6 +18,8 @@ struct ThemeMetadata {
     std::string type;
     std::string description;
     std::string date;
+    std::string biome;
+    std::vector<std::string> tags;
 };
 
 struct ThemeMatch {
@@ -27,6 +29,12 @@ struct ThemeMatch {
     std::vector<int> notOffsets;
     std::vector<std::string> commands;
     bool _else = false;
+};
+
+enum class OMType: int {
+    Corridor = 0,
+    Floor = 1,
+    Ceiling = 2
 };
 
 struct RepeatingPattern {
@@ -48,6 +56,7 @@ enum class InOverride : int {
     Speed = 8
 };
 
+std::string nuke155(std::string addBlockLine);
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
