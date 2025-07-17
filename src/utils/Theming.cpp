@@ -24,18 +24,28 @@ std::array<int, 3> hexToColor(const std::string& hex) {
 
 // orientationMatch, but modified to account for miniwave and transitions
 bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, const std::vector<int>& pattern,
-        OMType omType = OMType::Corridor) {
+        OMType omType, bool typeA) {
     if (idx < static_cast<int>(pattern.size())) return false;
     int y_swing = 0;
+    bool mini = false;
     for (int i = 0; i < pattern.size(); i++) {
         auto seg = segments[idx - pattern.size() + i];
         y_swing = seg.y_swing;
-        if (seg.options.mini) y_swing *= 2;
+        mini = seg.options.mini;
+
+        if (typeA && idx < segments.size() - 1 && mini != segments[i + 1].options.mini) {
+            if (omType == OMType::Floor && ((mini && y_swing == 1) || (!mini && y_swing == -1))) {
+                y_swing *= 2;
+            } else if (omType == OMType::Ceiling && ((mini && y_swing == -1) || (!mini && y_swing == 1))) {
+                y_swing *= 2;
+            }
+        } else if (mini) {
+            y_swing *= 2;
+        }
         if ((seg.options.isTransition) || y_swing != pattern[i]) return false;
     }
     return true;
 }
-
 
 std::string handleRawBlock(std::string addBlockLine, OMType omType) {
     std::string res;

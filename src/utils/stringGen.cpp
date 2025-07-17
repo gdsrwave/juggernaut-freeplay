@@ -190,7 +190,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         );
 
         bool fMini = false, cMini = false;
-        if (i < biome.segments.size() - 1 && biome.options.typeA && mini != biome.segments[i + 1].options.mini) {
+        if (biome.options.typeA && i < biome.segments.size() - 1 && mini != biome.segments[i + 1].options.mini) {
             if ((mini && y_swing == 1) || (!mini && y_swing == -1)) {
                 fMini = true;
             } else if ((mini && y_swing == -1) || (!mini && y_swing == 1)) {

@@ -20,7 +20,7 @@ void onCopyBtns(EditorUI* ui, ThemeGen::OMType omType = ThemeGen::OMType::None) 
 
 void onThemeInfoButton() {
     std::string message = "Definition Types:\n"
-                        "base\nbase-mini\nenddown\nenddown-mini\nendup\nendup-mini\nstart\nstart-mini";
+                        "base\nenddown\nenddown-mini\nendup\nendup-mini\nstart\nstart-mini";
     auto infoLayer = FLAlertLayer::create(nullptr, "JFP",
         message.c_str(),
         "OK",

@@ -57,11 +57,12 @@ enum class InOverride : int {
     Speed = 8
 };
 
+std::array<int, 3> hexToColor(const std::string& hex);
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, const std::vector<int>& pattern,
+        OMType omType = OMType::Corridor);
 std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None);
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
-
-std::array<int, 3> hexToColor(const std::string& hex);
 
 }
