@@ -34,7 +34,8 @@ struct ThemeMatch {
 enum class OMType: int {
     Corridor = 0,
     Floor = 1,
-    Ceiling = 2
+    Ceiling = 2,
+    None = 3
 };
 
 struct RepeatingPattern {
@@ -56,7 +57,7 @@ enum class InOverride : int {
     Speed = 8
 };
 
-std::string nuke155(std::string addBlockLine);
+std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None);
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);

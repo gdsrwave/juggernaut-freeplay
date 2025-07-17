@@ -4,11 +4,41 @@
 
 using namespace geode::prelude;
 
+void onCopyBtns(EditorUI* ui, ThemeGen::OMType omType = ThemeGen::OMType::None) {
+    auto selectedObj = ui->getSelectedObjects();
+    std::string res = "# <definition or matcher> #\n";
+    for (int i = 0; i < selectedObj->count(); i++) {
+        GameObject* obj = static_cast<GameObject*>(selectedObj->objectAtIndex(i));
+        res += ThemeGen::handleRawBlock(obj->getSaveString(ui->m_editorLayer),
+            omType);
+        res += ";\n";
+    }
+    res += "# end <def or match> #";
+    clipboard::write(res);
+    Notification::create("Copied JFPT block to clipboard", NotificationIcon::Info, 1.f)->show();
+};
+
+void onThemeInfoButton() {
+    std::string message = "Definition Types:\n"
+                        "base\nbase-mini\nenddown\nenddown-mini\nendup\nendup-mini\nstart\nstart-mini";
+    auto infoLayer = FLAlertLayer::create(nullptr, "JFP",
+        message.c_str(),
+        "OK",
+        nullptr,
+        200.f
+    );
+    infoLayer->setID("jfp-themeinfo-layer"_spr);
+    infoLayer->show();
+}
+
 #include <Geode/modify/EditorUI.hpp>
 class $modify(EditorUI) {
 
     bool init(LevelEditorLayer* editorLayer) {
         if (!EditorUI::init(editorLayer)) return false;
+        
+        bool ttb = Mod::get()->getSettingValue<bool>("theming-toolbox");
+        if (!ttb) return true;
 
         EditorTabs::addTab(this, TabType::EDIT, "themetools"_spr,
                 [](EditorUI* ui, CCMenuItemToggler* toggler) -> CCNode* {
@@ -23,26 +53,53 @@ class $modify(EditorUI) {
             );
             auto basicBtn = CCMenuItemExt::createSpriteExtra(
                 basicBtnSpr,
-                [=](auto) {
-                    auto selectedObj = ui->getSelectedObjects();
-                    std::string res = "# <definition or condition> #\n";
-                    for (int i = 0; i < selectedObj->count(); i++) {
-                        GameObject* obj = static_cast<GameObject*>(selectedObj->objectAtIndex(i));
-                        res += ThemeGen::nuke155(obj->getSaveString(ui->m_editorLayer));
-                        res += ";\n";
-                    }
-                    res += "# end define #";
-                    clipboard::write(res);
-                }
+                [=](auto) { onCopyBtns(ui); }
             );
             basicBtn->setID("jfpt-copy-btn");
             arr->addObject(basicBtn);
+
+            // floor seg export btn
+            auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            floorBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("floorIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero
+            );
+            auto floorBtn = CCMenuItemExt::createSpriteExtra(
+                floorBtnSpr,
+                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor); }
+            );
+            floorBtn->setID("jfpt-floorcpy-btn");
+            arr->addObject(floorBtn);
+
+            // ceiling seg export btn
+            auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            ceilBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("ceilingIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero
+            );
+            auto ceilBtn = CCMenuItemExt::createSpriteExtra(
+                ceilBtnSpr,
+                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); }
+            );
+            ceilBtn->setID("jfpt-ceilcpy-btn");
+            arr->addObject(ceilBtn);
+
+            // ceiling seg export btn
+            auto infoBtnSpr = CCSprite::createWithSpriteFrameName("blueBg.png"_spr);
+            infoBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("eInfoIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero
+            );
+            auto infoBtn = CCMenuItemExt::createSpriteExtra(
+                infoBtnSpr,
+                [=](auto) { onThemeInfoButton(); }
+            );
+            infoBtn->setID("jfpt-theme-info-btn");
+            arr->addObject(infoBtn);
             
-
-            // make advanced export btn
-            // auto label = CCLabelBMFont::create("meow", "bigFont.fnt");
-            // arr->addObject(label);
-
 
             CCLabelBMFont* textLabel = CCLabelBMFont::create("JFP", "bigFont.fnt");
             textLabel->setScale(0.4f);
@@ -57,20 +114,3 @@ class $modify(EditorUI) {
         return true;
     }
 };
-
-
-            // auto onCopyBtnClicked = [](EditorUI* ui) {
-            //     auto selectedObj = ui->getSelectedObjects();
-            //     std::string res;
-            //     for (int i = 0; i < selectedObj->count(); i++) {
-            //         GameObject* obj = static_cast<GameObject*>(selectedObj->objectAtIndex(i));
-            //         if (!res.empty()) res += "\n";
-            //         res += obj->getSaveString(ui->m_editorLayer);
-            //     }
-            //     clipboard::write(res);
-            // };
-
-            // auto basicBtn = CCMenuItemExt::createSpriteExtra(
-            //     basicBtnSpr,
-            //     onCopyBtnClicked(ui) }
-            // );
