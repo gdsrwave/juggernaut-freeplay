@@ -77,7 +77,10 @@ std::map<std::string, std::string> kBank = {
 std::map<std::string, bool> overrideBank = {
     {"override-base", false},
     {"override-enddown", false},
-    {"override-endup", false}
+    {"override-endup", false},
+    {"override-start", false},
+    {"override-slope", false},
+    {"override-slope-mini", false}
 };
 
 namespace JFPGen {

@@ -157,6 +157,9 @@ std::string jfpNewStringGen(LevelData ldata) {
         level += startingConnectors;
     }
 
+    bool bigSlopes = !overrideBank["override-slope"];
+    bool miniSlopes = !overrideBank["override-slope-mini"];
+
     for (int64_t i = 0; i < biome.segments.size(); i++) {
         const auto& seg = biome.segments[i];
         x = seg.coords.first;
@@ -202,14 +205,14 @@ std::string jfpNewStringGen(LevelData ldata) {
         }
 
         if (fMini) {
-            level += mFSlope;
+            level += miniSlopes ? mFSlope : "";
         } else {
-            level += bFSlope;
+            level += bigSlopes ? bFSlope : "";
         }
         if (cMini) {
-            level += mCSlope;
+            level += miniSlopes ? mCSlope : "";
         } else {
-            level += bCSlope;
+            level += bigSlopes ? bCSlope : "";
         }
 
         // Corner-Pieces

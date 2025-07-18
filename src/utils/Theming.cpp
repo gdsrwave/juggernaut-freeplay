@@ -33,16 +33,16 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, const std::
         y_swing = seg.y_swing;
         mini = seg.options.mini;
 
-        if (typeA && idx < segments.size() - 1 && mini != segments[i + 1].options.mini) {
+        if (typeA && seg.options.isTransition) {
             if (omType == OMType::Floor && ((mini && y_swing == 1) || (!mini && y_swing == -1))) {
                 y_swing *= 2;
             } else if (omType == OMType::Ceiling && ((mini && y_swing == -1) || (!mini && y_swing == 1))) {
                 y_swing *= 2;
-            }
+            } else if (omType == OMType::Corridor) return false;
         } else if (mini) {
             y_swing *= 2;
         }
-        if ((seg.options.isTransition) || y_swing != pattern[i]) return false;
+        if (y_swing != pattern[i]) return false;
     }
     return true;
 }
@@ -76,9 +76,29 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
         if (key == 155 || key == 156) continue;
 
         if (key == 2) {
+            float xv = 0.f;
+            try {
+                xv = std::stof(v);
+            } catch (...) {
+                continue;
+            }
+            if (std::abs(xv - std::round(xv)) < 0.1f) {
+                xv = std::round(xv);
+                v = std::to_string(static_cast<int>(xv));
+            }
             if (omType != OMType::None) v = "[X+" + v + "]";
         } else if (key == 3) {
-            if (omType == OMType::Ceiling) v = "[Y+C+" + v + "]"; 
+            float yv = 0.f;
+            try {
+                yv = std::stof(v);
+            } catch (...) {
+                continue;
+            }
+            if (std::abs(yv - std::round(yv)) < 0.1f) {
+                yv = std::round(yv);
+                v = std::to_string(static_cast<int>(yv));
+            }
+            if (omType == OMType::Ceiling) v = "[Y+C+" + v + "]";
             else if (omType != OMType::None) v = "[Y+" + v + "]";
         }
             
@@ -187,6 +207,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     bool inMatches = false;
     bool inPattern = false;
     InOverride inOverride = InOverride::None;
+    bool inOverrideMini = false;
 
     RepeatingPattern patternGen = RepeatingPattern();
     ThemeMatch cMP = ThemeMatch();
@@ -195,10 +216,14 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     std::vector<ThemeMatch> cMPList;
     std::vector<RepeatingPattern> repeatingPatterns;
     std::string themeGen = "";
+    std::string corridorBlock = "";
 
     overrideBank["override-base"] = false;
+    overrideBank["override-start"] = false;
     overrideBank["override-enddown"] = false;
     overrideBank["override-endup"] = false;
+    overrideBank["override-slope"] = false;
+    overrideBank["override-slope-mini"] = false;
 
     JFPGen::Color sColor = JFPGen::Color();
     
@@ -317,18 +342,34 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             std::string cmd = l.substr(9, l.size() - 11);
             cmd.erase(0, cmd.find_first_not_of(" \t\r\n"));
             cmd.erase(cmd.find_last_not_of(" \t\r\n") + 1);
-            log::info("{}", cmd);
+            
             if (cmd == "base") {
                 inOverride = InOverride::Base;
                 overrideBank["override-base"] = true;
-            } else if (cmd == "enddown") {
+                continue;
+            } else if (cmd == "corridorblock") {
+                inOverride = InOverride::CorridorBlock;
+                continue;
+            }
+
+            if (cmd.size() > 5 && cmd.substr(cmd.size() - 5) == "-mini") {
+                cmd = cmd.substr(0, cmd.size() - 5);
+                inOverrideMini = true;
+            } else {
+                inOverrideMini = false;
+            }
+            if (cmd == "enddown") {
                 inOverride = InOverride::EndDown;
                 overrideBank["override-enddown"] = true;
             } else if (cmd == "endup") {
                 inOverride = InOverride::EndUp;
                 overrideBank["override-endup"] = true;
-            } else if (cmd == "mini-endup") {
-
+            } else if (cmd == "start") {
+                inOverride = InOverride::Start;
+                overrideBank["override-start"] = true;
+            } else if (cmd == "slope") {
+                inOverride = InOverride::Slope;
+                overrideBank[inOverrideMini ? "override-slope-mini" : "override-slope"] = true;
             }
             continue;
         } else if (l == "# end define #") {
@@ -346,26 +387,50 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 biome.options.corridorHeight
             );
             continue;
+        } else if (inOverride == InOverride::Start) {
+            if (biome.options.startingMini == inOverrideMini) {
+                int passedCH = biome.options.corridorHeight;
+                if (inOverrideMini && biome.options.typeA) passedCH += 30;
+                themeGen += parseAddBlock(
+                    l,
+                    0,
+                    0,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    passedCH
+                );
+            }
+            continue;
         } else if (inOverride == InOverride::EndUp && biome.segments.back().y_swing == 1) {
-            themeGen += parseAddBlock(
-                l,
-                biome.segments.back().coords.first,
-                biome.segments.back().coords.second,
-                biome.options.maxHeight,
-                biome.options.minHeight,
-                biome.options.corridorHeight
-            );
+            if (biome.segments.back().options.mini == inOverrideMini) {
+                int passedCH = biome.options.corridorHeight;
+                if (inOverrideMini && biome.options.typeA) passedCH += 30;
+                themeGen += parseAddBlock(
+                    l,
+                    biome.segments.back().coords.first,
+                    biome.segments.back().coords.second,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    passedCH
+                );
+            }
             continue;
         } else if (inOverride == InOverride::EndDown && biome.segments.back().y_swing == -1) {
-            themeGen += parseAddBlock(
-                l,
-                biome.segments.back().coords.first,
-                biome.segments.back().coords.second,
-                biome.options.maxHeight,
-                biome.options.minHeight,
-                biome.options.corridorHeight
-            );
+            if (biome.segments.back().options.mini == inOverrideMini) {
+                int passedCH = biome.options.corridorHeight;
+                if (inOverrideMini && biome.options.typeA) passedCH += 30;
+                themeGen += parseAddBlock(
+                    l,
+                    biome.segments.back().coords.first,
+                    biome.segments.back().coords.second,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    passedCH
+                );
+            }
             continue;
+        } else if(inOverride == InOverride::CorridorBlock) {
+            corridorBlock = l;
         }
 
         if (l == "# k #") {
@@ -392,12 +457,12 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         }
 
         if (!l.empty() && 
-                ((l.find("# if corridor ") == 0 && l.back() == '#') ||
-                (l.find("# else if corridor ") == 0 && l.back() == '#'))) {
+                ((l.find("# if ") == 0 && l.back() == '#') ||
+                (l.find("# else if ") == 0 && l.back() == '#'))) {
             inMatches = true;
-            if (l.find("# if corridor ") == 0) {
+            if (l.find("# if ") == 0) {
                 cMP = ThemeMatch();
-            } else if (l.find("# else if corridor ") == 0) {
+            } else if (l.find("# else if ") == 0) {
                 if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
                     cMPList.push_back(cMP);
                     cMP = ThemeMatch();
@@ -418,6 +483,15 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 t.erase(0, t.find_first_not_of(" \t\r\n"));
                 t.erase(t.find_last_not_of(" \t\r\n") + 1);
+
+                size_t corridorPos = t.find("corridor");
+                size_t floorPos = t.find("floor");
+                size_t ceilingPos = t.find("ceiling");
+                OMType omType;
+                if (corridorPos != std::string::npos) omType = OMType::Corridor;
+                else if (floorPos != std::string::npos) omType = OMType::Floor;
+                else if (ceilingPos != std::string::npos) omType = OMType::Ceiling;
+                else continue;
 
                 bool isNot = false;
                 size_t notPos = t.find("not matches");
@@ -468,9 +542,11 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 }
 
                 if (!isNot) {
+                    cMP.omType = omType;
                     cMP.pattern = pattern;
                     cMP.offset = offset;
                 } else {
+                    cMP.notTypes.push_back(omType);
                     cMP.notPatterns.push_back(pattern);
                     cMP.notOffsets.push_back(offset);
                 }
@@ -481,6 +557,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             if (!cMP.pattern.empty() || !cMP.notPatterns.empty()) {
                 cMPList.push_back(cMP);
                 cMP = ThemeMatch();
+                cMP.omType = OMType::Corridor;
+                cMP.notTypes = {};
                 cMP.pattern = {};
                 cMP.offset = 0;
                 cMP.notPatterns = {};
@@ -567,6 +645,25 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     }
 
     for (int i = 0; i < biome.segments.size(); i++) {
+        const auto& seg = biome.segments[i];
+
+        int passedCH = biome.options.corridorHeight;
+        if (seg.options.mini && biome.options.typeA) passedCH += 30;
+
+        if (corridorBlock != "") {
+            int numCB = (passedCH / 30) - (seg.options.mini ? 2 : 1);
+            for (int j = 1; j <= numCB; j++) {
+                themeGen += parseAddBlock(
+                    corridorBlock, seg.coords.first, seg.coords.second + j*30,
+                    biome.options.maxHeight, biome.options.minHeight, passedCH
+                );
+            }
+        }
+
+        if (seg.options.isTransition) {
+            if (seg.y_swing == 1 && !seg.options.mini) passedCH += 30;
+            else if (seg.y_swing == 1 && seg.options.mini) passedCH -= 30;
+        }
 
         for (const auto& condition : matchConditions) {
             for (const auto& match : condition) {
@@ -574,23 +671,32 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 bool notPatternsOk = true;
                 for (int np = 0; np < match.notPatterns.size(); ++np) {
-                    if (JFPGen::orientationMatch(
-                            biome.segments, 
-                            i + match.notOffsets[np] + 1, 
-                            match.notPatterns[np])) {
+                    if (strictOM(
+                        biome.segments, 
+                        i + match.notOffsets[np] + 1, 
+                        match.notPatterns[np],
+                        match.notTypes[np],
+                        biome.options.typeA
+                    )) {
                         notPatternsOk = false;
                         break;
                     }
                 }
 
                 if (notPatternsOk &&
-                    (JFPGen::orientationMatch(biome.segments, i + match.offset + 1, match.pattern, true) ||
+                    (strictOM(
+                        biome.segments,
+                        i + match.offset + 1,
+                        match.pattern,
+                        match.omType,
+                        biome.options.typeA
+                    ) ||
                      (match._else && match.pattern.empty()))) {
                     
                     for (const auto& cmd : match.commands) {
                         std::string parsed = parseAddBlock(
-                            cmd, biome.segments[i].coords.first, biome.segments[i].coords.second,
-                            biome.options.maxHeight, biome.options.minHeight, biome.options.corridorHeight);
+                            cmd, seg.coords.first, seg.coords.second,
+                            biome.options.maxHeight, biome.options.minHeight, passedCH);
                         if (!parsed.empty()) {
                             themeGen += parsed;
                         }
