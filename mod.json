@@ -38,6 +38,9 @@
 		"content",
 		"utility"
 	],
+	"links": {
+		"source": "https://github.com/gdsrwave/juggernaut-freeplay"
+	},
 	"settings": {
         "gen-title": {
             "type": "title",
