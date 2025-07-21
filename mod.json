@@ -62,6 +62,7 @@
 			"one-of": [
 				"NSNZ",
 				"NS",
+				"LRD",
 				"Experimental",
 				"Unrestricted"
 			],
@@ -174,6 +175,19 @@
 			],
 			"default": "Washed"
 		},
+		"background-image": {
+			"name": "Background Image",
+			"type": "int",
+			"description": "Background image (# is position on the editor selection screen)",
+			"default": 1,
+			"min": 0,
+			"max": 59
+		},
+		"finish-line": {
+			"name": "Finish Line",
+			"type": "bool",
+			"default": false
+		},
 		"hide-icon": {
 			"name": "Hide Icon",
 			"type": "bool",
@@ -280,6 +294,15 @@
 			"description": "Popup in the level editor for exporting objects in JFPT block format. Access via a button in the Edit tab.",
 			"type": "bool",
 			"default": false
+		},
+		"builtin-soundtrack": {
+			"name": "Music Source",
+			"type": "string",
+			"one-of": [
+				"JFP Soundtrack",
+				"Local Music"
+			],
+			"default": "JFP Soundtrack"
 		},
 		"filename": {
 			"name": "File Name",

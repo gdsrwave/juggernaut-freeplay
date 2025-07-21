@@ -66,8 +66,12 @@ std::string jfpStringGen(bool compress) {
     LevelData ldata = generateJFPLevel();
     if (ldata.biomes.empty()) return "";
 
+    // this could self-evidently be optimized by splitting the theme function and storing the matching/overriding
+    // structure for reuse every in tiling every att. however, I'm holding off on this because of possibilities during
+    // biome system buildout and the introduction of presets. -M
     std::string themeString = ThemeGen::parseTheme(Mod::get()->getSettingValue<std::string>("active-theme"), ldata);
-    std::string levelString = jfpNewStringGen(ldata);;
+
+    std::string levelString = jfpNewStringGen(ldata);
     levelString = colorStringGen() + kStringGen() + levelString + themeString;
 
     return jfpPackString(levelString, ldata.seed, ldata.biomes[0].song, compress);
@@ -122,8 +126,8 @@ std::string jfpNewStringGen(LevelData ldata) {
     const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
     const bool hideIcon = Mod::get()->getSettingValue<bool>("hide-icon");
     
-    std::string level;
-    if(!overrideBank["override-base"]) level += levelBaseSeg;
+    std::string level = levelCommonBaseSeg;
+    if (!overrideBank["override-base"]) level += levelBaseSeg;
     level += levelBuildSeg2;
 
     const auto& biome = ldata.biomes[0];
@@ -137,7 +141,7 @@ std::string jfpNewStringGen(LevelData ldata) {
 
     int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
 
-    if(!overrideBank["override-base"]) {
+    if (!overrideBank["override-base"]) {
         fmt::dynamic_format_arg_store<fmt::format_context> args;
         if (opts.startingMini) {
             args.push_back(fmt::arg("ch_1", 90 + currentCH));
@@ -274,6 +278,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                 if (seg.options.isPortal == Portals::None) {
                     xSP = x - 26;
                     ySP = biome.segments[i - 1].coords.second + 15 + (corridorHeight - 30) / 2;
+                    ySP += biome.segments[i - 1].y_swing * 4;
                     rSP = (std::atan((corridorHeight - 30.f) / 30.f) * 180/3.1415 - 90) * biome.segments[i - 1].y_swing;
                     scaleSP = std::sqrt(std::pow((corridorHeight - 30), 2) + 900) / 110.f;
                 } else {
@@ -306,7 +311,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                         ySP += 15;
                     }
                     scaleSP = (currentCH / 90.f) * 0.8;
-                    xSP = x - 15 + 13 * scaleSP;
+                    xSP = x - 14 + 13 * scaleSP;
                 } else {
                     xSP = xP;
                     ySP = yP;
@@ -465,11 +470,10 @@ std::string jfpNewStringGen(LevelData ldata) {
     }
 
     // Meter-Marks
-    const bool marks = Mod::get()->getSettingValue<bool>("marks");
     const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
     std::string metermarksStr = "";
     std::string currentMark;
-    if (marks && markInterval > 0) {
+    if (Mod::get()->getSettingValue<bool>("marks") && markInterval > 0) {
         int meters = markInterval;
         double markHeight;
         for (int j = 0; j < (biome.options.length / markInterval); j++) {
@@ -477,18 +481,30 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,902,6,-90,64,1,67,1,21,1011,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
             std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
             meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,902,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }
     }
     level += metermarksStr;
+
+    // Finish Line
+    if(Mod::get()->getSettingValue<bool>("finish-line")) {
+        fmt::dynamic_format_arg_store<fmt::format_context> args;
+        args.push_back(fmt::arg("pos1", x+7.5));
+        args.push_back(fmt::arg("pos2", x+22.5));
+        std::string finishLineBuild = fmt::vformat(
+            finishLine,
+            args
+        );
+        level += finishLineBuild;
+    }
 
     // Visibility
     if (biome.options.visibility == Visibility::Low) {

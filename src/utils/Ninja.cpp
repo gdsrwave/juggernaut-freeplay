@@ -176,7 +176,8 @@ LevelData generateJFPLevel() {
     CorridorRules optCorridorRules = CorridorRules::Unrestricted;
     if (corridorRulesStr == "NS") optCorridorRules = CorridorRules::NoSpam;
     else if (corridorRulesStr == "NSNZ") optCorridorRules = CorridorRules::NoSpamNoZigzag;
-    else if (corridorRulesStr == "Juggernaut") optCorridorRules = CorridorRules::Experimental;
+    else if (corridorRulesStr == "LRD") optCorridorRules = CorridorRules::LRD;
+    else if (corridorRulesStr == "Experimental") optCorridorRules = CorridorRules::Experimental;
 
     std::string portalInputsStr = mod->getSettingValue<std::string>("portal-inputs");
     PortalInputs optPortalInputs = PortalInputs::Both;
@@ -317,6 +318,8 @@ LevelData generateJFPLevel() {
     if (mini && typeA) relMaxHeight -= 30;
     float currentSpeed = convertSpeedToFloat(optSpeed);
     bool specialRules = false;
+    bool lowRespectfulDensity = false;
+    int8_t y_bias = -1;
     Portals currentPortal;
 
     levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
@@ -395,8 +398,10 @@ LevelData generateJFPLevel() {
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMax)
             ) ||
-            orientationMatch(segments, i, antiTpspam1) ||
-            i == 1
+            i == 1 || (
+                optCorridorRules != CorridorRules::Unrestricted &&
+                orientationMatch(segments, i, {-1, 1, -1})
+            )
         )) {
             y_swing = -1;
         } else if (
@@ -404,8 +409,10 @@ LevelData generateJFPLevel() {
             (
                 optCorridorRules == CorridorRules::NoSpamNoZigzag &&
                 orientationMatch(segments, i, antiZigzagMin)
-            ) ||
-            orientationMatch(segments, i, antiTpspam2)
+            ) || (
+                optCorridorRules != CorridorRules::Unrestricted &&
+                orientationMatch(segments, i, {1, -1, 1})
+            )
         )) {
             y_swing = 1;
         } else if (
@@ -431,7 +438,25 @@ LevelData generateJFPLevel() {
                 !(!gravity && cY != minHeight)))) {
             y_swing = 1;
         } else {
-            // special condition used in Juggernaut rules
+            if (optCorridorRules == CorridorRules::LRD) {
+                if (
+                    orientationMatch(segments, i, {1, -1, 1}) ||
+                    (cY <= (mini ? minHeight + 30 : minHeight) && segments[i - 1].y_swing == 1)
+                ) {
+                    lowRespectfulDensity = true;
+                    y_bias = 1;
+                } else if (
+                    orientationMatch(segments, i, {-1, 1, -1}) ||
+                    (cY >= relMaxHeight && segments[i - 1].y_swing == -1)
+                ) {
+                    lowRespectfulDensity = true;
+                    y_bias = -1;
+                } else {
+                    lowRespectfulDensity = false;
+                }
+            }
+
+            // special condition used in Experimental rules
             if (specialRules) {
                 y_swing = segmentRNG() % 4;
                 if (y_swing > 0) y_swing = 1;
@@ -439,6 +464,10 @@ LevelData generateJFPLevel() {
                 if (cY >= relMaxHeight - 30) {
                     y_swing *= -1;
                 }
+            } else if (lowRespectfulDensity) {
+                y_swing = segmentRNG() % 7;
+                if (y_swing == 0) y_swing = y_bias * -1;
+                else y_swing = y_bias;
             } else {
                 // 50/50 corridor direction flip
                 y_swing = segmentRNG() % 2;
@@ -480,12 +509,24 @@ LevelData generateJFPLevel() {
                 if (segments[i - 1].y_swing == -1) cY -= 30;
             }
         }
+
+        // size change y_swing catch - reorients the corridor if about to get stuck. -M
+        if (mini && !segments[i - 1].options.mini) {
+            log::info("{} {} {} {}", y_swing, cY, relMaxHeight, orientationMatch(segments, i, {1, -1}));
+            if (y_swing == 1 && cY >= relMaxHeight && orientationMatch(segments, i, {1, -1})) {
+                y_swing = -1;
+            } else if (y_swing == -1 && cY <= minHeight + 30 &&
+                orientationMatch(segments, i, {-1, 1})) {
+                    y_swing = 1;
+            }
+        }
         
         if ((i == 0 && y_swing == 1) || segments[i - 1].y_swing == y_swing) {
             int mfac = 1;
             if (mini) {
                 mfac = 2;
             }
+
             cY += mfac * (y_swing * 30);
         }
 

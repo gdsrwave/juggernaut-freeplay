@@ -26,8 +26,8 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 			return false;
 		}
 		
-        if(Mod::get()->getSettingValue<bool>("waveman-button")) {
-            if(s->m_searchType != SearchType::MyLevels) return true;
+        if (Mod::get()->getSettingValue<bool>("waveman-button")) {
+            if (s->m_searchType != SearchType::MyLevels) return true;
             auto genButton = CCMenuItemSpriteExtra::create(
                 CircleButtonSprite::createWithSpriteFrameName("waveman_s.png"_spr, .90f, CircleBaseColor::Cyan, CircleBaseSize::Medium),
                 this,
@@ -53,7 +53,7 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 		std::srand(std::time(0));
 		auto localPath = CCFileUtils::sharedFileUtils();
 		std::string levelString = JFPGen::jfpStringGen(true);
-		if(levelString.empty()) return;
+		if (levelString.empty()) return;
 		JFPGen::exportLvlStringGMD(std::string(localPath->getWritablePath()) + "/waveman.gmd", levelString);
 		auto jfpImport = ImportGmdFile::from(std::string(localPath->getWritablePath()) + "/waveman.gmd");
 
@@ -61,7 +61,7 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
 		jfpImport.tryInferType(); // .gmd
 		// convert to GJGameLevel
 		auto jfpResult = jfpImport.intoLevel();
-		if(jfpResult.isErr()) return FLAlertLayer::create("Import Error", jfpResult.unwrapErr(), "Sure thing...")->show();
+		if (jfpResult.isErr()) return FLAlertLayer::create("Import Error", jfpResult.unwrapErr(), "Sure thing...")->show();
 
 		// Insert level object into local list
 		LocalLevelManager::get()->m_localLevels->insertObject(jfpResult.unwrap(), 0);

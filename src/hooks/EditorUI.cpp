@@ -6,14 +6,14 @@ using namespace geode::prelude;
 
 void onCopyBtns(EditorUI* ui, ThemeGen::OMType omType = ThemeGen::OMType::None) {
     auto selectedObj = ui->getSelectedObjects();
-    std::string res = "# <definition or matcher> #\n";
+    std::string res = "# <if|define> #\n";
     for (int i = 0; i < selectedObj->count(); i++) {
         GameObject* obj = static_cast<GameObject*>(selectedObj->objectAtIndex(i));
         res += ThemeGen::handleRawBlock(obj->getSaveString(ui->m_editorLayer),
             omType);
         res += ";\n";
     }
-    res += "# end <def or match> #";
+    res += "# end <if|define> #";
     clipboard::write(res);
     Notification::create("Copied JFPT block to clipboard", NotificationIcon::Info, 1.f)->show();
 };
@@ -85,6 +85,20 @@ class $modify(EditorUI) {
             );
             ceilBtn->setID("jfpt-ceilcpy-btn");
             arr->addObject(ceilBtn);
+
+            // // pattern export btn
+            // auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            // ceilBtnSpr->addChildAtPosition(
+            //     CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
+            //     Anchor::Center,
+            //     CCPointZero
+            // );
+            // auto ceilBtn = CCMenuItemExt::createSpriteExtra(
+            //     ceilBtnSpr,
+            //     [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); }
+            // );
+            // ceilBtn->setID("jfpt-ceilcpy-btn");
+            // arr->addObject(ceilBtn);
 
             // ceiling seg export btn
             auto infoBtnSpr = CCSprite::createWithSpriteFrameName("blueBg.png"_spr);

@@ -68,5 +68,7 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::Non
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
+ThemeMetadata parseThemeMeta(const std::string& name);
+std::vector<std::string> tagConflicts(ThemeMetadata tmd);
 
 }

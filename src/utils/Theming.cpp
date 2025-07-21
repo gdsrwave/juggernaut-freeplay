@@ -5,6 +5,7 @@
 #include <Geode/utils/cocos.hpp>
 #include <Geode/utils/file.hpp>
 #include "Ninja.hpp"
+#include "shared.hpp"
 
 using namespace geode::prelude;
 
@@ -224,6 +225,11 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     overrideBank["override-endup"] = false;
     overrideBank["override-slope"] = false;
     overrideBank["override-slope-mini"] = false;
+    
+    // in the future, we'll add a dedicated k building function so its functionality isn't haphazardly placed here in
+    // theming. -M
+    kBank = defaultKbank;
+    kBank["kA6"] = std::to_string(Mod::get()->getSettingValue<int>("background-image"));
 
     JFPGen::Color sColor = JFPGen::Color();
     
@@ -247,46 +253,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     file.close();
 
     for (const auto& l : lines) {
-        // TODO: rework into a switch case or a neater conditional
-        if (l == "# metadata #") {
-            inMetadata = true;
-            continue;
-        } else if (l == "# end metadata #") {
-            inMetadata = false;
-            continue;
-        }
-        if (inMetadata) {
-            auto pos = l.find(':');
-            if (pos != std::string::npos) {
-                std::string key = l.substr(0, pos);
-                std::string value = l.substr(pos + 1);
-
-                key.erase(0, key.find_first_not_of(" \t\r\n"));
-                key.erase(key.find_last_not_of(" \t\r\n") + 1);
-                value.erase(0, value.find_first_not_of(" \t\r\n"));
-                value.erase(value.find_last_not_of(" \t\r\n") + 1);
-
-                if (key == "Name") metadata.name = value;
-                else if (key == "Author") metadata.author = value;
-                else if (key == "Version") metadata.version = value;
-                else if (key == "Biome") metadata.biome = value;
-                else if (key == "Tags") {
-                    metadata.tags.clear();
-                    size_t start = 0, end = 0;
-                    while ((end = value.find(", ", start)) != std::string::npos) {
-                        metadata.tags.push_back(value.substr(start, end - start));
-                        start = end + 2;
-                    }
-                    metadata.tags.push_back(value.substr(start));
-                }
-                else if (key == "Date") metadata.date = value;
-                else if (key == "Pack") metadata.pack = value;
-                else if (key == "Type") metadata.type = value;
-                else if (key == "Description") metadata.description = value;
-            }
-            continue;
-        }
-
         if (l == "# color #") {
             inAddcolor = true;
             continue;
@@ -429,7 +395,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 );
             }
             continue;
-        } else if(inOverride == InOverride::CorridorBlock) {
+        } else if (inOverride == InOverride::CorridorBlock) {
             corridorBlock = l;
         }
 
@@ -712,6 +678,99 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     }
     
     return themeGen;
+}
+
+ThemeMetadata parseThemeMeta(const std::string& name) {
+    bool inMetadata = false;
+    ThemeMetadata metadata;
+
+    auto localPath = CCFileUtils::sharedFileUtils();
+    std::string themeName = name;
+    if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
+        themeName += ".jfpt";
+    }
+    std::string fp = std::string(localPath->getWritablePath()) + "/jfp/themes/" + themeName;
+    std::ifstream file(fp);
+    if (!file.is_open()) {
+        return ThemeMetadata();
+    }
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(file, line)) {
+        lines.push_back(line);
+    }
+    file.close();
+
+    for (const auto& l : lines) {
+        // TODO: rework into a switch case or a neater conditional
+        if (l == "# metadata #") {
+            inMetadata = true;
+            continue;
+        } else if (l == "# end metadata #") {
+            inMetadata = false;
+            continue;
+        }
+        if (inMetadata) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                if (key == "Name") metadata.name = value;
+                else if (key == "Author") metadata.author = value;
+                else if (key == "Version") metadata.version = value;
+                else if (key == "Biome") metadata.biome = value;
+                else if (key == "Tags") {
+                    metadata.tags.clear();
+                    size_t start = 0, end = 0;
+                    while ((end = value.find(", ", start)) != std::string::npos) {
+                        metadata.tags.push_back(value.substr(start, end - start));
+                        start = end + 2;
+                    }
+                    metadata.tags.push_back(value.substr(start));
+                }
+                else if (key == "Date") metadata.date = value;
+                else if (key == "Pack") metadata.pack = value;
+                else if (key == "Type") metadata.type = value;
+                else if (key == "Description") metadata.description = value;
+            }
+            continue;
+        }
+    }
+
+    return metadata;
+}
+
+std::vector<std::string> tagConflicts(ThemeMetadata tmd) {
+    auto* mod = Mod::get();
+    std::vector<std::string> conflicts;
+
+    const bool isBigPresent = mod->getSettingValue<std::string>("starting-size") == "Big" ||
+        mod->getSettingValue<bool>("changing-size");
+    const bool isMiniPresent = mod->getSettingValue<std::string>("starting-size") == "Mini" ||
+        mod->getSettingValue<bool>("changing-size");
+    const bool isTypeA = mod->getSettingValue<bool>("changing-size") &&
+        (mod->getSettingValue<std::string>("transition-type") == "Type A" ? true : false);
+
+    if (isMiniPresent && std::find(tmd.tags.begin(), tmd.tags.end(), "bigwave-only") != tmd.tags.end()) {
+        conflicts.push_back("bigwave-only");
+    }
+    if (isBigPresent && std::find(tmd.tags.begin(), tmd.tags.end(), "miniwave-only") != tmd.tags.end()) {
+        conflicts.push_back("miniwave-only");
+    }
+    if (isTypeA && std::find(tmd.tags.begin(), tmd.tags.end(), "type-b-only") != tmd.tags.end()) {
+        conflicts.push_back("type-b-only");
+    }
+    if (!isTypeA && std::find(tmd.tags.begin(), tmd.tags.end(), "type-a-only") != tmd.tags.end()) {
+        conflicts.push_back("type-a-only");
+    }
+
+    return conflicts;
 }
 
 }

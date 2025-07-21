@@ -18,6 +18,7 @@ public:
     void onBack(cocos2d::CCObject*);
     void onOptionButton(cocos2d::CCObject*);
     void onAutoGenButton(cocos2d::CCObject*);
+    void onAutoGen();
     void onThemeButton(cocos2d::CCObject*);
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);

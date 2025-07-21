@@ -7,6 +7,7 @@
 #include "../utils/shared.hpp"
 #include "../utils/Ninja.hpp"
 #include "../utils/OptionStr.hpp"
+#include "../utils/Theming.hpp"
 #include "OptionStrPopup.hpp"
 
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
@@ -35,7 +36,6 @@ static GJGameLevel* createGameLevel() {
 
     delete commonLevel;
     commonLevel = GJGameLevel::create();
-    GJGameLevel* level = GJGameLevel::create();
 
     commonLevel->dataLoaded(dict.get());
     commonLevel->m_levelType = GJLevelType::Editor;
@@ -212,7 +212,7 @@ void JFPMenuLayer::onOptionButton(CCObject*) {
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
     uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
-    if(globalSeed) {
+    if (globalSeed) {
         clipboard::write(std::to_string(globalSeed));
         Notification::create("Copied to clipboard", NotificationIcon::None, 0.5f)->show();
     } else {
@@ -254,7 +254,35 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
     if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
         FLAlertLayer::create("JFP", "Please accept the disclaimer to continue!", "OK")->show();
         return;
-    } 
+    }
+
+    return JFPMenuLayer::onAutoGen();
+
+    std::string themeName = Mod::get()->getSettingValue<std::string>("active-theme");
+    auto tmd = ThemeGen::parseThemeMeta(
+        themeName
+    );
+    auto conflicts = ThemeGen::tagConflicts(tmd);
+    
+    if (conflicts.size() > 0) {
+        std::string message = "Your options are incompatible with the the \"" + themeName +
+            "\" theme's following tags:\n" +
+            fmt::format("{}", fmt::join(conflicts, ", ")) +
+            "\nSome segments may not be themed.";
+        auto jfpConfirm = createQuickPopup(
+            "JFP",
+            message.c_str(),
+            "Continue", nullptr,
+            [&](bool b1, auto) {
+                if (b1) return JFPMenuLayer::onAutoGen();
+            }
+        );
+    } else {
+        JFPMenuLayer::onAutoGen();
+    }
+}
+
+void JFPMenuLayer::onAutoGen() {
     jfpActive = true;
     state = JFPGen::AutoJFP::JustStarted;
     Mod::get()->setSavedValue<uint32_t>(
@@ -308,7 +336,7 @@ CCScene* JFPMenuLayer::scene() {
     auto layer = JFPMenuLayer::create();
     scene->addChild(layer);
 
-    if(!GameManager::sharedState()->getGameVariable("0122")) {
+    if (!GameManager::sharedState()->getGameVariable("0122")) {
         auto bgmPath = CCFileUtils::sharedFileUtils()->getWritablePath() + "jfpLoop.mp3";
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
     }

@@ -38,8 +38,9 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Experimental = 2,
-    Unrestricted = 3
+    LRD = 2,
+    Experimental = 3,
+    Unrestricted = 4
 };
 
 enum class Difficulties : int {

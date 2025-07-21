@@ -14,6 +14,8 @@ extern GJGameLevel* commonLevel;
 extern const int jfpSoundtrack[];
 extern const int jfpSoundtrackSize;
 
+extern const std::map<std::string, std::string> defaultKbank;
+
 namespace JFPGen {
 
 enum class AutoJFP : int {
@@ -24,10 +26,13 @@ enum class AutoJFP : int {
     PlayingLevel = 4,
 };
 
+extern const std::string levelCommonBaseSeg;
 extern const std::string levelBaseSeg;
 extern const std::string levelStartingBase;
 extern const std::string levelStartingBase2;
 extern const std::string lowVis;
+extern const std::string finishLine;
+
 
 }
 #endif // JFP_CONSTANTS_HPP
