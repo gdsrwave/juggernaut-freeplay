@@ -216,11 +216,11 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         std::string minSpeedStr = mod->getSettingValue<std::string>("min-speed");
 
         // starting-speed (fakeenum)
-        resSettings.push_back(PackedEntry{3, getSpeedChange(sspeedStr)});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(getSpeedChange(sspeedStr))});
         // max-speed (fakeenum)
-        resSettings.push_back(PackedEntry{3, getSpeedChange(maxSpeedStr)});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(getSpeedChange(maxSpeedStr))});
         // min-speed (fakeenum)
-        resSettings.push_back(PackedEntry{3, getSpeedChange(minSpeedStr)});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(getSpeedChange(minSpeedStr))});
 
         // max-height
         resSettings.push_back(PackedEntry{12, 255});
@@ -246,7 +246,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         else if (corridorRulesStr == "Experimental") optCR = 2;
         else if (corridorRulesStr == "LRD") optCR = 4;
         else if (corridorRulesStr == "Random") optCR = 5;
-        resSettings.push_back(PackedEntry{4, optCR});
+        resSettings.push_back(PackedEntry{4, static_cast<uint32_t>(optCR)});
 
         // portals (fakeenum)
         std::string portalsStr = mod->getSettingValue<std::string>("portals");
@@ -254,7 +254,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         if (portalsStr == "Light") optPortals = 1;
         else if (portalsStr == "Balanced") optPortals = 2;
         else if (portalsStr == "Aggressive") optPortals = 3;
-        resSettings.push_back(PackedEntry{3, optPortals});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(optPortals)});
 
         // fake-gravity-portals
         resSettings.push_back(PackedEntry{1,
@@ -278,7 +278,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         else if (colorModeStr == "Classic Mode") optColorMode = 2;
         else if (colorModeStr == "Night Mode") optColorMode = 3;
         else if (colorModeStr == "Random") optColorMode = 4;
-        resSettings.push_back(PackedEntry{3, optColorMode});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(optColorMode)});
 
         // corridor-spikes
         resSettings.push_back(PackedEntry{2,
@@ -295,13 +295,13 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         if (cspeedStr == "Light") optChangingSpeed = 1;
         else if (cspeedStr == "Balanced") optChangingSpeed = 2;
         else if (cspeedStr == "Aggressive") optChangingSpeed = 3;
-        resSettings.push_back(PackedEntry{3, optChangingSpeed});
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(optChangingSpeed)});
 
         // starting-size
         std::string sizeStr = mod->getSettingValue<std::string>("starting-size");
         int mini = 1;
         if (sizeStr == "Big") mini = 0;
-        resSettings.push_back(PackedEntry{2, mini});
+        resSettings.push_back(PackedEntry{2, static_cast<uint32_t>(mini)});
         // changing-size
         resSettings.push_back(PackedEntry{3,
             static_cast<uint8_t>(mod->getSettingValue<bool>("changing-size"))});
@@ -309,7 +309,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         std::string scTypeStr = mod->getSettingValue<std::string>("transition-type");
         int typeA = 1;
         if (scTypeStr == "Type B") typeA = 0;
-        resSettings.push_back(PackedEntry{2, typeA});
+        resSettings.push_back(PackedEntry{2, static_cast<uint32_t>(typeA)});
     }
 
     return resSettings;
