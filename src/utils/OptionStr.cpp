@@ -199,7 +199,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         uint8_t ver = 37;
         resSettings.push_back(PackedEntry{6, ver});
 
-        uint8_t biomeType = static_cast<int>(biome);
+        uint8_t biomeType = static_cast<uint32_t>(biome);
         resSettings.push_back(PackedEntry{4, biomeType});
 
         auto getSpeedChange = [](const std::string& speedStr) -> int8_t {
@@ -228,10 +228,10 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         resSettings.push_back(PackedEntry{12, 45});
         // corridor-widening
         resSettings.push_back(PackedEntry{1,
-            static_cast<int>(mod->getSettingValue<bool>("corridor-widening"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("corridor-widening"))});
         // corridor height
         resSettings.push_back(PackedEntry{8,
-            static_cast<int>(mod->getSettingValue<float>("corridor-height"))});
+            static_cast<uint32_t>(mod->getSettingValue<float>("corridor-height"))});
 
         // starting-height
         resSettings.push_back(PackedEntry{12, 135});
@@ -258,18 +258,18 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
 
         // fake-gravity-portals
         resSettings.push_back(PackedEntry{1,
-            static_cast<int>(mod->getSettingValue<bool>("fake-gravity-portals"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("fake-gravity-portals"))});
         resSettings.push_back(PackedEntry{2,
-            static_cast<int>(mod->getSettingValue<bool>("upside-start"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("upside-start"))});
         resSettings.push_back(PackedEntry{3,
-            static_cast<int>(mod->getSettingValue<bool>("portal-inputs"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("portal-inputs"))});
 
         // corner-pieces
         resSettings.push_back(PackedEntry{1,
-            static_cast<int>(mod->getSettingValue<bool>("corners"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("corners"))});
         // low-vis
         resSettings.push_back(PackedEntry{2,
-            static_cast<int>(mod->getSettingValue<bool>("low-vis"))});
+            static_cast<uint32_t>(mod->getSettingValue<bool>("low-vis"))});
 
         // color-mode (fakeenum)
         std::string colorModeStr = mod->getSettingValue<std::string>("color-mode");
@@ -304,7 +304,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         resSettings.push_back(PackedEntry{2, mini});
         // changing-size
         resSettings.push_back(PackedEntry{3,
-            static_cast<int>(mod->getSettingValue<bool>("changing-size"))});
+            static_cast<uint8_t>(mod->getSettingValue<bool>("changing-size"))});
         // transition-type (fakeenum)
         std::string scTypeStr = mod->getSettingValue<std::string>("transition-type");
         int typeA = 1;
