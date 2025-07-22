@@ -9,15 +9,15 @@ using namespace geode::prelude;
 
 std::string exportSettings(const std::vector<PackedEntry>& entries) {
     int totalBits = 0;
-    for (const auto& entry : entries) totalBits += entry.size;
+    for (const auto& entry : entries) totalBits += entry.sizeSize;
     int totalBytes = (totalBits + 7) / 8;
     std::vector<uint8_t> bytes(totalBytes, 0);
 
     int bitPos = 0;
     for (const auto& entry : entries) {
-        uint32_t value = entry.value;
-        for (int b = 0; b < entry.size; b++) {
-            if (value & (1 << (entry.size - b - 1))) {
+        uint32_t value = entry.valueVal;
+        for (int b = 0; b < entry.sizeSize; b++) {
+            if (value & (1 << (entry.sizeSize - b - 1))) {
                 bytes[bitPos / 8] |= (1 << (7 - (bitPos % 8)));
             }
             bitPos++;
