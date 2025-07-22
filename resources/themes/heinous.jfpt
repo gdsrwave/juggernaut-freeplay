@@ -299,11 +299,15 @@ Add Block 1,1273,2,[X-5],3,[Y+C-5],4,1,196,1,64,1,67,1
 
 # if floor matches / + - #
 Add Block 1,1274,2,[X-55],3,[Y-25],96,1,5,1,64,1,67,1
+# else if floor matches / / - #
+Add Block 1,1274,2,[X-55],3,[Y-55],96,1,5,1,64,1,67,1
 # else if corridor matches / / \ and if corridor not matches / / / [\] \ \ #
 Add Block 1,1274,2,[X-55],3,[Y-55],96,1,5,1,64,1,67,1
 # end if #
 
 # if floor matches + - \ #
+Add Block 1,1274,2,[X-5],3,[Y+5],96,1,4,1,5,1,64,1,67,1
+# else if floor matches + \ \ #
 Add Block 1,1274,2,[X-5],3,[Y+5],96,1,4,1,5,1,64,1,67,1
 # else if corridor matches / \ \ and if corridor not matches / / / \ [\] \ #
 Add Block 1,1274,2,[X-5],3,[Y+5],96,1,4,1,5,1,64,1,67,1
@@ -311,11 +315,15 @@ Add Block 1,1274,2,[X-5],3,[Y+5],96,1,4,1,5,1,64,1,67,1
 
 # if ceiling matches \ - + #
 Add Block 1,1274,2,[X-55],3,[Y+C+25],96,1,64,1,67,1
+# else if ceiling matches \ \ + #
+Add Block 1,1274,2,[X-55],3,[Y+C+55],96,1,64,1,67,1
 # else if corridor matches \ \ / and if corridor not matches \ \ \ [/] / / #
 Add Block 1,1274,2,[X-55],3,[Y+C+25],96,1,64,1,67,1
 # end if #
 
 # if ceiling matches - + / #
+Add Block 1,1274,2,[X-5],3,[Y+C-35],4,1,196,1,64,1,67,1
+# else if ceiling matches - / / #
 Add Block 1,1274,2,[X-5],3,[Y+C-35],4,1,196,1,64,1,67,1
 # else if corridor matches \ / / and if corridor not matches \ \ \ / [/] / #
 Add Block 1,1274,2,[X-5],3,[Y+C-35],4,1,196,1,64,1,67,1

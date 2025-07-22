@@ -1,8 +1,10 @@
+// Copyright 2025 GDSRWave
 #pragma once
 
 #include <string>
 #include <unordered_map>
-#include "Ninja.hpp"
+#include <vector>
+#include "./Ninja.hpp"
 
 namespace ThemeGen {
 
@@ -62,8 +64,9 @@ enum class InOverride : int {
 };
 
 std::array<int, 3> hexToColor(const std::string& hex);
-bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, const std::vector<int>& pattern,
-        OMType omType = OMType::Corridor, bool typeA = false);
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
+    const std::vector<int>& pattern, OMType omType = OMType::Corridor,
+    bool typeA = false);
 std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None);
 std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
     int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
@@ -71,4 +74,4 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& levelda
 ThemeMetadata parseThemeMeta(const std::string& name);
 std::vector<std::string> tagConflicts(ThemeMetadata tmd);
 
-}
+}  // namespace ThemeGen

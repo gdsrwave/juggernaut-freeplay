@@ -1,8 +1,9 @@
+// Copyright 2025 GDSRWave
 #include "JFPGenericLayer.hpp"
 #include "Geode/binding/FLAlertLayer.hpp"
 #include "Geode/utils/cocos.hpp"
 
-// JFPGenericLayer.cpp takes reference from Cvolton/BetterInfo
+// JFPGenericLayer.cpp takes reference from Cvolton/BetterInfo. -M
 // https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
 JFPGenericLayer* JFPGenericLayer::create() {
@@ -19,25 +20,24 @@ JFPGenericLayer* JFPGenericLayer::create() {
 bool JFPGenericLayer::init() {
     auto backgroundSprite = CCSprite::create("game_bg_12_001.png");
     backgroundSprite->setID("background"_spr);
-    
+
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     auto size = backgroundSprite->getContentSize();
-    
+
     backgroundSprite->setScale(winSize.width / size.width);
-    
+
     backgroundSprite->setAnchorPoint({0, 0});
-    backgroundSprite->setPosition({0,-75});
-    
+    backgroundSprite->setPosition({0, -75});
+
     backgroundSprite->setColor({29, 120, 86});
-    
+
     backgroundSprite->setZOrder(-3);
     addChild(backgroundSprite);
 
     auto backBtn = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
         this,
-        menu_selector(JFPGenericLayer::onBack)
-    );
+        menu_selector(JFPGenericLayer::onBack));
     backBtn->setID("exit-button"_spr);
     backBtn->setSizeMult(1.2f);
 

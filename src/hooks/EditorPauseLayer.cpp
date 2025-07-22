@@ -1,3 +1,4 @@
+// Copyright 2025 GDSRWave
 #include <Geode/Geode.hpp>
 #include "../utils/Ninja.hpp"
 #include "../utils/StringGen.hpp"
@@ -24,7 +25,8 @@ class $modify(EditorPauseLayer) {
 
     void onSave(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
-            FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+            FLAlertLayer::create("Error",
+                "Action not permitted in Dabbink mode.", "OK")->show();
         } else {
             EditorPauseLayer::onSave(obj);
         }
@@ -32,7 +34,8 @@ class $modify(EditorPauseLayer) {
 
     void onSaveAndPlay(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
-            FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+            FLAlertLayer::create("Error",
+                "Action not permitted in Dabbink mode.", "OK")->show();
         } else {
             EditorPauseLayer::onSaveAndPlay(obj);
         }
@@ -40,7 +43,8 @@ class $modify(EditorPauseLayer) {
 
     void onSaveAndExit(CCObject* obj) {
         if (state != JFPGen::AutoJFP::NotInAutoJFP) {
-            FLAlertLayer::create("Error", "Action not permitted in Dabbink mode.", "OK")->show();
+            FLAlertLayer::create("Error",
+                "Action not permitted in Dabbink mode.", "OK")->show();
         } else {
             EditorPauseLayer::onSaveAndExit(obj);
         }

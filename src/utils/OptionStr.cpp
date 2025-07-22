@@ -1,7 +1,8 @@
+// Copyright 2025 GDSRWave
 #include <string>
 #include <vector>
 #include <Geode/Geode.hpp>
-#include "Ninja.hpp"
+#include "./Ninja.hpp"
 #include "OptionStr.hpp"
 
 using namespace geode::prelude;
@@ -36,8 +37,9 @@ std::string exportSettings(const std::vector<PackedEntry>& entries) {
         }
     }
     if (valb > -6) res.push_back(b64_table[((val << 8) >> (valb + 8)) & 0x3F]);
-    
-    std::string lenSuffix = fmt::format("+{}", Mod::get()->getSettingValue<uint32_t>("length"));
+
+    std::string lenSuffix =
+        fmt::format("+{}", Mod::get()->getSettingValue<uint32_t>("length"));
 
     return res + lenSuffix;
 }
@@ -96,9 +98,10 @@ void importSettings(std::string packed) {
         mod->setSettingValue<std::string>("starting-speed", sspeedStr);
         mod->setSettingValue<std::string>("max-speed", maxSpeedStr);
         mod->setSettingValue<std::string>("min-speed", minSpeedStr);
-        
-        mod->setSettingValue<bool>("corridor-widening", static_cast<bool>(readStoredNum(bytes, 43, 1)));
-        
+
+        mod->setSettingValue<bool>("corridor-widening",
+            static_cast<bool>(readStoredNum(bytes, 43, 1)));
+
         mod->setSettingValue<float>("corridor-height", readStoredNum(bytes, 44, 8));
 
         std::array<std::string, 6> corridorRules = {
@@ -110,7 +113,9 @@ void importSettings(std::string packed) {
             "Random"
         };
         size_t cri = readStoredNum(bytes, 64, 4);
-        std::string crstr = (cri >= 0 && cri < corridorRules.size()) ? corridorRules[cri] : "Unrestricted";
+        std::string crstr = (cri >= 0 && cri < corridorRules.size())
+            ? corridorRules[cri]
+            : "Unrestricted";
         mod->setSettingValue<std::string>("corridor-rules", crstr);
 
         std::array<std::string, 4> diffs = {
@@ -123,11 +128,16 @@ void importSettings(std::string packed) {
         std::string pstr = (p_i >= 0 && p_i < diffs.size()) ? diffs[p_i] : "None";
         mod->setSettingValue<std::string>("portals", pstr);
 
-        mod->setSettingValue<bool>("fake-gravity-portals", static_cast<bool>(readStoredNum(bytes, 71, 1)));
-        mod->setSettingValue<bool>("upside-start", static_cast<bool>(readStoredNum(bytes, 72, 2)));
-        mod->setSettingValue<bool>("portal-inputs", static_cast<bool>(readStoredNum(bytes, 74, 3)));
-        mod->setSettingValue<bool>("corners", static_cast<bool>(readStoredNum(bytes, 77, 1)));
-        mod->setSettingValue<bool>("low-vis", static_cast<bool>(readStoredNum(bytes, 78, 2)));
+        mod->setSettingValue<bool>("fake-gravity-portals",
+            static_cast<bool>(readStoredNum(bytes, 71, 1)));
+        mod->setSettingValue<bool>("upside-start",
+            static_cast<bool>(readStoredNum(bytes, 72, 2)));
+        mod->setSettingValue<bool>("portal-inputs",
+            static_cast<bool>(readStoredNum(bytes, 74, 3)));
+        mod->setSettingValue<bool>("corners",
+            static_cast<bool>(readStoredNum(bytes, 77, 1)));
+        mod->setSettingValue<bool>("low-vis",
+            static_cast<bool>(readStoredNum(bytes, 78, 2)));
 
         std::array<std::string, 5> colorMode = {
             "Washed",
@@ -137,11 +147,15 @@ void importSettings(std::string packed) {
             "Random"
         };
         size_t cmi = readStoredNum(bytes, 80, 3);
-        std::string cmstr = (cmi >= 0 && cmi < colorMode.size()) ? colorMode[cmi] : "Washed";
+        std::string cmstr = (cmi >= 0 && cmi < colorMode.size())
+            ? colorMode[cmi]
+            : "Washed";
         mod->setSettingValue<std::string>("color-mode", cmstr);
 
-        mod->setSettingValue<bool>("corridor-spikes", static_cast<bool>(readStoredNum(bytes, 83, 2)));
-        mod->setSettingValue<bool>("fuzzy-spikes", static_cast<bool>(readStoredNum(bytes, 85, 2)));
+        mod->setSettingValue<bool>("corridor-spikes",
+            static_cast<bool>(readStoredNum(bytes, 83, 2)));
+        mod->setSettingValue<bool>("fuzzy-spikes",
+            static_cast<bool>(readStoredNum(bytes, 85, 2)));
 
         size_t sc_i = readStoredNum(bytes, 87, 3);
         std::string scstr = (sc_i >= 0 && sc_i < diffs.size()) ? diffs[sc_i] : "None";
@@ -150,7 +164,8 @@ void importSettings(std::string packed) {
         std::string sizeStr = readStoredNum(bytes, 90, 3) ? "Mini" : "Big";
         mod->setSettingValue<std::string>("starting-size", sizeStr);
 
-        mod->setSettingValue<bool>("changing-size", static_cast<bool>(readStoredNum(bytes, 93, 3)));
+        mod->setSettingValue<bool>("changing-size",
+            static_cast<bool>(readStoredNum(bytes, 93, 3)));
 
         std::string ttStr = readStoredNum(bytes, 96, 2) ? "Type A" : "Type B";
         mod->setSettingValue<std::string>("transition-type", ttStr);
@@ -181,7 +196,6 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
     auto* mod = Mod::get();
 
     if (biome == JFPGen::JFPBiome::Juggernaut) {
-    
         uint8_t ver = 37;
         resSettings.push_back(PackedEntry(6, ver));
 
@@ -218,13 +232,14 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         // corridor height
         resSettings.push_back(PackedEntry(8,
             static_cast<int>(mod->getSettingValue<float>("corridor-height"))));
-        
+
         // starting-height
         resSettings.push_back(PackedEntry(12, 135));
         // starting-dist
 
         // corridor-rules (fakeenum)
-        std::string corridorRulesStr = mod->getSettingValue<std::string>("corridor-rules");
+        std::string corridorRulesStr =
+            mod->getSettingValue<std::string>("corridor-rules");
         int optCR = 3;
         if (corridorRulesStr == "NS") optCR = 1;
         else if (corridorRulesStr == "NSNZ") optCR = 0;
@@ -255,7 +270,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         // low-vis
         resSettings.push_back(PackedEntry(2,
             static_cast<int>(mod->getSettingValue<bool>("low-vis"))));
-            
+
         // color-mode (fakeenum)
         std::string colorModeStr = mod->getSettingValue<std::string>("color-mode");
         int optColorMode = 0;

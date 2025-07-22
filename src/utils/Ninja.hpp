@@ -1,10 +1,10 @@
+// Copyright 2025 GDSRWave
 #pragma once
-#include <utility>
+#include <map>
 #include <string>
 #include <vector>
-#include "shared.hpp"
-#include <map>
-
+#include <utility>
+#include "./shared.hpp"
 
 extern JFPGen::AutoJFP state;
 
@@ -146,12 +146,12 @@ SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
-bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern,
-    bool strictMini = false);
+bool orientationMatch(const std::vector<Segment>& segments, int idx,
+    const std::vector<int>& pattern, bool strictMini = false);
 
 LevelData generateJFPLevel();
 
-}
+}  // namespace JFPGen
 
 extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;

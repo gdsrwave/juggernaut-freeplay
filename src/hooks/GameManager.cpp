@@ -1,3 +1,4 @@
+// Copyright 2025 GDSRWave
 #include <Geode/Geode.hpp>
 #include "../utils/StringGen.hpp"
 #include "../ui/JFPMenuLayer.hpp"
@@ -9,7 +10,8 @@ using namespace geode::prelude;
 class $modify(GameManager) {
     void returnToLastScene(GJGameLevel* p0) {
         if (jfpActive) {
-		    auto jlTransition = CCTransitionFade::create(0.5, JFPMenuLayer::scene());
+            auto jlTransition = CCTransitionFade::create(
+                0.5, JFPMenuLayer::scene());
             CCDirector::sharedDirector()->replaceScene(jlTransition);
 
             jfpActive = false;
