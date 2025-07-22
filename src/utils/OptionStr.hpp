@@ -1,3 +1,4 @@
+// Copyright 2025 GDSRWave
 #pragma once
 
 #include <string>

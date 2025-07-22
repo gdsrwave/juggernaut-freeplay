@@ -1,31 +1,34 @@
-#include <Geode/Geode.hpp>
-#include <Geode/ui/BasedButtonSprite.hpp>
-#include <Geode/binding/LocalLevelManager.hpp>
-#include <Geode/cocos/platform/CCFileUtils.h>
-#include <Geode/ui/GeodeUI.hpp>
-#include <Geode/utils/cocos.hpp>
-#include <Geode/utils/file.hpp>
-#include <random>
-#include <cmath>
+// Copyright 2025 GDSRWave
+#include "StringGen.hpp"
 #include <fmt/core.h>
 #include <fmt/args.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include "shared.hpp"
-#include "StringGen.hpp"
-#include "Theming.hpp"
-#include "Ninja.hpp"
+#include <Geode/cocos/platform/CCFileUtils.h>
+#include <random>
+#include <string>
+#include <cmath>
+#include <Geode/Geode.hpp>
+#include <Geode/ui/BasedButtonSprite.hpp>
+#include <Geode/binding/LocalLevelManager.hpp>
+#include <Geode/ui/GeodeUI.hpp>
+#include <Geode/utils/cocos.hpp>
+#include <Geode/utils/file.hpp>
+#include "./shared.hpp"
+#include "./Theming.hpp"
+#include "./Ninja.hpp"
 
 using namespace geode::prelude;
 
-bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
+bool jfpActive = false;  // used in GameManager.cpp to check if a menu is open over JFPMenuLayer
 
 namespace JFPGen {
 
+// Legacy
 static void orientationShift(int prevO[11], int newO) {
-	for (int i = 0; i < 10; i++) {
-		prevO[i] = prevO[i+1];
-	}
-	prevO[10] = newO;
+    for (int i = 0; i < 10; i++) {
+        prevO[i] = prevO[i+1];
+    }
+    prevO[10] = newO;
 }
 
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
@@ -43,17 +46,21 @@ static int convertSpeed(SpeedChange speed) {
     }
 }
 
-std::string jfpPackString(const std::string& level, uint32_t seed, int song, bool compress) {
-
+std::string jfpPackString(const std::string& level, uint32_t seed,
+        int song, bool compress) {
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);
     else b64 = level;
     std::string desc = fmt::format("ninja v1");
-    desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc)); // double encoding might be unnecessary according to gmd-api source?
+
+    // double encoding might be unnecessary according to gmd-api source?
+    desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc));
     b64.erase(std::find(b64.begin(), b64.end(), '\0'), b64.end());
     desc.erase(std::find(desc.begin(), desc.end(), '\0'), desc.end());
 
-    std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
+    std::string levelString = fmt::format("<k>kCEK</k><i>4</i><k>k2</k><s>JFP {title}"
+        "</s><k>k3</k><s>{desc}</s><k>k4</k><s>{b64}</s><k>k45</k><i>{song}</i><k>k13"
+        "</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
     fmt::arg("desc", desc),
     fmt::arg("b64", b64),
     fmt::arg("title", std::to_string(seed)),
@@ -63,11 +70,18 @@ std::string jfpPackString(const std::string& level, uint32_t seed, int song, boo
 }
 
 std::string jfpStringGen(bool compress) {
+    kBank = defaultKbank;
     LevelData ldata = generateJFPLevel();
     if (ldata.biomes.empty()) return "";
 
-    std::string themeString = ThemeGen::parseTheme(Mod::get()->getSettingValue<std::string>("active-theme"), ldata);
-    std::string levelString = jfpNewStringGen(ldata);;
+    // this could self-evidently be optimized by splitting the theme function
+    // and storing the matching/overriding structure for reuse every in tiling
+    // every att. however, I'm holding off on this because of possibilities
+    // during biome system buildout and the introduction of presets. -M
+    std::string themeString = ThemeGen::parseTheme(
+        Mod::get()->getSettingValue<std::string>("active-theme"), ldata);
+
+    std::string levelString = jfpNewStringGen(ldata);
     levelString = colorStringGen() + kStringGen() + levelString + themeString;
 
     return jfpPackString(levelString, ldata.seed, ldata.biomes[0].song, compress);
@@ -91,8 +105,7 @@ std::string colorStringGen() {
             fmt::arg("r", color.rgb[0]),
             fmt::arg("g", color.rgb[1]),
             fmt::arg("b", color.rgb[2]),
-            fmt::arg("slot", color.slot)
-        );
+            fmt::arg("slot", color.slot));
         if (color.blending) result += "_5_1";
         if (color.opacity <= 1.0) {
             result += fmt::format("_7_{}", color.opacity);
@@ -112,18 +125,16 @@ std::string colorStringGen() {
 }
 
 std::string jfpNewStringGen(LevelData ldata) {
-
     if (ldata.biomes.empty()) return "";
 
     std::string levelBuildSeg2 = fmt::format(
         "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
-        fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed))
-    );
+        fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed)));
     const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
     const bool hideIcon = Mod::get()->getSettingValue<bool>("hide-icon");
-    
-    std::string level;
-    if(!overrideBank["override-base"]) level += levelBaseSeg;
+
+    std::string level = levelCommonBaseSeg;
+    if (!overrideBank["override-base"]) level += levelBaseSeg;
     level += levelBuildSeg2;
 
     const auto& biome = ldata.biomes[0];
@@ -132,12 +143,14 @@ std::string jfpNewStringGen(LevelData ldata) {
     int y = biome.y_initial;
     int y_swing = 0;
     const int corridorHeight = opts.corridorHeight;
-    const int corridorHeightM = biome.options.typeA ? corridorHeight + 30 : corridorHeight;
+    const int corridorHeightM = biome.options.typeA
+        ? corridorHeight + 30
+        : corridorHeight;
     bool spikeSide = false;
 
     int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
 
-    if(!overrideBank["override-base"]) {
+    if (!overrideBank["override-base"]) {
         fmt::dynamic_format_arg_store<fmt::format_context> args;
         if (opts.startingMini) {
             args.push_back(fmt::arg("ch_1", 90 + currentCH));
@@ -152,10 +165,12 @@ std::string jfpNewStringGen(LevelData ldata) {
         }
         std::string startingConnectors = fmt::vformat(
             opts.startingMini ? levelStartingBase2 : levelStartingBase,
-            args
-        );
+            args);
         level += startingConnectors;
     }
+
+    bool bigSlopes = !overrideBank["override-slope"];
+    bool miniSlopes = !overrideBank["override-slope-mini"];
 
     for (int64_t i = 0; i < biome.segments.size(); i++) {
         const auto& seg = biome.segments[i];
@@ -171,26 +186,26 @@ std::string jfpNewStringGen(LevelData ldata) {
         std::string mFSlope = fmt::format("1,1339,2,{x},3,{y},6,90,5,{flip},64,1,67,1;",
             fmt::arg("x", x),
             fmt::arg("y", y - 15),
-            fmt::arg("flip", y_swing > 0 ? 1 : 0)
-        );
+            fmt::arg("flip", y_swing > 0 ? 1 : 0));
+
         std::string mCSlope = fmt::format("1,1339,2,{x},3,{yC},6,-90,5,{flip},64,1,67,1;",
             fmt::arg("x", x),
             fmt::arg("yC", y - 15 + corridorHeightM),
-            fmt::arg("flip", y_swing > 0 ? 1 : 0)
-        );
+            fmt::arg("flip", y_swing > 0 ? 1 : 0));
+
         std::string bFSlope = fmt::format("1,1338,2,{x},3,{y},6,{rot},64,1,67,1;",
             fmt::arg("x", x),
             fmt::arg("y", y),
-            fmt::arg("rot", y_swing > 0 ? 0 : 90)
-        );
+            fmt::arg("rot", y_swing > 0 ? 0 : 90));
+
         std::string bCSlope = fmt::format("1,1338,2,{x},3,{yC},6,{rot},64,1,67,1;",
             fmt::arg("x", x),
             fmt::arg("yC", y + corridorHeight),
-            fmt::arg("rot", y_swing > 0 ? 180 : 270)
-        );
+            fmt::arg("rot", y_swing > 0 ? 180 : 270));
 
         bool fMini = false, cMini = false;
-        if (i < biome.segments.size() - 1 && biome.options.typeA && mini != biome.segments[i + 1].options.mini) {
+        if (biome.options.typeA && i < biome.segments.size() - 1 &&
+                mini != biome.segments[i + 1].options.mini) {
             if ((mini && y_swing == 1) || (!mini && y_swing == -1)) {
                 fMini = true;
             } else if ((mini && y_swing == -1) || (!mini && y_swing == 1)) {
@@ -202,14 +217,14 @@ std::string jfpNewStringGen(LevelData ldata) {
         }
 
         if (fMini) {
-            level += mFSlope;
+            level += miniSlopes ? mFSlope : "";
         } else {
-            level += bFSlope;
+            level += bigSlopes ? bFSlope : "";
         }
         if (cMini) {
-            level += mCSlope;
+            level += miniSlopes ? mCSlope : "";
         } else {
-            level += bCSlope;
+            level += bigSlopes ? bCSlope : "";
         }
 
         // Corner-Pieces
@@ -231,8 +246,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                     fmt::arg("cnr1x", x - 30),
                     fmt::arg("cnr2x", x),
                     fmt::arg("cnry", cnry),
-                    fmt::arg("flip", flip)
-                );
+                    fmt::arg("flip", flip));
                 level += cornerBuild;
             }
         }
@@ -240,16 +254,20 @@ std::string jfpNewStringGen(LevelData ldata) {
         // Gravity-Portals
         int xP, yP;
         float rPdeg, scaleP;
-        if (seg.options.isPortal == Portals::Gravity || seg.options.isPortal == Portals::Fake) {
-            double portalFactor = ((double)currentCH / 60.0) * 1.414;
+        if (seg.options.isPortal == Portals::Gravity ||
+                seg.options.isPortal == Portals::Fake) {
+            double portalFactor = (static_cast<double>(currentCH) / 60.0) * 1.414;
             int portalNormal = currentCH / 10;
             int portalPos = currentCH / 4;
             int portalID;
-            if (seg.options.isPortal == Portals::Fake) portalID = seg.options.gravity ? 10 : 11;
+            if (seg.options.isPortal == Portals::Fake)
+                portalID = seg.options.gravity ? 10 : 11;
             else portalID = seg.options.gravity ? 11 : 10;
 
             xP = x - 15 - portalNormal + portalPos;
-            yP = y + (y_swing == 1 ? portalNormal + portalPos - 15 : currentCH + 15 - portalNormal - portalPos);
+            yP = y + (y_swing == 1
+                ? portalNormal + portalPos - 15
+                : currentCH + 15 - portalNormal - portalPos);
             if (mini && y_swing == 1) yP -= 30;
             rPdeg = (mini ? 26.565 : 45) * y_swing;
             scaleP = portalFactor / 2.5;
@@ -270,8 +288,11 @@ std::string jfpNewStringGen(LevelData ldata) {
                 float ySP, xSP, rSP, scaleSP;
                 if (seg.options.isPortal == Portals::None) {
                     xSP = x - 26;
-                    ySP = biome.segments[i - 1].coords.second + 15 + (corridorHeight - 30) / 2;
-                    rSP = (std::atan((corridorHeight - 30.f) / 30.f) * 180/3.1415 - 90) * biome.segments[i - 1].y_swing;
+                    ySP = biome.segments[i - 1].coords.second + 15 +
+                        (corridorHeight - 30) / 2;
+                    ySP += biome.segments[i - 1].y_swing * 4;
+                    rSP = (std::atan((corridorHeight - 30.f) / 30.f) * 180/3.1415 - 90) *
+                        biome.segments[i - 1].y_swing;
                     scaleSP = std::sqrt(std::pow((corridorHeight - 30), 2) + 900) / 110.f;
                 } else {
                     xSP = xP;
@@ -279,9 +300,8 @@ std::string jfpNewStringGen(LevelData ldata) {
                     rSP = rPdeg;
                     scaleSP = scaleP;
                 }
-                
+
                 int portalID = mini ? 101 : 99;
-                
                 std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
                 fmt::arg("portalID", portalID),
                 fmt::arg("xP", xSP),
@@ -303,17 +323,17 @@ std::string jfpNewStringGen(LevelData ldata) {
                         ySP += 15;
                     }
                     scaleSP = (currentCH / 90.f) * 0.8;
-                    xSP = x - 15 + 13 * scaleSP;
+                    xSP = x - 14 + 13 * scaleSP;
                 } else {
                     xSP = xP;
                     ySP = yP;
                     rSP = rPdeg;
                     scaleSP = scaleP;
                 }
-                
+
                 int portalID = mini ? 101 : 99;
-                
-                level +=  fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
+
+                level += fmt::format("1,{portalID},2,{xP},3,{yP},6,{rP},32,{scale},64,1,67,1;",
                 fmt::arg("portalID", portalID),
                 fmt::arg("xP", xSP),
                 fmt::arg("yP", ySP),
@@ -335,8 +355,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                     fmt::arg("x", x - 15),
                     fmt::arg("y", spY),
                     fmt::arg("r", spR),
-                    fmt::arg("factor", speedFactor)
-            );
+                    fmt::arg("factor", speedFactor));
         }
 
         // Corridor-Spikes
@@ -375,13 +394,14 @@ std::string jfpNewStringGen(LevelData ldata) {
                 fmt::arg("xS", xS),
                 fmt::arg("yS", yS),
                 fmt::arg("rS", rS),
-                fmt::arg("scaleS", scaleS)
-            );
+                fmt::arg("scaleS", scaleS));
         }
 
         // fuzzy spikes
         if (seg.options.isFuzzy) {
-            std::string colorMod = (biome.options.colorMode == ColorMode::NightMode) ? "21,1004,41,1,43,0a1a0.60a0a0," : "";
+            std::string colorMod = (biome.options.colorMode == ColorMode::NightMode)
+                ? "21,1004,41,1,43,0a1a0.60a0a0,"
+                : "";
             std::string fFlip = "", cFlip = "";
             if (y_swing == -1 && !fMini) {
                 fFlip = "4,1,";
@@ -411,11 +431,10 @@ std::string jfpNewStringGen(LevelData ldata) {
                 fmt::arg("rC", cMini ? "6,-90," : "6,180,"),
                 fmt::arg("fFlip", fFlip),
                 fmt::arg("cFlip", cFlip),
-                fmt::arg("colorMod", colorMod)
-            );
+                fmt::arg("colorMod", colorMod));
         }
     }
-    
+
     // Ending-Connectors
     bool endingMini = biome.segments.back().options.mini;
     if (
@@ -423,7 +442,8 @@ std::string jfpNewStringGen(LevelData ldata) {
         biome.segments.back().y_swing == -1 && !overrideBank["override-enddown"]
     ) {
         auto lastSegment = biome.segments[biome.segments.size() - 1];
-        int xB = lastSegment.coords.first, yB = lastSegment.coords.second, xT = xB, yT = yB + currentCH;
+        int xB = lastSegment.coords.first, yB = lastSegment.coords.second;
+        int xT = xB, yT = yB + currentCH;
         if (endingMini) {
             if (lastSegment.y_swing == 1) {
                 yB += 45;
@@ -451,22 +471,23 @@ std::string jfpNewStringGen(LevelData ldata) {
             while (yT <= (opts.maxHeight + 30)) {
                 xT += 30;
                 yT += 30;
-                level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;", fmt::arg("x", xT), fmt::arg("y", yT));
+                level += fmt::format("1,1338,2,{x},3,{y},6,180,64,1,67,1;",
+                    fmt::arg("x", xT), fmt::arg("y", yT));
             }
             while (yB >= (opts.minHeight)) {
                 xB += 30;
                 yB -= 30;
-                level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;", fmt::arg("x", xB), fmt::arg("y", yB));
+                level += fmt::format("1,1338,2,{x},3,{y},6,90,64,1,67,1;",
+                    fmt::arg("x", xB), fmt::arg("y", yB));
             }
         }
     }
 
     // Meter-Marks
-    const bool marks = Mod::get()->getSettingValue<bool>("marks");
     const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
     std::string metermarksStr = "";
     std::string currentMark;
-    if (marks && markInterval > 0) {
+    if (Mod::get()->getSettingValue<bool>("marks") && markInterval > 0) {
         int meters = markInterval;
         double markHeight;
         for (int j = 0; j < (biome.options.length / markInterval); j++) {
@@ -474,18 +495,33 @@ std::string jfpNewStringGen(LevelData ldata) {
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
-                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,2,6,-90,64,1,67,1,21,1011,25,1,24,11;", fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
+                currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,902,6,-90,64,1,67,1,21,1011,25,1,24,11;",
+                    fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
-            std::string meterLabel = ZipUtils::base64URLEncode(fmt::format("{}m", meters));
-            meterLabel.erase(std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
-            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,2,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;", fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
+            std::string meterLabel = ZipUtils::base64URLEncode(
+                fmt::format("{}m", meters));
+            meterLabel.erase(
+                std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
+            currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,902,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;",
+                fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }
     }
     level += metermarksStr;
+
+    // Finish Line
+    if (Mod::get()->getSettingValue<bool>("finish-line")) {
+        fmt::dynamic_format_arg_store<fmt::format_context> args;
+        args.push_back(fmt::arg("pos1", x+7.5));
+        args.push_back(fmt::arg("pos2", x+22.5));
+        std::string finishLineBuild = fmt::vformat(
+            finishLine,
+            args);
+        level += finishLineBuild;
+    }
 
     // Visibility
     if (biome.options.visibility == Visibility::Low) {
@@ -501,13 +537,15 @@ std::string jfpNewStringGen(LevelData ldata) {
     if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
     // hide icon
     if (hideIcon) level += "1,1612,2,375,3,285,36,1;";
-    
+
     // log::info("LevelData: name={}", ldata.name);
     // log::info("Biomes: {}", ldata.biomes.size());
     // for (size_t i = 0; i < ldata.biomes.size(); ++i) {
     //     const auto& biome = ldata.biomes[i];
-    //     log::info("  Biome {}: x_initial={}, type={}, theme={}, segments={}", i, biome.x_initial, biome.type, biome.theme, biome.segments.size());
-    //     log::info("    Options: length={}, corridorHeight={}, maxHeight={}, visibility={}, startingSpeed={}, colorMode={}",
+    //     log::info("  Biome {}: x_initial={}, type={}, theme={}, segments={}",
+    // i, biome.x_initial, biome.type, biome.theme, biome.segments.size());
+    //     log::info("    Options: length={}, corridorHeight={}, maxHeight={},
+    // visibility={}, startingSpeed={}, colorMode={}",
     //         biome.options.length,
     //         biome.options.corridorHeight,
     //         biome.options.maxHeight,
@@ -517,11 +555,12 @@ std::string jfpNewStringGen(LevelData ldata) {
     //     );
     //     for (size_t j = 0; j < biome.segments.size(); ++j) {
     //         const auto& seg = biome.segments[j];
-    //         // log::info("      Segment {}: coords=({}, {}), y_swing={}", j, seg.coords.first, seg.coords.second, seg.y_swing);
+    //         // log::info("      Segment {}: coords=({}, {}), y_swing={}", j,
+    // seg.coords.first, seg.coords.second, seg.y_swing);
     //     }
     // }
 
     return level;
 }
 
-}
+}  // namespace JFPGen

@@ -1,9 +1,12 @@
+// Copyright 2025 GDSRWave
 #include "ThemeSelect.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/binding/CustomListView.hpp>
 
+// Currently an unused UI element, with introduction planned for a future JFP
+// update. Feel free to mess with it as you want. -M
 ThemeSelectLayer* ThemeSelectLayer::create() {
     auto ret = new ThemeSelectLayer();
     if (ret && ret->init()) {
@@ -22,7 +25,8 @@ bool ThemeSelectLayer::init() {
 
     CCArray* themes = CCArray::create();
 
-    CustomListView* listView = CustomListView::create(themes, BoomListType::CustomSong, 220.0f, 356.0f);
+    CustomListView* listView = CustomListView::create(
+        themes, BoomListType::CustomSong, 220.0f, 356.0f);
     if (!listView) {
         return false;
     }
@@ -30,7 +34,8 @@ bool ThemeSelectLayer::init() {
     listView->setAnchorPoint({0.5f, 0.5f});
     listView->setAnchorPoint({0.5f, 0.5f});
 
-    GJListLayer* listLayer = GJListLayer::create(listView, "", {191, 114, 62, 255}, 356.0, 240.0, 1.0f);
+    GJListLayer* listLayer = GJListLayer::create(
+        listView, "", {191, 114, 62, 255}, 356.0, 240.0, 1.0f);
     listLayer->setID("theme-select-list-layer"_spr);
     this->addChild(listLayer);
 

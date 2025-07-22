@@ -1,21 +1,22 @@
+// Copyright 2025 GDSRWave
 #pragma once
 
+#include <string>
 #include <Geode/Geode.hpp>
 
 using namespace geode::prelude;
 
 // specify parameters for the setup function in the Popup<...> template
 class OptionStrPopup : public geode::Popup<std::string const&> {
-protected:
+ protected:
     bool setup(std::string const& value) override;
     void onClose(CCObject*) override;
     virtual ~OptionStrPopup();
 
     TextInput* m_inputOptTxt;
 
-public:
+ public:
     static OptionStrPopup* create(std::string const& text);
 
     void clickImport(CCObject*);
 };
-

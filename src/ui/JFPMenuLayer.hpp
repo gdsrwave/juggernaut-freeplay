@@ -1,3 +1,4 @@
+// Copyright 2025 GDSRWave
 #pragma once
 
 #include <Geode/Geode.hpp>
@@ -7,17 +8,18 @@
 using namespace geode::prelude;
 
 class JFPMenuLayer : public JFPGenericLayer {
-protected:
+ protected:
     virtual bool init();
     void keyBackClicked();
 
     CCLabelBMFont* m_optText;
-public:
+ public:
     static JFPMenuLayer* create();
     static cocos2d::CCScene* scene();
     void onBack(cocos2d::CCObject*);
     void onOptionButton(cocos2d::CCObject*);
     void onAutoGenButton(cocos2d::CCObject*);
+    void onAutoGen();
     void onThemeButton(cocos2d::CCObject*);
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);

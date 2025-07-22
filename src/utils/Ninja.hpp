@@ -1,10 +1,10 @@
+// Copyright 2025 GDSRWave
 #pragma once
-#include <utility>
+#include <map>
 #include <string>
 #include <vector>
-#include "shared.hpp"
-#include <map>
-
+#include <utility>
+#include "./shared.hpp"
 
 extern JFPGen::AutoJFP state;
 
@@ -33,13 +33,24 @@ enum class ColorMode : int {
     AllColors = 1,
     ClassicMode = 2,
     NightMode = 3
+    // Random = 4
 };
 
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
     Experimental = 2,
-    Unrestricted = 3
+    Unrestricted = 3,
+    LRD = 4
+    // Random = 5
+};
+
+struct RawCR {
+    bool NZ = false;
+    bool NS = false;
+    bool LRD = false;
+    bool FD = false;
+    bool SPECIAL = false;
 };
 
 enum class Difficulties : int {
@@ -77,7 +88,6 @@ struct SegmentOptions {
     bool gravity = false;
     bool isSpikeM = false;
     bool spikeSide = false;
-    bool cornerPieces = false;
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;
@@ -136,12 +146,12 @@ SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
-bool orientationMatch(const std::vector<Segment>& segments, int idx, const std::vector<int>& pattern,
-    bool strictMini = false);
+bool orientationMatch(const std::vector<Segment>& segments, int idx,
+    const std::vector<int>& pattern, bool strictMini = false);
 
 LevelData generateJFPLevel();
 
-}
+}  // namespace JFPGen
 
 extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;

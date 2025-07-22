@@ -1,27 +1,30 @@
+// Copyright 2025 GDSRWave
+#include <string>
 #include "OptionStrPopup.hpp"
 #include "../utils/Ninja.hpp"
 #include "../utils/OptionStr.hpp"
 
 bool OptionStrPopup::setup(std::string const& value) {
-        this->setTitle("Option String:");
+        this->setTitle("Option Code:");
 
         auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
 
-        m_inputOptTxt = TextInput::create(150.f, "lByh_gWjwIcEQGAK+500", "chatFont.fnt");
+        m_inputOptTxt = TextInput::create(
+            150.f, "lByh_gWjwIcEQGAK+500", "chatFont.fnt");
         m_inputOptTxt->setID("option-str-input");
         m_inputOptTxt->setScale(1.3f);
-        m_inputOptTxt->setFilter("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_+");
+        m_inputOptTxt->setFilter(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_+");
 
-        auto importSprite = ButtonSprite::create("Import", "bigFont.fnt", "GJ_button_01.png", 0.8f);
+        auto importSprite = ButtonSprite::create(
+            "Import", "bigFont.fnt", "GJ_button_01.png", 0.8f);
         importSprite->setScale(0.7f);
         auto importButton = CCMenuItemSpriteExtra::create(
-            importSprite, this, menu_selector(OptionStrPopup::clickImport)
-        );
-        
+            importSprite, this, menu_selector(OptionStrPopup::clickImport));
+
         auto mainMenu = CCMenu::create();
         mainMenu->setLayout(ColumnLayout::create()
-            ->setGap(15.f)
-        );
+            ->setGap(15.f));
         mainMenu->addChild(importButton);
         mainMenu->addChild(m_inputOptTxt);
         mainMenu->addChild(label);
@@ -45,9 +48,9 @@ void OptionStrPopup::clickImport(CCObject* object) {
 }
 
 void OptionStrPopup::onClose(CCObject* object) {
-	this->setKeypadEnabled(false);
-	this->setTouchEnabled(false);
-	this->removeFromParentAndCleanup(true);
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    this->removeFromParentAndCleanup(true);
 }
 
 OptionStrPopup *OptionStrPopup::create(std::string const& text) {
@@ -62,5 +65,5 @@ OptionStrPopup *OptionStrPopup::create(std::string const& text) {
 }
 
 OptionStrPopup::~OptionStrPopup() {
-    this->removeAllChildrenWithCleanup(true);
+    if (this->getParent() != nullptr) this->removeAllChildrenWithCleanup(true);
 }
