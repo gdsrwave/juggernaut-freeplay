@@ -101,11 +101,13 @@ void importSettings(std::string packed) {
         
         mod->setSettingValue<float>("corridor-height", readStoredNum(bytes, 44, 8));
 
-        std::array<std::string, 4> corridorRules = {
+        std::array<std::string, 6> corridorRules = {
             "NSNZ",
             "NS",
             "Experimental",
-            "Unrestricted"
+            "Unrestricted",
+            "LRD",
+            "Random"
         };
         size_t cri = readStoredNum(bytes, 64, 4);
         std::string crstr = (cri >= 0 && cri < corridorRules.size()) ? corridorRules[cri] : "Unrestricted";
@@ -127,11 +129,12 @@ void importSettings(std::string packed) {
         mod->setSettingValue<bool>("corners", static_cast<bool>(readStoredNum(bytes, 77, 1)));
         mod->setSettingValue<bool>("low-vis", static_cast<bool>(readStoredNum(bytes, 78, 2)));
 
-        std::array<std::string, 4> colorMode = {
+        std::array<std::string, 5> colorMode = {
             "Washed",
             "All Colors",
             "Classic Mode",
-            "Night Mode"
+            "Night Mode",
+            "Random"
         };
         size_t cmi = readStoredNum(bytes, 80, 3);
         std::string cmstr = (cmi >= 0 && cmi < colorMode.size()) ? colorMode[cmi] : "Washed";
@@ -226,6 +229,8 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         if (corridorRulesStr == "NS") optCR = 1;
         else if (corridorRulesStr == "NSNZ") optCR = 0;
         else if (corridorRulesStr == "Experimental") optCR = 2;
+        else if (corridorRulesStr == "LRD") optCR = 4;
+        else if (corridorRulesStr == "Random") optCR = 5;
         resSettings.push_back(PackedEntry(4, optCR));
 
         // portals (fakeenum)
@@ -257,6 +262,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         if (colorModeStr == "All Colors") optColorMode = 1;
         else if (colorModeStr == "Classic Mode") optColorMode = 2;
         else if (colorModeStr == "Night Mode") optColorMode = 3;
+        else if (colorModeStr == "Random") optColorMode = 4;
         resSettings.push_back(PackedEntry(3, optColorMode));
 
         // corridor-spikes

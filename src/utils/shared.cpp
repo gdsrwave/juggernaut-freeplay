@@ -26,6 +26,24 @@ void setupJFPMusic() {
     };
 }
 
+std::vector<int> getUserSongs() {
+    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::vector<int> res;
+    for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
+        if (entry.is_regular_file()) {
+            auto filename = entry.path().filename().string();
+            if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".mp3") {
+                std::string numPart = filename.substr(0, filename.size() - 4);
+                try {
+                    int num = std::stoi(numPart);
+                    res.push_back(num);
+                } catch (...) {}
+            }
+        }
+    }
+    return res;
+}
+
 void setupJFPDirectories(bool bypass) {
     auto localPath = CCFileUtils::sharedFileUtils();
     std::string jfpDir = localPath->getWritablePath() + "jfp\\";

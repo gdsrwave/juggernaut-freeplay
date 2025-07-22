@@ -17,7 +17,7 @@
 
 using namespace geode::prelude;
 
-bool jfpActive = false; // used in GameManager.cpp to check if JFP is active
+bool jfpActive = false; // used in GameManager.cpp to check if a menu is open over JFPMenuLayer
 
 namespace JFPGen {
 
@@ -63,6 +63,7 @@ std::string jfpPackString(const std::string& level, uint32_t seed, int song, boo
 }
 
 std::string jfpStringGen(bool compress) {
+    kBank = defaultKbank;
     LevelData ldata = generateJFPLevel();
     if (ldata.biomes.empty()) return "";
 

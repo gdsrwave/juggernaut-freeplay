@@ -8,7 +8,7 @@ using namespace geode::prelude;
 class $modify(GJGarageLayer) {
     void onBack(CCObject* sender) {
         if (jfpActive) {
-            CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionMoveInT);
+            CCDirector::sharedDirector()->popSceneWithTransition(0.5f, PopTransition::kPopTransitionFade);
             jfpActive = false;
         } else {
             GJGarageLayer::onBack(sender);

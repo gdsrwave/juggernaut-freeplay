@@ -3,7 +3,7 @@
 	"gd": {
 		"win": "2.2074"
 	},
-	"version": "v1.6.0",
+	"version": "v1.6.3",
 	"id": "gdsrwave.jfp",
 	"name": "JFP",
 	"developer": "gdsrwave",
@@ -67,7 +67,8 @@
 				"NS",
 				"LRD",
 				"Experimental",
-				"Unrestricted"
+				"Unrestricted",
+				"Random"
 			],
 			"default": "NSNZ"
 		},
@@ -149,6 +150,7 @@
 		},
 		"marks": {
 			"name": "Meter Marks",
+			"description": "Dashed lines and text marking how far you've currently travelled.",
 			"type": "bool",
 			"default": true
 		},
@@ -159,29 +161,33 @@
 		},
 		"corners": {
 			"name": "Corner Pieces",
+			"description": "The corners connecting slopes on their edges.",
 			"type": "bool",
 			"default": false
 		},
 		"low-vis": {
 			"name": "Low Visibility",
+			"description": "Adds a dark fog to the right of the screen, lowering your FOV.",
 			"type": "bool",
 			"default": false
 		},
 		"color-mode": {
 			"name": "Color Mode",
 			"type": "string",
+			"description": "Basic unthemed color options.\n- Washed - washed out random background color\n- All Colors - any random background color\n- Classic Mode - classic Juggernaut gray color\n- Night Mode - black background with bright randomly colored lines\n- Random",
 			"one-of": [
 				"Washed",
 				"All Colors",
 				"Classic Mode",
-				"Night Mode"
+				"Night Mode",
+				"Random"
 			],
 			"default": "Washed"
 		},
 		"background-image": {
-			"name": "Background Image",
+			"name": "Background Texture",
 			"type": "int",
-			"description": "Background image (# is position on the editor selection screen)",
+			"description": "Background Texture # represents its position on the editor selection screen. Select 0 for a random texture.",
 			"default": 1,
 			"min": 0,
 			"max": 59
@@ -231,6 +237,7 @@
 		},
 		"fuzzy-spikes": {
 			"name": "Fuzzy Spikes",
+			"description": "AKA groud spikes. And yes, they actually do have a hitbox, albeit not a conventional one.",
 			"type": "bool",
 			"default": false
 		},
@@ -286,6 +293,12 @@
             "type": "title",
             "name": "Meta"
         },
+		"lmao-button": {
+			"name": "LMAO (Primary) Button",
+			"description": "WiseTree button used to access the JFP main menu.",
+			"type": "bool",
+			"default": true
+		},
 		"waveman-button": {
 			"name": "Waveman Button",
 			"description": "Button for generating JFP levels within your 'created' list.",
@@ -298,9 +311,10 @@
 			"type": "bool",
 			"default": false
 		},
-		"builtin-soundtrack": {
+		"level-song-source": {
 			"name": "Music Source",
 			"type": "string",
+			"description": "JFP has a built-in soundtrack of 100+ songs it uses by default. Shuffling from the GD folder can be selected if preferred.",
 			"one-of": [
 				"JFP Soundtrack",
 				"Local Music"

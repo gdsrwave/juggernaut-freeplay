@@ -225,7 +225,8 @@ LevelData generateJFPLevel() {
 
     double optCorridorHeight = mod->getSettingValue<double>("corridor-height");
 
-    const int64_t optLength = mod->getSettingValue<int64_t>("length");
+    int64_t optLength = mod->getSettingValue<int64_t>("length");
+    if (optLength <= 0) optLength = 1;
     int y_swing = 0, cX = 345, cY = 135;
     int maxHeight = 255, minHeight = 45;
 
@@ -322,8 +323,15 @@ LevelData generateJFPLevel() {
     int8_t y_bias = -1;
     Portals currentPortal;
 
-    levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
+    std::string musicSource = mod->getSettingValue<std::string>("level-song-source");
+    if (musicSource == "Local Music") {
+        auto songsList = getUserSongs();
+        levelData.biomes[0].song = songsList[songRNG() % (songsList.size())];
+    } else levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
 
+    if (colorModeStr == "Random") {
+        optColorMode = static_cast<ColorMode>(bgRNG() % 4);
+    }
     std::array<int, 3> backgroundColor = {28, 28, 28};
     std::array<int, 3> lineColor = {255, 255, 255};
     if (optColorMode == JFPGen::ColorMode::NightMode) {
@@ -371,16 +379,42 @@ LevelData generateJFPLevel() {
     pushColor(JFPGen::Color{1000, backgroundColor, false, 1.0f});
     pushColor(JFPGen::Color{1004, lineColor, false, 1.0f});
 
+    uint8_t bgImage = Mod::get()->getSettingValue<int>("background-image");
+    if (bgImage > 0) kBank["kA6"] = std::to_string(bgImage);
+    else {
+        kBank["kA6"] = std::to_string(bgRNG() % 59 + 1);
+    }
 
-    // future prior block to generate lengths of different biomes
+    RawCR cr;
+    
+    if (corridorRulesStr == "Random") {
+        // Currently uses bgRNG as to not interfere with segmentRNG calc. May change later. Also, I might add in-enum
+        // size elements for repeatability. -M
+        optCorridorRules = static_cast<CorridorRules>(bgRNG() % 5);
+    }
+    if (optCorridorRules == CorridorRules::NoSpamNoZigzag) {
+        cr.NZ = true;
+        cr.NS = true;
+    } else if (optCorridorRules == CorridorRules::NoSpam) {
+        cr.NS = true;
+    } else if (optCorridorRules == CorridorRules::Experimental) {
+        cr.NS = true;
+        cr.SPECIAL = true;
+        cr.FD = true;
+    } else if (optCorridorRules == CorridorRules::LRD) {
+        cr.NS = true;
+        cr.NZ = true;
+        cr.LRD = true;
+    }
+
+    // Future prior block to generate lengths of different biomes
 
     for (int i = 0; i < optLength; i++) {
         cX += 30;
         y_swing = 0;
         currentPortal = Portals::None;
 
-        if (optCorridorRules == CorridorRules::Experimental &&
-            (cY == minHeight+30 || cY == relMaxHeight-30) &&
+        if (cr.SPECIAL && (cY == minHeight+30 || cY == relMaxHeight-30) &&
             (i > 0 && (segments[i - 1].coords.second == minHeight || segments[i - 1].coords.second == relMaxHeight))
         ) {
             specialRules = true;
@@ -394,51 +428,40 @@ LevelData generateJFPLevel() {
             y_swing = segments[i - 1].y_swing;
         } else if (
             cY >= relMaxHeight &&(segments[i - 1].y_swing == 1 ||
-            (
-                optCorridorRules == CorridorRules::NoSpamNoZigzag &&
-                orientationMatch(segments, i, antiZigzagMax)
-            ) ||
-            i == 1 || (
-                optCorridorRules != CorridorRules::Unrestricted &&
-                orientationMatch(segments, i, {-1, 1, -1})
-            )
+            (cr.NZ && orientationMatch(segments, i, antiZigzagMax)) ||
+            (cr.NS &&orientationMatch(segments, i, {-1, 1, -1}))
         )) {
             y_swing = -1;
         } else if (
             cY <= (mini ? minHeight + 30 : minHeight) && (segments[i - 1].y_swing == -1 ||
-            (
-                optCorridorRules == CorridorRules::NoSpamNoZigzag &&
-                orientationMatch(segments, i, antiZigzagMin)
-            ) || (
-                optCorridorRules != CorridorRules::Unrestricted &&
-                orientationMatch(segments, i, {1, -1, 1})
-            )
+            (cr.NZ && orientationMatch(segments, i, antiZigzagMin)) || 
+            (cr.NS && orientationMatch(segments, i, {1, -1, 1}))
         )) {
             y_swing = 1;
         } else if (
-            optCorridorRules == CorridorRules::NoSpamNoZigzag && orientationMatch(segments, i, antiZigzagStd1)) {
+            cr.NZ && orientationMatch(segments, i, antiZigzagStd1)) {
             y_swing = -1;
         } else if (
-            optCorridorRules == CorridorRules::NoSpamNoZigzag && orientationMatch(segments, i, antiZigzagStd2)) {
+            cr.NZ && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
         } else if ((
-            optCorridorRules != CorridorRules::Unrestricted
+            cr.NS
         ) && (
             orientationMatch(segments, i, antiSpam1) &&
-            (optCorridorRules != CorridorRules::Experimental ||
+            (!cr.FD ||
                 !(gravity && cY != relMaxHeight)
             )
         )) {
             y_swing = -1;
         } else if ((
-            optCorridorRules != CorridorRules::Unrestricted
+            cr.NS
         ) && (
             orientationMatch(segments, i, antiSpam2) &&
-            (optCorridorRules != CorridorRules::Experimental ||
+            (!cr.FD ||
                 !(!gravity && cY != minHeight)))) {
             y_swing = 1;
         } else {
-            if (optCorridorRules == CorridorRules::LRD) {
+            if (cr.LRD) {
                 if (
                     orientationMatch(segments, i, {1, -1, 1}) ||
                     (cY <= (mini ? minHeight + 30 : minHeight) && segments[i - 1].y_swing == 1)
@@ -512,7 +535,6 @@ LevelData generateJFPLevel() {
 
         // size change y_swing catch - reorients the corridor if about to get stuck. -M
         if (mini && !segments[i - 1].options.mini) {
-            log::info("{} {} {} {}", y_swing, cY, relMaxHeight, orientationMatch(segments, i, {1, -1}));
             if (y_swing == 1 && cY >= relMaxHeight && orientationMatch(segments, i, {1, -1})) {
                 y_swing = -1;
             } else if (y_swing == -1 && cY <= minHeight + 30 &&
@@ -637,7 +659,6 @@ LevelData generateJFPLevel() {
                 .gravity = gravity,
                 .isSpikeM = segments[i].options.isSpikeM,
                 .spikeSide = static_cast<bool>(spikeSide),
-                .cornerPieces = (optCorridorRules == CorridorRules::Unrestricted),
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? convertFloatSpeedEnum(currentSpeed) : SpeedChange::None,
                 .isFuzzy = segments[i].options.isFuzzy,

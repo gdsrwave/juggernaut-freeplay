@@ -225,11 +225,6 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     overrideBank["override-endup"] = false;
     overrideBank["override-slope"] = false;
     overrideBank["override-slope-mini"] = false;
-    
-    // in the future, we'll add a dedicated k building function so its functionality isn't haphazardly placed here in
-    // theming. -M
-    kBank = defaultKbank;
-    kBank["kA6"] = std::to_string(Mod::get()->getSettingValue<int>("background-image"));
 
     JFPGen::Color sColor = JFPGen::Color();
     

@@ -19,22 +19,22 @@ using namespace geode::prelude;
 class $modify(GenerateLevelLayer, CreatorLayer) {
 
 	bool init() {
-
 		if (!CreatorLayer::init()) {
 			return false;
 		}
-		auto optionButton = CCMenuItemSpriteExtra::create(
-			CircleButtonSprite::createWithSpriteFrameName("lmao_s.png"_spr, .80f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
-			this,
-			menu_selector(GenerateLevelLayer::onJFPButton)
-		);
+		if (Mod::get()->getSettingValue<bool>("lmao-button")) {
+			auto optionButton = CCMenuItemSpriteExtra::create(
+				CircleButtonSprite::createWithSpriteFrameName("lmao_s.png"_spr, .80f, CircleBaseColor::DarkAqua, CircleBaseSize::Medium),
+				this,
+				menu_selector(GenerateLevelLayer::onJFPButton)
+			);
 
-		auto menu = this->getChildByID("bottom-left-menu");
-		menu->addChild(optionButton);
-		optionButton->setID("jfp-launch-button"_spr);
+			auto menu = this->getChildByID("bottom-left-menu");
+			menu->addChild(optionButton);
+			optionButton->setID("jfp-launch-button"_spr);
 
-		menu->updateLayout();
-
+			menu->updateLayout();
+		}
 		return true;
 	}
 

@@ -3,7 +3,7 @@
 #include "../utils/OptionStr.hpp"
 
 bool OptionStrPopup::setup(std::string const& value) {
-        this->setTitle("Option String:");
+        this->setTitle("Option Code:");
 
         auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
 
@@ -62,5 +62,5 @@ OptionStrPopup *OptionStrPopup::create(std::string const& text) {
 }
 
 OptionStrPopup::~OptionStrPopup() {
-    this->removeAllChildrenWithCleanup(true);
+    if (this->getParent() != nullptr) this->removeAllChildrenWithCleanup(true);
 }

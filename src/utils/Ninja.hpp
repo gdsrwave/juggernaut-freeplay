@@ -33,14 +33,24 @@ enum class ColorMode : int {
     AllColors = 1,
     ClassicMode = 2,
     NightMode = 3
+    // Random = 4
 };
 
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    LRD = 2,
-    Experimental = 3,
-    Unrestricted = 4
+    Experimental = 2,
+    Unrestricted = 3,
+    LRD = 4
+    // Random = 5
+};
+
+struct RawCR {
+    bool NZ = false;
+    bool NS = false;
+    bool LRD = false;
+    bool FD = false;
+    bool SPECIAL = false;
 };
 
 enum class Difficulties : int {
@@ -78,7 +88,6 @@ struct SegmentOptions {
     bool gravity = false;
     bool isSpikeM = false;
     bool spikeSide = false;
-    bool cornerPieces = false;
     Portals isPortal = Portals::None;
     SpeedChange speedChange = SpeedChange::None;
     bool isFuzzy = false;

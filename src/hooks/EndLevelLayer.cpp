@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include "../utils/Ninja.hpp"
 
 using namespace geode::prelude;
 
@@ -8,6 +9,7 @@ class $modify(EndLevelLayer) {
 	void customSetup() {
 
 		EndLevelLayer::customSetup();
+		if (state == JFPGen::AutoJFP::NotInAutoJFP) return;
 
 		auto timeLabel = static_cast<CCLabelBMFont*>(this->getChildByIDRecursive("jumps-label"));
 

@@ -34,11 +34,15 @@ static GJGameLevel* createGameLevel() {
     }
     dict->stepIntoSubDictWithKey("root");
 
-    delete commonLevel;
+    if (commonLevel) {
+        commonLevel->release();
+        commonLevel = nullptr;
+    };
     commonLevel = GJGameLevel::create();
-
+    commonLevel->retain();
     commonLevel->dataLoaded(dict.get());
     commonLevel->m_levelType = GJLevelType::Editor;
+
     return commonLevel;
 }
 
@@ -46,6 +50,12 @@ bool JFPMenuLayer::init() {
     if (!JFPGenericLayer::init()) {
         return false;
     }
+
+    if (commonLevel) {
+        commonLevel->release();
+        commonLevel = nullptr;
+    };
+
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
     auto backgroundSprite2 = CCSprite::createWithSpriteFrameName("game_bg_27_001_m.png"_spr);
     backgroundSprite2->setID("background-menu"_spr);
@@ -164,6 +174,9 @@ bool JFPMenuLayer::init() {
         menu_selector(JFPMenuLayer::onGarageButton)
     );
     garageBtn->setID("garage-button"_spr);
+    garageBtn->m_animationType = MenuAnimationType::Move;
+    garageBtn->m_startPosition = CCPoint(18.875f, 35.250f);
+    garageBtn->m_offset = CCPoint(0.f, -8.f);
     garageBtn->setSizeMult(1.1f);
     
     auto menu = CCMenu::create();
@@ -189,6 +202,7 @@ bool JFPMenuLayer::init() {
         ->setGap(7.f)
     );
     menu2->updateLayout();
+    garageBtn->setPositionY(garageBtn->getPositionY() + 8);
     addChild(menu2);
 
     menu3->setLayout(ColumnLayout::create()
