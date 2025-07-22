@@ -21,7 +21,7 @@ using namespace geode::prelude;
 GJGameLevel* commonLevel = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
     std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
     std::string dstPath = appdataDir + "jfpLoop.mp3";
     if (!std::filesystem::exists(dstPath)) {
@@ -48,12 +48,12 @@ std::vector<int> getUserSongs() {
 
 void setupJFPDirectories(bool bypass) {
     auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = localPath->getWritablePath() + "jfp\\";
+    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
     if (!std::filesystem::is_directory(jfpDir)) {
         log::info("Creating JFP directory: {}", jfpDir);
         (void)file::createDirectory(jfpDir);
     }
-    std::string themesDir = localPath->getWritablePath() + "jfp\\themes\\";
+    std::string themesDir = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
 
     bool contFlag = bypass;
     if (!std::filesystem::is_directory(themesDir)) {

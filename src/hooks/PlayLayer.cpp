@@ -27,7 +27,7 @@ class $modify(PlayLayer) {
             CCDirector::sharedDirector()->getRunningScene() != nullptr) {
             try {
                 auto fileUtils = CCFileUtils::sharedFileUtils();
-                auto bgmPath = fileUtils->getWritablePath() + "jfpLoop.mp3";
+                auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
                 auto* engine = FMODAudioEngine::get();
                 if (engine) {
                     engine->playMusic(bgmPath, true, 1.0f, 1);
