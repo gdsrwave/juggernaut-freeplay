@@ -281,10 +281,13 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         resSettings.push_back(PackedEntry(3, optColorMode));
 
         // corridor-spikes
-        resSettings.push_back(PackedEntry(2, static_cast<int>(mod->getSettingValue<bool>("corridor-spikes"))));
+        resSettings.push_back(PackedEntry(2,
+            static_cast<uint32_t>(mod->getSettingValue<bool>("corridor-spikes"))));
 
-        // fuzzy-spikes
-        resSettings.push_back(PackedEntry(2, static_cast<int>(mod->getSettingValue<bool>("fuzzy-spikes"))));
+        // fuzzy-spike
+
+        resSettings.push_back(PackedEntry(2,
+            static_cast<uint32_t>(mod->getSettingValue<bool>("fuzzy-spikes"))));
 
         // changing-speed (fakeenum)
         std::string cspeedStr = mod->getSettingValue<std::string>("changing-speed");
