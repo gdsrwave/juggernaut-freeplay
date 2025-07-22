@@ -22,9 +22,9 @@ std::array<int, 3> hexToColor(const std::string& hex) {
     std::array<int, 3> color = {255, 255, 255};
     if (hex.size() == 7 && hex[0] == '#') {
         try {
-            color[0] = geode::utils::numFromString<int>(hex.substr(1, 2), 16);
-            color[1] = geode::utils::numFromString<int>(hex.substr(3, 2), 16);
-            color[2] = geode::utils::numFromString<int>(hex.substr(5, 2), 16);
+            color[0] = geode::utils::numFromString<int>(hex.substr(1, 2), 16).unwrapOr(0);
+            color[1] = geode::utils::numFromString<int>(hex.substr(3, 2), 16).unwrapOr(0);
+            color[2] = geode::utils::numFromString<int>(hex.substr(5, 2), 16).unwrapOr(0);
         } catch (const std::invalid_argument&) {}
     }
     return color;
