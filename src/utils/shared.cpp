@@ -31,17 +31,15 @@ void setupJFPMusic() {
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
     std::vector<int> res;
     for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
         if (entry.is_regular_file()) {
             auto filename = entry.path().filename().string();
             if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".mp3") {
                 std::string numPart = filename.substr(0, filename.size() - 4);
-                try {
-                    int num = std::stoi(numPart);
-                    res.push_back(num);
-                } catch (...) {}
+                int num = geode::utils::numFromString<int>(numPart).unwrapOr(-1);
+                if (num > -1) res.push_back(num);
             }
         }
     }

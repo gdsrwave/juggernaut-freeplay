@@ -22,9 +22,9 @@ std::array<int, 3> hexToColor(const std::string& hex) {
     std::array<int, 3> color = {255, 255, 255};
     if (hex.size() == 7 && hex[0] == '#') {
         try {
-            color[0] = std::stoi(hex.substr(1, 2), nullptr, 16);
-            color[1] = std::stoi(hex.substr(3, 2), nullptr, 16);
-            color[2] = std::stoi(hex.substr(5, 2), nullptr, 16);
+            color[0] = geode::utils::numFromString<int>(hex.substr(1, 2), 16);
+            color[1] = geode::utils::numFromString<int>(hex.substr(3, 2), 16);
+            color[2] = geode::utils::numFromString<int>(hex.substr(5, 2), 16);
         } catch (const std::invalid_argument&) {}
     }
     return color;
@@ -74,9 +74,8 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
         start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
 
         int key = 0;
-        try {
-            key = std::stoi(k);
-        } catch (...) {
+        key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+        if (key == -1) {
             continue;
         }
 
@@ -100,7 +99,7 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
             }
             if (std::abs(xv - std::round(xv)) < 0.1f) {
                 xv = std::round(xv);
-                v = std::to_string(static_cast<int>(xv));
+                v = geode::utils::numToString(static_cast<int>(xv));
             }
             if (omType != OMType::None) v = "[X+" + v + "]";
         } else if (key == 3) {
@@ -112,7 +111,7 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
             }
             if (std::abs(yv - std::round(yv)) < 0.1f) {
                 yv = std::round(yv);
-                v = std::to_string(static_cast<int>(yv));
+                v = geode::utils::numToString(static_cast<int>(yv));
             }
             if (omType == OMType::Ceiling) v = "[Y+C+" + v + "]";
             else if (omType != OMType::None) v = "[Y+" + v + "]";
@@ -153,11 +152,11 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
                 std::string parsedExpr;
                 for (size_t j = 0; j < expr.size(); ++j) {
                     if (expr[j] == 'X') {
-                        parsedExpr += std::to_string(X);
+                        parsedExpr += geode::utils::numToString(X);
                     } else if (expr[j] == 'Y') {
-                        parsedExpr += std::to_string(Y);
+                        parsedExpr += geode::utils::numToString(Y);
                     } else if (expr[j] == 'C') {
-                        parsedExpr += std::to_string(corridorHeight);
+                        parsedExpr += geode::utils::numToString(corridorHeight);
                     } else {
                         parsedExpr += expr[j];
                     }
@@ -202,7 +201,7 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
                     }
                 }
 
-                result += std::to_string(static_cast<int>(value));
+                result += geode::utils::numToString(static_cast<int>(value));
                 i = end + 1;
             } else {
                 result += addBlockLine[i++];
@@ -288,28 +287,16 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 if (key == "Color") {
                     if (value.size() > 4 && value.substr(0, 4) == "Copy") {
-                        try {
-                            sColor.copyColor = std::stoi(value.substr(5));
-                        } catch (...) {
-                            sColor.copyColor = -1;
-                        }
+                        sColor.copyColor = geode::utils::numFromString<int>(value.substr(5)).unwrapOr(-1);
                     } else {
                         sColor.rgb = hexToColor(value);
                     }
                 } else if (key == "Slot") {
-                    try {
-                        sColor.slot = std::stoi(value);
-                    } catch (const std::invalid_argument&) {
-                        sColor.slot = 13;
-                    }
+                    sColor.slot = geode::utils::numFromString<int>(value).unwrapOr(13);
                 } else if (key == "Blending") {
                     sColor.blending = (value == "true" || value == "1");
                 } else if (key == "Opacity") {
-                    try {
-                        sColor.opacity = std::stof(value);
-                    } catch (const std::invalid_argument&) {
-                        sColor.opacity = 1.0f;
-                    }
+                    sColor.opacity = geode::utils::numFromString<float>(value).unwrapOr(1.0f);
                 } else if (key == "Special") {
                     sColor.special = value;
                 }
@@ -519,7 +506,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 std::string patternStr;
                 for (size_t pi = 0; pi < pattern.size(); ++pi) {
-                    patternStr += std::to_string(pattern[pi]);
+                    patternStr += geode::utils::numToString(pattern[pi]);
                     if (pi + 1 < pattern.size()) patternStr += ",";
                 }
 
@@ -589,19 +576,11 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 if (key == "Data") {
                     patternGen.data = value;
                 } else if (key == "Start") {
-                    try {
-                        patternGen.start = std::stoi(value);
-                    } catch (...) {
-                        patternGen.start = 195;
-                    }
+                    patternGen.start = geode::utils::numFromString<int>(value).unwrapOr(195);
                 } else if (key == "Repeat") {
-                    try {
-                        patternGen.repeat = std::stoi(value);
-                        if (patternGen.repeat < 1) {
-                            patternGen.repeat = 1;
-                        }
-                    } catch (...) {
-                        patternGen.repeat = 30;
+                    patternGen.repeat = geode::utils::numFromString<int>(value).unwrapOr(30);
+                    if (patternGen.repeat < 1 && patternGen.repeat != 30) {
+                        patternGen.repeat = 1;
                     }
                 }
             }

@@ -63,7 +63,7 @@ std::string jfpPackString(const std::string& level, uint32_t seed,
         "</k><t/><k>k21</k><i>2</i><k>k50</k><i>35</i>",
     fmt::arg("desc", desc),
     fmt::arg("b64", b64),
-    fmt::arg("title", std::to_string(seed)),
+    fmt::arg("title", geode::utils::numToString(seed)),
     fmt::arg("song", song));
 
     return levelString;

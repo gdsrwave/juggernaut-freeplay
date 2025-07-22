@@ -51,7 +51,7 @@ void importSettings(std::string packed) {
     if (ls == std::string::npos) {
         throw std::runtime_error("Length suffix not found");
     }
-    int length = std::stoi(packed.substr(ls + 1, std::string::npos));
+    int length = geode::utils::numFromString<int>(packed.substr(ls + 1, std::string::npos)).unwrapOr(-1);
     mod->setSettingValue("length", length);
 
     std::string dataPack = packed.substr(0, ls);

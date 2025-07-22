@@ -398,9 +398,9 @@ LevelData generateJFPLevel() {
 
     uint8_t bgImage = Mod::get()->getSettingValue<int>("background-image");
     if (bgImage > 0) {
-        kBank["kA6"] = std::to_string(bgImage);
+        kBank["kA6"] = geode::utils::numToString(bgImage);
     } else {
-        kBank["kA6"] = std::to_string(bgRNG() % 59 + 1);
+        kBank["kA6"] = geode::utils::numToString(bgRNG() % 59 + 1);
     }
 
     RawCR cr;
