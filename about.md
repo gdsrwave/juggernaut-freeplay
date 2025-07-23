@@ -8,7 +8,8 @@
 # Contributors
 
 * Martin C (gdsrwave)
-* syzzi (theyareonit) 
+* syzzi (theyareonit)
+* Erymanthus (RayDeeUx)
 
 Special thanks to the Geode community and to early playtesters; you made this possible!
 
