@@ -89,7 +89,7 @@ bool JFPMenuLayer::init() {
 
     uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
     std::string displaySeed = "Last Seed: " +
-        (globalSeed ? std::to_string(globalSeed) : "N/A");
+        (globalSeed ? geode::utils::numToString(globalSeed) : "N/A");
     auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "goldFont.fnt");
     seedTxt->setScale(0.9f);
     auto seedCopyBtn = CCMenuItemSpriteExtra::create(
@@ -232,7 +232,7 @@ void JFPMenuLayer::onOptionButton(CCObject*) {
 void JFPMenuLayer::onCopySeed(CCObject*) {
     uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
     if (globalSeed) {
-        clipboard::write(std::to_string(globalSeed));
+        clipboard::write(geode::utils::numToString(globalSeed));
         Notification::create("Copied to clipboard",
             NotificationIcon::None, 0.5f)->show();
     } else {
@@ -334,7 +334,7 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
 }
 
 void JFPMenuLayer::onInfoButton(CCObject*) {
-    std::string playCt = std::to_string(
+    std::string playCt = geode::utils::numToString(
         Mod::get()->getSavedValue<uint32_t>("total-played", 0));
     std::string message = "Advanced Random Wave Generation\n\n"
         "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
@@ -362,7 +362,7 @@ CCScene* JFPMenuLayer::scene() {
 
     if (!GameManager::sharedState()->getGameVariable("0122")) {
         auto bgmPath =
-            CCFileUtils::sharedFileUtils()->getWritablePath() + "jfpLoop.mp3";
+            std::string(CCFileUtils::sharedFileUtils()->getWritablePath()) + "jfpLoop.mp3";
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
     }
     return scene;

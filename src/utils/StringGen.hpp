@@ -25,9 +25,9 @@ using namespace geode::prelude;
 
 namespace JFPGen {
 
-void orientationShift(int prevO[11], int newO);
+static void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
-int convertSpeed(JFPGen::SpeedChange speed);
+static int convertSpeed(JFPGen::SpeedChange speed);
 
 std::string jfpStringGen(bool compress);
 std::string jfpNewStringGen(LevelData ldata);

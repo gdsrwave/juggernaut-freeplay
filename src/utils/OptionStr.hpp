@@ -19,8 +19,8 @@ struct ConfigEntry {
 };
 
 struct PackedEntry {
-    uint32_t size;
-    uint32_t value;
+    uint32_t sizeSize;
+    uint32_t valueVal;
 };
 
 std::string exportSettings(const std::vector<PackedEntry>& entries);

@@ -76,7 +76,7 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
 
     void onClickFolder(CCObject*) {
         auto localPath = CCFileUtils::sharedFileUtils();
-        file::openFolder(localPath->getWritablePath() + "jfp\\themes\\");
+        file::openFolder(std::string(localPath->getWritablePath()) + "jfp\\themes\\");
     }
 
     void onClickReload(CCObject*) {

@@ -21,7 +21,7 @@ using namespace geode::prelude;
 GJGameLevel* commonLevel = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
     std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
     std::string dstPath = appdataDir + "jfpLoop.mp3";
     if (!std::filesystem::exists(dstPath)) {
@@ -31,17 +31,15 @@ void setupJFPMusic() {
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = CCFileUtils::sharedFileUtils()->getWritablePath();
+    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
     std::vector<int> res;
     for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
         if (entry.is_regular_file()) {
             auto filename = entry.path().filename().string();
             if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".mp3") {
                 std::string numPart = filename.substr(0, filename.size() - 4);
-                try {
-                    int num = std::stoi(numPart);
-                    res.push_back(num);
-                } catch (...) {}
+                int num = geode::utils::numFromString<int>(numPart).unwrapOr(-1);
+                if (num > -1) res.push_back(num);
             }
         }
     }
@@ -50,12 +48,12 @@ std::vector<int> getUserSongs() {
 
 void setupJFPDirectories(bool bypass) {
     auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = localPath->getWritablePath() + "jfp\\";
+    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
     if (!std::filesystem::is_directory(jfpDir)) {
         log::info("Creating JFP directory: {}", jfpDir);
         (void)file::createDirectory(jfpDir);
     }
-    std::string themesDir = localPath->getWritablePath() + "jfp\\themes\\";
+    std::string themesDir = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
 
     bool contFlag = bypass;
     if (!std::filesystem::is_directory(themesDir)) {
@@ -73,23 +71,20 @@ void setupJFPDirectories(bool bypass) {
                 std::filesystem::path srcPath = srcDir / fileStr;
                 std::string dstPath = themesDir + fileStr;
 
-                try {
-                    if (std::filesystem::exists(dstPath)) {
-                        if (bypass) {
-                            std::filesystem::copy_file(
-                                srcPath, dstPath,
-                                std::filesystem::copy_options::overwrite_existing);
-                            log::info("Overwrote existing theme file: {}", dstPath);
-                        } else {
-                            log::info("Theme file already exists and bypass is false: {}",
-                                dstPath);
-                        }
+                if (std::filesystem::exists(dstPath)) {
+                    if (bypass) {
+                        std::filesystem::copy_file(
+                            srcPath, dstPath,
+                            std::filesystem::copy_options::overwrite_existing);
+                        log::info("Overwrote existing theme file: {}", dstPath);
                     } else {
-                        std::filesystem::copy_file(srcPath, dstPath);
-                        log::info("Copied theme file: {}", dstPath);
+                        log::info("Theme file already exists and bypass is false: {}",
+                            dstPath);
                     }
-                } catch (const std::filesystem::filesystem_error& e) {
-                    log::error("Failed to copy theme file {}: {}", dstPath, e.what());
+                } else if (std::filesystem::copy_file(srcPath, dstPath)) {
+                    log::info("Copied theme file: {}", dstPath);
+                } else {
+                    log::error("Failed to copy theme file {}", dstPath);
                 }
             }
         }
