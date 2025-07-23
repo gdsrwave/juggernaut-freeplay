@@ -71,22 +71,19 @@ void setupJFPDirectories(bool bypass) {
                 std::filesystem::path srcPath = srcDir / fileStr;
                 std::string dstPath = themesDir + fileStr;
 
-                try {
-                    if (std::filesystem::exists(dstPath)) {
-                        if (bypass) {
-                            std::filesystem::copy_file(
-                                srcPath, dstPath,
-                                std::filesystem::copy_options::overwrite_existing);
-                            log::info("Overwrote existing theme file: {}", dstPath);
-                        } else {
-                            log::info("Theme file already exists and bypass is false: {}",
-                                dstPath);
-                        }
+                if (std::filesystem::exists(dstPath)) {
+                    if (bypass) {
+                        std::filesystem::copy_file(
+                            srcPath, dstPath,
+                            std::filesystem::copy_options::overwrite_existing);
+                        log::info("Overwrote existing theme file: {}", dstPath);
                     } else {
-                        std::filesystem::copy_file(srcPath, dstPath);
-                        log::info("Copied theme file: {}", dstPath);
+                        log::info("Theme file already exists and bypass is false: {}",
+                            dstPath);
                     }
-                } catch (const std::filesystem::filesystem_error& e) {
+                } else if (std::filesystem::copy_file(srcPath, dstPath)) {
+                    log::info("Copied theme file: {}", dstPath);
+                } else {
                     log::error("Failed to copy theme file {}: {}", dstPath, e.what());
                 }
             }

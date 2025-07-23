@@ -291,12 +291,8 @@ LevelData generateJFPLevel() {
     // random device setups - used with modulo to generate integers in a range
     std::random_device rd;
     uint32_t seed = 0;
-    try {
-        std::string seedStr = mod->getSettingValue<std::string>("seed");
-        if (!seedStr.empty()) seed = std::stoul(seedStr);
-    } catch(const std::exception &e) {
-        return levelData;
-    }
+    std::string seedStr = mod->getSettingValue<std::string>("seed");
+    if (!seedStr.empty()) seed = geode::utils::numFromString<uint32_t>(seedStr).unwrapOr(0);
     if (seed == 0) seed = rd();
     levelData.seed = seed;
     mod->setSavedValue<uint32_t>("global-seed", seed);

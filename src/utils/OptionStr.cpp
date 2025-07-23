@@ -49,7 +49,7 @@ void importSettings(std::string packed) {
 
     size_t ls = packed.find('+');
     if (ls == std::string::npos) {
-        throw std::runtime_error("Length suffix not found");
+        return FLAlertLayer::create("Error", "Length suffix not found", "OK")->show();
     }
     int length = geode::utils::numFromString<int>(packed.substr(ls + 1, std::string::npos)).unwrapOr(-1);
     mod->setSettingValue("length", length);

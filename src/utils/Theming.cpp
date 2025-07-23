@@ -21,11 +21,9 @@ namespace ThemeGen {
 std::array<int, 3> hexToColor(const std::string& hex) {
     std::array<int, 3> color = {255, 255, 255};
     if (hex.size() == 7 && hex[0] == '#') {
-        try {
-            color[0] = geode::utils::numFromString<int>(hex.substr(1, 2), 16).unwrapOr(0);
-            color[1] = geode::utils::numFromString<int>(hex.substr(3, 2), 16).unwrapOr(0);
-            color[2] = geode::utils::numFromString<int>(hex.substr(5, 2), 16).unwrapOr(0);
-        } catch (const std::invalid_argument&) {}
+        color[0] = geode::utils::numFromString<int>(hex.substr(1, 2), 16).unwrapOr(0);
+        color[1] = geode::utils::numFromString<int>(hex.substr(3, 2), 16).unwrapOr(0);
+        color[2] = geode::utils::numFromString<int>(hex.substr(5, 2), 16).unwrapOr(0);
     }
     return color;
 }
@@ -91,10 +89,8 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
         if (key == 155 || key == 156) continue;
 
         if (key == 2) {
-            float xv = 0.f;
-            try {
-                xv = std::stof(v);
-            } catch (...) {
+            float xv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
+            if (xv == 0.f) {
                 continue;
             }
             if (std::abs(xv - std::round(xv)) < 0.1f) {
@@ -103,10 +99,9 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
             }
             if (omType != OMType::None) v = "[X+" + v + "]";
         } else if (key == 3) {
-            float yv = 0.f;
-            try {
-                yv = std::stof(v);
-            } catch (...) {
+            float yv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
+            // num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
+            if (yv == 0.f) {
                 continue;
             }
             if (std::abs(yv - std::round(yv)) < 0.1f) {
@@ -169,12 +164,7 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
                 while (idx < parsedExpr.size()) {
                     size_t nextOp = parsedExpr.find_first_of("+-*/", idx);
                     std::string numStr = parsedExpr.substr(idx, nextOp - idx);
-                    float num = 0.f;
-                    try {
-                        num = std::stof(numStr);
-                    } catch (...) {
-                        num = 0.f;
-                    }
+                    float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
                     if (lastOp == 0) {
                         acc = num;
                     } else if (lastOp == '+') {

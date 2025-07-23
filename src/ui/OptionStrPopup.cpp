@@ -36,13 +36,9 @@ bool OptionStrPopup::setup(std::string const& value) {
     }
 
 void OptionStrPopup::clickImport(CCObject* object) {
-    try {
-        std::string input = m_inputOptTxt->getString();
-        log::info("Importing Theme {}", input);
-        importSettings(input);
-    } catch (const std::runtime_error& re) {
-        FLAlertLayer::create("Error", re.what(), "OK")->show();
-    }
+    std::string input = m_inputOptTxt->getString();
+    log::info("Importing Theme {}", input);
+    importSettings(input);
 
     OptionStrPopup::onClose(object);
 }

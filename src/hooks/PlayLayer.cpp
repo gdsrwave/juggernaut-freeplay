@@ -25,14 +25,12 @@ class $modify(PlayLayer) {
         if (storedState != JFPGen::AutoJFP::NotInAutoJFP &&
             !GameManager::sharedState()->getGameVariable("0122") &&
             CCDirector::sharedDirector()->getRunningScene() != nullptr) {
-            try {
-                auto fileUtils = CCFileUtils::sharedFileUtils();
-                auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
-                auto* engine = FMODAudioEngine::get();
-                if (engine) {
-                    engine->playMusic(bgmPath, true, 1.0f, 1);
-                }
-            } catch (...) {}
+            auto fileUtils = CCFileUtils::sharedFileUtils();
+            auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+            auto* engine = FMODAudioEngine::get();
+            if (engine) {
+                engine->playMusic(bgmPath, true, 1.0f, 1);
+            }
         }
     }
 
