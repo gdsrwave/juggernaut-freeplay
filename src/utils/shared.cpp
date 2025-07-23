@@ -84,7 +84,7 @@ void setupJFPDirectories(bool bypass) {
                 } else if (std::filesystem::copy_file(srcPath, dstPath)) {
                     log::info("Copied theme file: {}", dstPath);
                 } else {
-                    log::error("Failed to copy theme file {}: {}", dstPath, e.what());
+                    log::error("Failed to copy theme file {}", dstPath);
                 }
             }
         }
