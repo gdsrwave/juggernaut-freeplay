@@ -1,3 +1,6 @@
+# JFP 1.6.7 (July 30, 2025)
+- Bugfixes and touch-ups
+
 # JFP 1.6.6 (July 23, 2025)
 - Added logo and changelog
 
