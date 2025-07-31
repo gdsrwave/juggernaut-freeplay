@@ -56,7 +56,7 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
             this, menu_selector(ReloadThemesBtnNodeV3::onClickFolder));
 
         auto reloadSprite = ButtonSprite::create(
-            "Reload Themes", 0, false, "bigFont.fnt",
+            "Restore Defaults", 0, false, "bigFont.fnt",
             "GJ_button_04.png", 0, 0.75f);
         reloadSprite->setScale(.5f);
         auto reloadButton = CCMenuItemSpriteExtra::create(
@@ -90,7 +90,7 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
                 themeFiles.push_back(fileStr);
             }
         }
-        std::string message = "Are you sure you want to reload default themes?"
+        std::string message = "Are you sure you want to restore the default themes?"
             "\nThe following files will be overwritten:\n" +
             fmt::format("{}", fmt::join(themeFiles, ", "));
         auto jfpConfirm = createQuickPopup(

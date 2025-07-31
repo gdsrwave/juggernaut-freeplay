@@ -274,11 +274,11 @@ std::string jfpNewStringGen(LevelData ldata) {
             if (currentCH > 60) scaleP *= 0.85;
 
             std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
-            fmt::arg("portalID", portalID),
-            fmt::arg("xP", x-15-portalNormal+portalPos),
-            fmt::arg("yP", yP),
-            fmt::arg("rPdeg", rPdeg),
-            fmt::arg("scale", scaleP));
+                fmt::arg("portalID", portalID),
+                fmt::arg("xP", xP),
+                fmt::arg("yP", yP),
+                fmt::arg("rPdeg", rPdeg),
+                fmt::arg("scale", scaleP));
             level += portalBuild;
         }
 
@@ -530,8 +530,26 @@ std::string jfpNewStringGen(LevelData ldata) {
 
     // Upside-Start
     if (biome.options.startingGravity) {
-        if (biome.options.startingMini) level += "1,11,2,307,3,35,6,26.7,32,0.57;";
-        else level += "1,11,2,299,3,99,6,45,32,0.57;";
+        double portalFactor = (static_cast<double>(currentCH) / 60.0) * 1.414;
+        int portalNormal = currentCH / 10;
+        int portalPos = currentCH / 4;
+        int xP, yP;
+        float rPdeg, scaleP;
+        bool startingMini = biome.options.startingMini;
+
+        xP = 300 - portalNormal + portalPos;
+        yP = 90 + portalNormal + portalPos;
+        if (startingMini) yP -= 30;
+        rPdeg = startingMini ? 26.565 : 45;
+        scaleP = portalFactor / 2.5;
+        if (currentCH > 60) scaleP *= 0.85;
+
+        std::string portalBuild = fmt::format("1,11,2,{xP},3,{yP},6,{rPdeg},32,{scale},64,1,67,1;",
+            fmt::arg("xP", xP),
+            fmt::arg("yP", yP),
+            fmt::arg("rPdeg", rPdeg),
+            fmt::arg("scale", scaleP));
+        level += portalBuild;
     }
     // Mini start
     if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";

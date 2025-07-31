@@ -292,8 +292,10 @@ LevelData generateJFPLevel() {
     std::random_device rd;
     uint32_t seed = 0;
     std::string seedStr = mod->getSettingValue<std::string>("seed");
-    if (!seedStr.empty()) seed = geode::utils::numFromString<uint32_t>(seedStr).unwrapOr(0);
+    if (!seedStr.empty())
+        seed = geode::utils::numFromString<uint32_t>(seedStr).unwrapOr(0);
     if (seed == 0) seed = rd();
+
     levelData.seed = seed;
     mod->setSavedValue<uint32_t>("global-seed", seed);
 
@@ -529,7 +531,7 @@ LevelData generateJFPLevel() {
         }
 
         // special type B transitional cases
-        if (!typeA && segments[i - 1].options.mini != mini) {
+        if (i > 0 && !typeA && segments[i - 1].options.mini != mini) {
             if (mini) {
                 if (segments[i - 1].y_swing == -1) cY += 30;
             } else {
@@ -539,7 +541,7 @@ LevelData generateJFPLevel() {
 
         // size change y_swing catch - reorients the corridor if about
         // to get stuck. -M
-        if (mini && !segments[i - 1].options.mini) {
+        if (i > 0 && mini && !segments[i - 1].options.mini) {
             if (y_swing == 1 && cY >= relMaxHeight &&
                     orientationMatch(segments, i, {1, -1})) {
                 y_swing = -1;
@@ -585,7 +587,7 @@ LevelData generateJFPLevel() {
                 midCorridorPortal = false;
             }
         }
-        if (!midCorridorPortal && segments[i - 1].y_swing != y_swing)
+        if (i > 0 && !midCorridorPortal && segments[i - 1].y_swing != y_swing)
             midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None &&
                 segments[i - 1].y_swing != y_swing) {
@@ -641,7 +643,7 @@ LevelData generateJFPLevel() {
             }
         }
 
-        if (optSpikes && segments[i - 1].y_swing != y_swing &&
+        if (i > 0 && optSpikes && segments[i - 1].y_swing != y_swing &&
                 currentPortal == Portals::None) {
             spikeSideHold = false;
             spikeOdds = spikeRNG() % 6;

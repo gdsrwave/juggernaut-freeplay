@@ -10,9 +10,7 @@ void onCopyBtns(EditorUI* ui,
         ThemeGen::OMType omType = ThemeGen::OMType::None) {
     auto selectedObj = ui->getSelectedObjects();
     std::string res = "# <if|define> #\n";
-    for (int i = 0; i < selectedObj->count(); i++) {
-        GameObject* obj = static_cast<GameObject*>(
-            selectedObj->objectAtIndex(i));
+    for (auto obj : CCArrayExt<GameObject*>(selectedObj)) {
         res += ThemeGen::handleRawBlock(obj->getSaveString(ui->m_editorLayer),
             omType);
         res += ";\n";
