@@ -6,9 +6,9 @@
 		"ios": "2.2074",
 		"android": "2.2074"
 	},
-	"version": "v1.6.7",
+	"version": "v1.6.8",
 	"id": "gdsrwave.jfp",
-	"name": "JFP",
+	"name": "Juggernaut Freeplay",
 	"developer": "gdsrwave",
 	"description": "Advanced Random Wave Generation",
 	"resources": {
@@ -60,11 +60,12 @@
 				"NSNZ",
 				"NS",
 				"LRD",
-				"Experimental",
+				"Juggernaut",
 				"Unrestricted",
+				"Limp",
 				"Random"
 			],
-			"default": "NSNZ"
+			"default": "LRD"
 		},
 		"corridor-height": {
 			"name": "Corridor Height (units)",
@@ -220,6 +221,11 @@
 			],
 			"default": "Both"
 		},
+		"portals-in-spams": {
+			"name": "Portals Within Spams",
+			"type": "bool",
+			"default": true
+		},
 		"hazards-title": {
 			"name": "Hazards",
 			"type": "title"
@@ -228,6 +234,16 @@
 			"name": "Corridor Spikes",
 			"type": "bool",
 			"default": false
+		},
+		"spike-placement": {
+			"name": "Spike Placement",
+			"type": "string",
+			"one-of": [
+				"Both",
+				"Big Wave",
+				"Mini Wave"
+			],
+			"default": "Both"
 		},
 		"fuzzy-spikes": {
 			"name": "Fuzzy Spikes",

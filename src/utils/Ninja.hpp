@@ -39,10 +39,11 @@ enum class ColorMode : int {
 enum class CorridorRules : int {
     NoSpamNoZigzag = 0,
     NoSpam = 1,
-    Experimental = 2,
+    Juggernaut = 2,
     Unrestricted = 3,
-    LRD = 4
+    LRD = 4,
     // Random = 5
+    Limp = 6
 };
 
 struct RawCR {
@@ -51,6 +52,8 @@ struct RawCR {
     bool LRD = false;
     bool FD = false;
     bool SPECIAL = false;
+    bool BURST = false;
+    bool ND = false;
 };
 
 enum class Difficulties : int {
@@ -71,6 +74,12 @@ enum class PortalInputs : int {
     Both = 0,
     Releases = 1,
     Holds = 2
+};
+
+enum class PlacementBySize : int {
+    Both = 0,
+    Big = 1,
+    Mini = 2
 };
 
 enum class JFPBiome : int {

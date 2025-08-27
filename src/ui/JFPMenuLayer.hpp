@@ -24,6 +24,7 @@ class JFPMenuLayer : public JFPGenericLayer {
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);
     void onGarageButton(cocos2d::CCObject*);
+    void onTwitterButton(cocos2d::CCObject*);
     void onCopySeed(cocos2d::CCObject*);
     void onCopyOpt(cocos2d::CCObject*);
     void onOptRefresh(cocos2d::CCObject*);

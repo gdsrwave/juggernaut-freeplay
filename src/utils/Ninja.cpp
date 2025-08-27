@@ -183,6 +183,11 @@ LevelData generateJFPLevel() {
     else if (colorModeStr == "Night Mode")
         optColorMode = ColorMode::NightMode;
 
+    std::string spikeStr = mod->getSettingValue<std::string>("spike-placement");
+    PlacementBySize optSpikePlacement = PlacementBySize::Both;
+    if (spikeStr == "Big Wave") optSpikePlacement = PlacementBySize::Big;
+    else if (spikeStr == "Mini Wave") optSpikePlacement = PlacementBySize::Mini;
+
     std::string corridorRulesStr =
         mod->getSettingValue<std::string>("corridor-rules");
     CorridorRules optCorridorRules = CorridorRules::Unrestricted;
@@ -192,8 +197,10 @@ LevelData generateJFPLevel() {
         optCorridorRules = CorridorRules::NoSpamNoZigzag;
     else if (corridorRulesStr == "LRD")
         optCorridorRules = CorridorRules::LRD;
-    else if (corridorRulesStr == "Experimental")
-        optCorridorRules = CorridorRules::Experimental;
+    else if (corridorRulesStr == "Juggernaut")
+        optCorridorRules = CorridorRules::Juggernaut;
+    else if (corridorRulesStr == "Limp")
+        optCorridorRules = CorridorRules::Limp;
 
     std::string portalInputsStr =
         mod->getSettingValue<std::string>("portal-inputs");
@@ -206,6 +213,8 @@ LevelData generateJFPLevel() {
     if (portalsStr == "Light") optPortals = Difficulties::Light;
     else if (portalsStr == "Balanced") optPortals = Difficulties::Balanced;
     else if (portalsStr == "Aggressive") optPortals = Difficulties::Aggressive;
+
+    const bool removeSpamPortals = !(mod->getSettingValue<bool>("portals-in-spams"));
 
     std::string cspeedStr = mod->getSettingValue<std::string>("changing-speed");
     Difficulties optChangingSpeed = Difficulties::None;
@@ -405,14 +414,16 @@ LevelData generateJFPLevel() {
     if (corridorRulesStr == "Random") {
         // Currently uses bgRNG as to not interfere with segmentRNG calc. May
         // change later. Also, I might add size enum elems for repeatability. -M
-        optCorridorRules = static_cast<CorridorRules>(bgRNG() % 5);
+        int crRoll = bgRNG() % 6;
+        if (crRoll >= 5) crRoll++;
+        optCorridorRules = static_cast<CorridorRules>(crRoll);
     }
     if (optCorridorRules == CorridorRules::NoSpamNoZigzag) {
         cr.NZ = true;
         cr.NS = true;
     } else if (optCorridorRules == CorridorRules::NoSpam) {
         cr.NS = true;
-    } else if (optCorridorRules == CorridorRules::Experimental) {
+    } else if (optCorridorRules == CorridorRules::Juggernaut) {
         cr.NS = true;
         cr.SPECIAL = true;
         cr.FD = true;
@@ -420,6 +431,11 @@ LevelData generateJFPLevel() {
         cr.NS = true;
         cr.NZ = true;
         cr.LRD = true;
+    } else if (optCorridorRules == CorridorRules::Limp) {
+        cr.NS = true;
+        cr.NZ = true;
+        cr.LRD = true;
+        cr.ND = true;
     }
 
     // Future prior block to generate lengths of different biomes
@@ -443,7 +459,12 @@ LevelData generateJFPLevel() {
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
         } else if (
-            cY >= relMaxHeight &&(segments[i - 1].y_swing == 1 ||
+            cr.ND && segments[i - 2].y_swing != segments[i - 1].y_swing
+        ) {
+            if (segments[i - 1].y_swing == 1) y_swing = 1;
+            else y_swing = -1;
+        } else if (
+            cY >= relMaxHeight && (segments[i - 1].y_swing == 1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMax)) ||
             (cr.NS &&orientationMatch(segments, i, {-1, 1, -1})))) {
             y_swing = -1;
@@ -489,7 +510,7 @@ LevelData generateJFPLevel() {
                 }
             }
 
-            // special condition used in Experimental rules
+            // special condition used in Juggernaut rules
             if (specialRules) {
                 y_swing = segmentRNG() % 4;
                 if (y_swing > 0) y_swing = 1;
@@ -521,6 +542,7 @@ LevelData generateJFPLevel() {
             if (typeA) {
                 segments[i - 1].options.isTransition = true;
                 segments[i - 1].options.isSpikeM = false;
+                spikeActive = false;
             }
         }
 
@@ -660,6 +682,13 @@ LevelData generateJFPLevel() {
             segments[i].options.isSpikeM = true;
         }
 
+        if (
+            (optSpikePlacement == PlacementBySize::Mini && !mini) ||
+            (optSpikePlacement == PlacementBySize::Big && mini)
+        ) {
+            segments[i].options.isSpikeM = false;
+        }
+
         if (optFuzz) {
             segments[i].options.isFuzzy = true;
         }
@@ -699,6 +728,17 @@ LevelData generateJFPLevel() {
         //     i, cX, cY, y_swing
         // );
 
+        if (removeSpamPortals &&
+            segments[i - 1].options.isPortal == Portals::Gravity &&
+            segments[i - 2].y_swing != segments[i - 1].y_swing &&
+            y_swing != segments[i - 1].y_swing
+        ) {
+            gravity = !gravity;
+            segments[i - 1].options.gravity = !segments[i - 1].options.gravity;
+            segments[i].options.gravity = !segments[i].options.gravity;
+            segments[i - 1].options.isPortal = Portals::None;
+        }
+
         // Legacy teleportals generation code - optTeleportals is always false. -M
         if (optTeleportals && last_tp > 2 &&
                 ((cY >= maxHeight && segments[i].y_swing == 1) ||
@@ -718,4 +758,4 @@ LevelData generateJFPLevel() {
     return levelData;
 }
 
-}
+}  // namespace JFPGen

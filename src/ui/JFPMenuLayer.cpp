@@ -187,9 +187,17 @@ bool JFPMenuLayer::init() {
     garageBtn->m_offset = CCPoint(0.f, -8.f);
     garageBtn->setSizeMult(1.1f);
 
+    auto twttrBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("twitterIcon_001.png"_spr),
+        this,
+        menu_selector(JFPMenuLayer::onTwitterButton));
+    twttrBtn->setID("twitter-link-button"_spr);
+    twttrBtn->setSizeMult(1.1f);
+
     auto menu = CCMenu::create();
     auto menu2 = CCMenu::create();
     auto menu3 = CCMenu::create();
+    auto menu4 = CCMenu::create();
 
     menu->setID("center-menu"_spr);
     menu->setPosition({windowDim.width/2, windowDim.height/2+50.f});
@@ -218,6 +226,13 @@ bool JFPMenuLayer::init() {
     menu3->addChild(optMenu);
     menu3->addChild(seedCopyBtn);
     addChild(menu3);
+
+    menu4->setID("twt-menu"_spr);
+    menu4->setAnchorPoint({1, 0});
+    menu4->setPosition({windowDim.width - 19.5f, 20.f});
+    menu4->addChild(twttrBtn);
+    menu4->updateLayout();
+    addChild(menu4);
 
     menu->updateLayout();
     menu3->updateLayout();
@@ -353,6 +368,10 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
 
 void JFPMenuLayer::onImportButton(CCObject*) {
     OptionStrPopup::create("")->show();
+}
+
+void JFPMenuLayer::onTwitterButton(CCObject*) {
+    CCApplication::sharedApplication()->openURL("https://twitter.com/shiestykahuna");
 }
 
 CCScene* JFPMenuLayer::scene() {

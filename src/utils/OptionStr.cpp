@@ -104,13 +104,14 @@ void importSettings(std::string packed) {
 
         mod->setSettingValue<float>("corridor-height", readStoredNum(bytes, 44, 8));
 
-        std::array<std::string, 6> corridorRules = {
+        std::array<std::string, 7> corridorRules = {
             "NSNZ",
             "NS",
-            "Experimental",
+            "Juggernaut",
             "Unrestricted",
             "LRD",
-            "Random"
+            "Random",
+            "Limp"
         };
         size_t cri = readStoredNum(bytes, 64, 4);
         std::string crstr = (cri >= 0 && cri < corridorRules.size())
@@ -132,8 +133,17 @@ void importSettings(std::string packed) {
             static_cast<bool>(readStoredNum(bytes, 71, 1)));
         mod->setSettingValue<bool>("upside-start",
             static_cast<bool>(readStoredNum(bytes, 72, 2)));
-        mod->setSettingValue<bool>("portal-inputs",
-            static_cast<bool>(readStoredNum(bytes, 74, 3)));
+
+
+        std::array<std::string, 3> inputTypes = {
+            "Both",
+            "Releases",
+            "Holds"
+        };
+        size_t piRaw = readStoredNum(bytes, 74, 3);
+        std::string piStr = (piRaw >= 0 && piRaw < inputTypes.size()) ? inputTypes[piRaw] : "Both";
+        mod->setSettingValue<std::string>("portal-inputs", piStr);
+
         mod->setSettingValue<bool>("corners",
             static_cast<bool>(readStoredNum(bytes, 77, 1)));
         mod->setSettingValue<bool>("low-vis",
@@ -152,8 +162,18 @@ void importSettings(std::string packed) {
             : "Washed";
         mod->setSettingValue<std::string>("color-mode", cmstr);
 
+        std::array<std::string, 3> csizes = {
+            "Both",
+            "Big Wave",
+            "Mini Wave"
+        };
+        size_t csp = readStoredNum(bytes, 83, 2);
+        if (csp > 0) csp--;
+        std::string splstr = (csp >= 0 && csp < csizes.size()) ? csizes[csp] : "Both";
+        bool corridorSpikes = csp > 0;
         mod->setSettingValue<bool>("corridor-spikes",
-            static_cast<bool>(readStoredNum(bytes, 83, 2)));
+            static_cast<bool>(corridorSpikes));
+        mod->setSettingValue<std::string>("spike-placement", splstr);
         mod->setSettingValue<bool>("fuzzy-spikes",
             static_cast<bool>(readStoredNum(bytes, 85, 2)));
 
@@ -169,6 +189,9 @@ void importSettings(std::string packed) {
 
         std::string ttStr = readStoredNum(bytes, 96, 2) ? "Type A" : "Type B";
         mod->setSettingValue<std::string>("transition-type", ttStr);
+
+        mod->setSettingValue<bool>("portals-in-spams",
+            !static_cast<bool>(readStoredNum(bytes, 98, 2)));
     }
 }
 
@@ -243,9 +266,10 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         int optCR = 3;
         if (corridorRulesStr == "NS") optCR = 1;
         else if (corridorRulesStr == "NSNZ") optCR = 0;
-        else if (corridorRulesStr == "Experimental") optCR = 2;
+        else if (corridorRulesStr == "Juggernaut") optCR = 2;
         else if (corridorRulesStr == "LRD") optCR = 4;
         else if (corridorRulesStr == "Random") optCR = 5;
+        else if (corridorRulesStr == "Limp") optCR = 6;
         resSettings.push_back(PackedEntry{4, static_cast<uint32_t>(optCR)});
 
         // portals (fakeenum)
@@ -261,8 +285,13 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
             static_cast<uint32_t>(mod->getSettingValue<bool>("fake-gravity-portals"))});
         resSettings.push_back(PackedEntry{2,
             static_cast<uint32_t>(mod->getSettingValue<bool>("upside-start"))});
-        resSettings.push_back(PackedEntry{3,
-            static_cast<uint32_t>(mod->getSettingValue<bool>("portal-inputs"))});
+        
+        // portal inputs (fakeenum)
+        std::string piStr = mod->getSettingValue<std::string>("portal-inputs");
+        int optPortalInputs = 0;
+        if (piStr == "Releases") optPortalInputs = 1;
+        else if (piStr == "Holds") optPortalInputs = 2;
+        resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(optPortalInputs) });
 
         // corner-pieces
         resSettings.push_back(PackedEntry{1,
@@ -281,8 +310,14 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         resSettings.push_back(PackedEntry{3, static_cast<uint32_t>(optColorMode)});
 
         // corridor-spikes
-        resSettings.push_back(PackedEntry{2,
-            static_cast<uint32_t>(mod->getSettingValue<bool>("corridor-spikes"))});
+        uint32_t optCorridorSpikes = mod->getSettingValue<uint32_t>("corridor-spikes");
+        if (optCorridorSpikes) {
+            std::string spikeStr = mod->getSettingValue<std::string>("spike-placement");
+            if (spikeStr == "Both") optCorridorSpikes = 1;
+            else if (spikeStr == "Big Wave") optCorridorSpikes = 2;
+            else if (spikeStr == "Mini Wave") optCorridorSpikes = 3;
+        }
+        resSettings.push_back(PackedEntry{2, optCorridorSpikes});
 
         // fuzzy-spike
 
@@ -310,6 +345,10 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         int typeA = 1;
         if (scTypeStr == "Type B") typeA = 0;
         resSettings.push_back(PackedEntry{2, static_cast<uint32_t>(typeA)});
+
+        // portals-in-spams
+        resSettings.push_back(PackedEntry{2,
+            static_cast<uint8_t>(!(mod->getSettingValue<bool>("portals-in-spams")))});
     }
 
     return resSettings;

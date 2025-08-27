@@ -1,3 +1,9 @@
+# JFP 1.6.8 (August 26, 2025)
+- Added option for size-exclusive spike placement
+- Added Limp corridor rule (all big clicks)
+- Added portal spawning within spams option
+- Bugfixes and touch-ups
+
 # JFP 1.6.7 (July 30, 2025)
 - Bugfixes and touch-ups
 

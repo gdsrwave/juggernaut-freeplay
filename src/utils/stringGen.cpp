@@ -537,9 +537,12 @@ std::string jfpNewStringGen(LevelData ldata) {
         float rPdeg, scaleP;
         bool startingMini = biome.options.startingMini;
 
-        xP = 300 - portalNormal + portalPos;
-        yP = 90 + portalNormal + portalPos;
-        if (startingMini) yP -= 30;
+        xP = 285 - portalNormal + portalPos;
+        yP = 75 + portalNormal + portalPos;
+        if (startingMini) {
+            yP -= 30;
+            xP += 15;
+        }
         rPdeg = startingMini ? 26.565 : 45;
         scaleP = portalFactor / 2.5;
         if (currentCH > 60) scaleP *= 0.85;
