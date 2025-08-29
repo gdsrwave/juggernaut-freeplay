@@ -28,4 +28,5 @@ class JFPMenuLayer : public JFPGenericLayer {
     void onCopySeed(cocos2d::CCObject*);
     void onCopyOpt(cocos2d::CCObject*);
     void onOptRefresh(cocos2d::CCObject*);
+    void openOptions(cocos2d::CCObject*);
 };

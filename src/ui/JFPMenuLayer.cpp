@@ -3,6 +3,7 @@
 #include <string>
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "JFPMenuLayer.hpp"
+#include "JFPOptionLayer.hpp"
 #include "./ThemeSelect.hpp"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
@@ -137,13 +138,22 @@ bool JFPMenuLayer::init() {
         this, menu_selector(JFPMenuLayer::onThemeButton));
     themeButton->setID("jfp-theme-button"_spr);
 
+    auto oldOptionSprite = CircleButtonSprite::createWithSpriteFrameName(
+        "options_s.png"_spr, 1.f,
+        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    oldOptionSprite->setScale(1.1f);
+    auto oldOptionButton = CCMenuItemSpriteExtra::create(
+        oldOptionSprite,
+        this, menu_selector(JFPMenuLayer::onOptionButton));
+    oldOptionButton->setID("jfp-option-button"_spr);
+
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
         "options_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     optionSprite->setScale(1.1f);
     auto optionButton = CCMenuItemSpriteExtra::create(
         optionSprite,
-        this, menu_selector(JFPMenuLayer::onOptionButton));
+        this, menu_selector(JFPMenuLayer::openOptions));
     optionButton->setID("jfp-option-button"_spr);
 
     auto autoGenSprite = CircleButtonSprite::createWithSpriteFrameName(
@@ -205,6 +215,7 @@ bool JFPMenuLayer::init() {
     menu->setLayout(RowLayout::create()
         ->setGap(7.f));
     menu->addChild(autoGenButton);
+    menu->addChild(oldOptionButton);
     menu->addChild(optionButton);
     addChild(menu);
 
@@ -372,6 +383,12 @@ void JFPMenuLayer::onImportButton(CCObject*) {
 
 void JFPMenuLayer::onTwitterButton(CCObject*) {
     CCApplication::sharedApplication()->openURL("https://twitter.com/shiestykahuna");
+}
+
+void JFPMenuLayer::openOptions(CCObject*) {
+    auto optsLayer = JFPOptionLayer::scene();
+    auto jlTransition = CCTransitionFade::create(0.5, optsLayer);
+    CCDirector::sharedDirector()->pushScene(jlTransition);
 }
 
 CCScene* JFPMenuLayer::scene() {
