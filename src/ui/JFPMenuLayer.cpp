@@ -1,9 +1,14 @@
 // Copyright 2025 GDSRWave
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>    
 #include <string>
+#include <thread>
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "JFPMenuLayer.hpp"
 #include "JFPOptionLayer.hpp"
+#include "JFPScreenshotLayer.hpp"
 #include "./ThemeSelect.hpp"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
@@ -13,6 +18,9 @@
 #include "../utils/OptionStr.hpp"
 #include "../utils/Theming.hpp"
 #include "./OptionStrPopup.hpp"
+
+std::mutex mtx;
+std::condition_variable cv;
 
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
@@ -27,7 +35,7 @@ JFPMenuLayer* JFPMenuLayer::create() {
     return ret;
 }
 
-static GJGameLevel* createGameLevel() {
+GJGameLevel* createGameLevel() {
     std::srand(std::time(0));
     std::string levelString = "<?xml version=\"1.0\"?>"
         "<plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>"
@@ -305,8 +313,10 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             "Please accept the disclaimer to continue!", "OK")->show();
         return;
     }
+    state = JFPGen::AutoJFP::InAutoTransition;
+    att1 = true;
 
-    return JFPMenuLayer::onAutoGen();
+    auto dir = CCDirector::sharedDirector();
 
     std::string themeName =
         Mod::get()->getSettingValue<std::string>("active-theme");
@@ -323,16 +333,16 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             message.c_str(),
             "Continue", nullptr,
             [&](bool b1, auto) {
-                if (b1) return JFPMenuLayer::onAutoGen();
+                if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
             });
     } else {
-        JFPMenuLayer::onAutoGen();
+        dir->replaceScene(JFPScreenshotLayer::scene());
     }
+    return;
 }
 
 void JFPMenuLayer::onAutoGen() {
     jfpActive = true;
-    state = JFPGen::AutoJFP::JustStarted;
     Mod::get()->setSavedValue<uint32_t>(
         "total-played",
         Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1);
@@ -345,6 +355,7 @@ void JFPMenuLayer::onAutoGen() {
     }
     auto newScene = PlayLayer::scene(level, false, false);
     // seems to work better than pushScene?
+    log::info("z");
     CCDirector::sharedDirector()->replaceScene(newScene);
 }
 
@@ -401,5 +412,18 @@ CCScene* JFPMenuLayer::scene() {
             std::string(CCFileUtils::sharedFileUtils()->getWritablePath()) + "jfpLoop.mp3";
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
     }
+    // queueInMainThread([=]() {
+    //     std::this_thread::sleep_for(std::chrono::seconds(2));
+    //     if (state != JFPGen::AutoJFP::NotInAutoJFP) {
+    //         layer->onAutoGen();
+    //     }
+    // });
     return scene;
 }
+
+void JFPMenuLayer::onEnterTransitionDidFinish() {
+    log::info("a");
+    JFPGenericLayer::onEnterTransitionDidFinish();
+}
+
+

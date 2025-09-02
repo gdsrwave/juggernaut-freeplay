@@ -17,36 +17,39 @@ JFPGenericLayer* JFPGenericLayer::create() {
     return ret;
 }
 
-bool JFPGenericLayer::init() {
-    auto backgroundSprite = CCSprite::create("game_bg_12_001.png");
-    backgroundSprite->setID("background"_spr);
+bool JFPGenericLayer::init(bool defaults) {
+    if (defaults) {
+        auto backgroundSprite = CCSprite::create("game_bg_12_001.png");
+        backgroundSprite->setID("background"_spr);
 
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    auto size = backgroundSprite->getContentSize();
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
+        auto size = backgroundSprite->getContentSize();
 
-    backgroundSprite->setScale(winSize.width / size.width);
+        backgroundSprite->setScale(winSize.width / size.width);
 
-    backgroundSprite->setAnchorPoint({0, 0});
-    backgroundSprite->setPosition({0, -75});
+        backgroundSprite->setAnchorPoint({0, 0});
+        backgroundSprite->setPosition({0, -75});
 
-    backgroundSprite->setColor({29, 120, 86});
+        backgroundSprite->setColor({29, 120, 86});
 
-    backgroundSprite->setZOrder(-3);
-    addChild(backgroundSprite);
+        backgroundSprite->setZOrder(-3);
+        addChild(backgroundSprite);
 
-    auto backBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
-        this,
-        menu_selector(JFPGenericLayer::onBack));
-    backBtn->setID("exit-button"_spr);
-    backBtn->setSizeMult(1.2f);
+        auto backBtn = CCMenuItemSpriteExtra::create(
+            CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png"),
+            this,
+            menu_selector(JFPGenericLayer::onBack));
+        backBtn->setID("exit-button"_spr);
+        backBtn->setSizeMult(1.2f);
 
-    auto menuBack = CCMenu::create();
-    menuBack->addChild(backBtn);
-    menuBack->setPosition({24, winSize.height - 23});
-    menuBack->setID("exit-menu"_spr);
+        auto menuBack = CCMenu::create();
+        menuBack->addChild(backBtn);
+        menuBack->setPosition({24, winSize.height - 23});
+        menuBack->setID("exit-menu"_spr);
 
-    addChild(menuBack);
+        addChild(menuBack);
+    }
+
 
     setKeypadEnabled(true);
 
@@ -67,4 +70,8 @@ CCScene* JFPGenericLayer::scene() {
     auto scene = CCScene::create();
     scene->addChild(layer);
     return scene;
+}
+
+void JFPGenericLayer::onEnterTransitionDidFinish() {
+    return CCLayer::onEnterTransitionDidFinish();
 }

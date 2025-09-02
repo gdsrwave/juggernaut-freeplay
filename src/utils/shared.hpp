@@ -24,10 +24,9 @@ namespace JFPGen {
 
 enum class AutoJFP : int {
     NotInAutoJFP = 0,
-    JustStarted = 1,
+    InAutoTransition = 1,
     JustRestarted = 2,
-    PlayingLevelAtt1 = 3,
-    PlayingLevel = 4,
+    PlayingLevel = 3,
 };
 
 extern const char* levelCommonBaseSeg;

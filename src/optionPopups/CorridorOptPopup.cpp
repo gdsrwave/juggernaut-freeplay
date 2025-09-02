@@ -9,7 +9,7 @@ protected:
         // convenience function provided by Popup
         // for adding/setting a title to the popup
         this->setTitle("Corridor Generation Settings");
-        log::info("abcd");
+        log::info("abcde");
 
         auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
         m_mainLayer->addChildAtPosition(label, Anchor::Center);

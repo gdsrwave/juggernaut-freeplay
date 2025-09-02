@@ -7,10 +7,13 @@
 
 using namespace geode::prelude;
 
+GJGameLevel* createGameLevel();
+
 class JFPMenuLayer : public JFPGenericLayer {
  protected:
     virtual bool init();
     void keyBackClicked();
+    void onEnterTransitionDidFinish();
 
     CCLabelBMFont* m_optText;
  public:
@@ -20,6 +23,7 @@ class JFPMenuLayer : public JFPGenericLayer {
     void onOptionButton(cocos2d::CCObject*);
     void onAutoGenButton(cocos2d::CCObject*);
     void onAutoGen();
+    CCScene* onAutoGenScene();
     void onThemeButton(cocos2d::CCObject*);
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);
