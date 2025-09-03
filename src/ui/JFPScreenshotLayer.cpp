@@ -10,7 +10,6 @@
 #include "../utils/shared.hpp"
 #include "../utils/StringGen.hpp"
 #include "../utils/Ninja.hpp"
-#include "../optionPopups/CorridorOptPopup.cpp"
 
 
 JFPScreenshotLayer* JFPScreenshotLayer::create() {

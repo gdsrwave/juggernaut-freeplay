@@ -14,6 +14,7 @@ using namespace geode::prelude;
 JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 bool att1 = false;
+int globalAtt = 1;
 // Use std::vector for colorBank, but provide a pushOrReplaceColor function
 std::vector<JFPGen::Color> colorBank = {
     JFPGen::Color{1000, {128, 128, 128}, false, 1.0f},

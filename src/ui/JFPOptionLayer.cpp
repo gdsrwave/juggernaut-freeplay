@@ -6,7 +6,7 @@
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/general.hpp>
 #include "./OptionStrPopup.hpp"
-#include "../optionPopups/CorridorOptPopup.cpp"
+#include "../option_popups/CorridorOptPopup.hpp"
 
 
 JFPOptionLayer* JFPOptionLayer::create() {

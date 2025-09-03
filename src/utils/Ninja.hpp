@@ -10,6 +10,8 @@ extern JFPGen::AutoJFP state;
 
 extern bool att1;
 
+extern int globalAtt;
+
 namespace JFPGen {
 
 extern std::map<std::string, int> portalOddsMap;
