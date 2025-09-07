@@ -228,8 +228,8 @@ bool JFPMenuLayer::init() {
     addChild(menu);
 
     menu2->setID("inf-menu"_spr);
-    menu2->setAnchorPoint({0, 0});
-    menu2->setPosition({214, 125});
+    menu2->setAnchorPoint({0.5, 0.5});
+    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 35.f});
     menu2->addChild(garageBtn);
     menu2->addChild(urBtnMenu);
     menu2->setLayout(RowLayout::create()

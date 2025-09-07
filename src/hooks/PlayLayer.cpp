@@ -50,8 +50,9 @@ class $modify(PlayLayer) {
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
             return PlayLayer::resetLevel();
         } else if (state == JFPGen::AutoJFP::InAutoTransition) {
+            if (att1) state = JFPGen::AutoJFP::InAutoTransitionAtt1;
             return PlayLayer::resetLevel();
-        } else if (state == JFPGen::AutoJFP::PlayingLevel) {
+        } else if (state == JFPGen::AutoJFP::PlayingLevel || state == JFPGen::AutoJFP::InAutoTransitionAtt1) {
             state = JFPGen::AutoJFP::JustRestarted;
         }
 

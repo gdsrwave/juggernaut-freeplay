@@ -7,6 +7,11 @@
 #include <Geode/utils/general.hpp>
 #include "./OptionStrPopup.hpp"
 #include "../option_popups/CorridorOptPopup.hpp"
+#include "../option_popups/GravHazOptPopup.hpp"
+#include "../option_popups/SoundtrackOptPopup.hpp"
+#include "../option_popups/SpeedSizeOptPopup.hpp"
+#include "../option_popups/JunkDrawerOptPopup.hpp"
+#include "../option_popups/VisualsOptPopup.hpp"
 
 
 JFPOptionLayer* JFPOptionLayer::create() {
@@ -47,42 +52,42 @@ bool JFPOptionLayer::init() {
         "setting1.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn00->setID("jfp-options-0-0"_spr);
+    optionsBtn00->setID("jfp-options-0-0");
 
     auto optionsBtn01 = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName(
         "setting2.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn01->setID("jfp-options-0-1"_spr);
+    optionsBtn01->setID("jfp-options-0-1");
 
     auto optionsBtn02 = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName(
         "setting3.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn02->setID("jfp-options-0-2"_spr);
+    optionsBtn02->setID("jfp-options-0-2");
 
     auto optionsBtn10 = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName(
         "setting4.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn10->setID("jfp-options-1-0"_spr);
+    optionsBtn10->setID("jfp-options-1-0");
 
     auto optionsBtn11 = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName(
         "setting5.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn11->setID("jfp-options-1-1"_spr);
+    optionsBtn11->setID("jfp-options-1-1");
 
     auto optionsBtn12 = CCMenuItemSpriteExtra::create(
         CCSprite::createWithSpriteFrameName(
         "setting6.png"_spr),
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
-    optionsBtn12->setID("jfp-options-1-2"_spr);
+    optionsBtn12->setID("jfp-options-1-2");
 
     // auto oldOptionSprite = CircleButtonSprite::createWithSpriteFrameName(
     //     "options_s.png"_spr, 1.f,
@@ -134,7 +139,21 @@ void JFPOptionLayer::onBack(CCObject* object) {
 }
 
 void JFPOptionLayer::onOptionsLaunch(CCObject* object) {
-    CorridorOptPopup::create("")->show();
+    std::string selectorID = typeinfo_cast<CCNode*>(object)->getID();
+    log::info("{}", selectorID);
+    if (selectorID == "jfp-options-0-0") {
+        CorridorOptPopup::create("")->show();
+    } else if (selectorID == "jfp-options-0-1") {
+        VisualsOptPopup::create("")->show();
+    } else if (selectorID == "jfp-options-0-2") {
+        SpeedSizeOptPopup::create("")->show();
+    } else if (selectorID == "jfp-options-1-0") {
+        GravHazOptPopup::create("")->show();
+    } else if (selectorID == "jfp-options-1-1") {
+        SoundtrackOptPopup::create("")->show();
+    } else if (selectorID == "jfp-options-1-2") {
+        JunkDrawerOptPopup::create("")->show();
+    }
 }
 
 CCScene* JFPOptionLayer::scene() {

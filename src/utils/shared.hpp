@@ -27,6 +27,7 @@ enum class AutoJFP : int {
     InAutoTransition = 1,
     JustRestarted = 2,
     PlayingLevel = 3,
+    InAutoTransitionAtt1 = 4,
 };
 
 extern const char* levelCommonBaseSeg;
@@ -35,6 +36,19 @@ extern const char* levelStartingBase;
 extern const char* levelStartingBase2;
 extern const char* lowVis;
 extern const char* finishLine;
+
+extern const std::map<int, std::string> SpeedChangeLabel;
+extern const std::map<int, std::string> VisibilityLabel;
+extern const std::map<int, std::string> ColorModeLabel;
+extern const std::map<int, std::string> CorridorRulesLabel;
+extern const std::map<int, std::string> DifficultiesLabel;
+extern const std::map<int, std::string> PortalsLabel;
+extern const std::map<int, std::string> PortalInputsLabel;
+extern const std::map<int, std::string> PlacementBySizeLabel;
+extern const std::map<int, std::string> StartingSizeLabel;
+extern const std::map<int, std::string> MusicSourceLabel;
+extern const std::map<int, std::string> SizeTransitionsLabel;
+extern const std::map<int, std::string> JFPBiomeLabel;
 
 }  // namespace JFPGen
 
