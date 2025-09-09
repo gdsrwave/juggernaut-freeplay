@@ -7,6 +7,7 @@ using namespace geode::prelude;
 class SoundtrackOptPopup : public geode::Popup<std::string const&> {
 protected:
     bool setup(std::string const& value) override;
+    void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
     void onEnumIncrease(CCObject* object);

@@ -308,7 +308,7 @@ void JFPMenuLayer::onGarageButton(CCObject*) {
 
 void JFPMenuLayer::onAutoGenButton(CCObject*) {
     if (state != JFPGen::AutoJFP::NotInAutoJFP) return;
-    if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+    if (!Mod::get()->getSavedValue<bool>("ack-disclaimer")) {
         FLAlertLayer::create("JFP",
             "Please accept the disclaimer to continue!", "OK")->show();
         return;

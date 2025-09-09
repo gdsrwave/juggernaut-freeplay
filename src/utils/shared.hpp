@@ -37,7 +37,6 @@ extern const char* levelStartingBase2;
 extern const char* lowVis;
 extern const char* finishLine;
 
-extern const std::map<int, std::string> SpeedChangeLabel;
 extern const std::map<int, std::string> VisibilityLabel;
 extern const std::map<int, std::string> ColorModeLabel;
 extern const std::map<int, std::string> CorridorRulesLabel;

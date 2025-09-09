@@ -46,6 +46,23 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
         CCDirector::sharedDirector()->pushScene(jlTransition);
     }
 
+    void loadDefaults() {
+        auto* mod = Mod::get();
+
+        // biome 0 (Juggernaut) default options
+        mod->setSavedValue<uint8_t>("opt-0-corridor-rules", 2);
+        mod->setSavedValue<uint16_t>("opt-0-corridor-height", 60);
+        mod->setSavedValue<uint32_t>("opt-0-length", 400);
+        mod->setSavedValue<uint8_t>("opt-0-grav-portals-diff", 1);
+        mod->setSavedValue<uint8_t>("opt-0-speed-changes-diff", 1);
+        mod->setSavedValue<uint8_t>("opt-0-speed-changes", 9);
+        mod->setSavedValue<bool>("opt-0-show-meter-marks", true);
+        mod->setSavedValue<uint32_t>("opt-0-mark-interval", 100);
+        mod->setSavedValue<std::string>("opt-0-filename", "waveman");
+    
+        mod->setSavedValue<bool>("ack-disclaimer", "true");
+    }
+
     void onJFPButton(CCObject*) {
         // openSettingsPopup(Mod::get());
 
@@ -55,15 +72,14 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
             "instability (particularly when exiting the game) and are choosing"
             "to continue anyway.\n\nRemember to back up your data!";
 
-        if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+        if (!Mod::get()->getSavedValue<bool>("ack-disclaimer")) {
             createQuickPopup(
                 "JFP",
                 warningMsg,
                 "I Understand", nullptr,
                 [&](bool b1, auto) {
                     if (b1) {
-                        Mod::get()->setSavedValue<bool>(
-                            "ackDisclaimer", "true");
+                        loadDefaults();
                         onJFPConfirm();
                     }
                 });
