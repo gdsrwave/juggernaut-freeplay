@@ -46,7 +46,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         menu_selector(JunkDrawerOptPopup::onToggle),
         1.f
     );
-    lmaoBtnChk->setID("jfpopt-lmao-chk");
+    lmaoBtnChk->setID("jfpopt-lmao-chk"_spr);
     lmaoBtnChk->toggle(m_lmaoButton);
     
     lmaoBtnMenu->setLayout(RowLayout::create()
@@ -69,7 +69,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         menu_selector(JunkDrawerOptPopup::onToggle),
         1.f
     );
-    wavemanBtnChk->setID("jfpopt-waveman-chk");
+    wavemanBtnChk->setID("jfpopt-waveman-chk"_spr);
     wavemanBtnChk->toggle(m_wavemanButton);
     
     wavemanBtnMenu->setLayout(RowLayout::create()
@@ -94,7 +94,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         menu_selector(JunkDrawerOptPopup::onToggle),
         1.f
     );
-    themeToolsChk->setID("jfpopt-theme-tools-chk");
+    themeToolsChk->setID("jfpopt-theme-tools-chk"_spr);
     themeToolsChk->toggle(m_themeTools);
     
     themeToolsMenu->setLayout(RowLayout::create()
@@ -118,7 +118,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         menu_selector(JunkDrawerOptPopup::onToggle),
         1.f
     );
-    debugChk->setID("jfpopt-debug-chk");
+    debugChk->setID("jfpopt-debug-chk"_spr);
     debugChk->toggle(m_debug);
     
     debugMenu->setLayout(RowLayout::create()
@@ -142,7 +142,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         menu_selector(JunkDrawerOptPopup::onToggle),
         1.f
     );
-    autoSaveChk->setID("jfpopt-autosave-chk");
+    autoSaveChk->setID("jfpopt-autosave-chk"_spr);
     autoSaveChk->toggle(m_autosave);
     
     autoSaveMenu->setLayout(RowLayout::create()
@@ -192,15 +192,15 @@ void JunkDrawerOptPopup::onToggle(CCObject* object) {
     auto chkID = chk->getID();
     bool toggled = !chk->isToggled();
 
-    if (chkID == "jfpopt-lmao-chk") {
+    if (chkID == "jfpopt-lmao-chk"_spr) {
         m_lmaoButton = toggled;
-    } else if (chkID == "jfpopt-waveman-chk") {
+    } else if (chkID == "jfpopt-waveman-chk"_spr) {
         m_wavemanButton = toggled;
-    } else if (chkID == "jfpopt-theme-tools-chk") {
+    } else if (chkID == "jfpopt-theme-tools-chk"_spr) {
         m_themeTools = toggled;
-    } else if (chkID == "jfpopt-debug-chk") {
+    } else if (chkID == "jfpopt-debug-chk"_spr) {
         m_debug = toggled;
-    } else if (chkID == "jfpopt-autosave-chk") {
+    } else if (chkID == "jfpopt-autosave-chk"_spr) {
         m_autosave = toggled;
     } else {
         log::info("Unknown toggle: {}", chkID);

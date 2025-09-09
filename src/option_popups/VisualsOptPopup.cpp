@@ -45,7 +45,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         menu_selector(VisualsOptPopup::onToggle),
         1.f
     );
-    metersChk->setID("jfpopt-meter-marks-chk");
+    metersChk->setID("jfpopt-meter-marks-chk"_spr);
     metersChk->toggle(m_meterMarks);
     
     metersMenu->setLayout(RowLayout::create()
@@ -69,7 +69,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         "bigFont.fnt"
     );
     m_markIntInput->setString(markIntLoad);
-    m_markIntInput->setID("jfpopt-mark-interval-input");
+    m_markIntInput->setID("jfpopt-mark-interval-input"_spr);
     m_markIntInput->setScale(1.f);
     m_markIntInput->setMaxCharCount(10);
     m_markIntInput->setCommonFilter(CommonFilter::Uint);
@@ -84,6 +84,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
     m_markIntMenu->setScale(0.5f);
     m_markIntMenu->setAnchorPoint({0, 0.5});
     m_markIntMenu->updateLayout();
+    if(!m_meterMarks) m_markIntMenu->setOpacity(127);
 
     markIntTxt->setScale(0.82f);
 
@@ -97,7 +98,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         menu_selector(VisualsOptPopup::onToggle),
         1.f
     );
-    lowVisChk->setID("jfpopt-low-visibility-chk");
+    lowVisChk->setID("jfpopt-low-visibility-chk"_spr);
     lowVisChk->toggle(m_lowVisiblity);
     
     lowVisMenu->setLayout(RowLayout::create()
@@ -121,7 +122,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         menu_selector(VisualsOptPopup::onToggle),
         1.f
     );
-    cornersChk->setID("jfpopt-corner-pieces-chk");
+    cornersChk->setID("jfpopt-corner-pieces-chk"_spr);
     cornersChk->toggle(m_cornerPieces);
     
     cornersMenu->setLayout(RowLayout::create()
@@ -145,7 +146,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         menu_selector(VisualsOptPopup::onToggle),
         1.f
     );
-    hideIconChk->setID("jfpopt-hide-icon-chk");
+    hideIconChk->setID("jfpopt-hide-icon-chk"_spr);
     hideIconChk->toggle(m_hideIcon);
     
     hideIconMenu->setLayout(RowLayout::create()
@@ -169,7 +170,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         menu_selector(VisualsOptPopup::onToggle),
         1.f
     );
-    finishLineChk->setID("jfpopt-finish-line-chk");
+    finishLineChk->setID("jfpopt-finish-line-chk"_spr);
     finishLineChk->toggle(m_finishLine);
     
     finishLineMenu->setLayout(RowLayout::create()
@@ -204,7 +205,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
     m_colorModeSelected = CCLabelBMFont::create(
         JFPGen::ColorModeLabel.at(m_colorModeIndex).c_str(), "bigFont.fnt"
     );
-    m_colorModeSelected->setID("jfpopt-color-mode");
+    m_colorModeSelected->setID("jfpopt-color-mode"_spr);
     m_colorModeSelected->setPosition({0, -110});
     m_colorModeSelected->setScale(0.75f);
 
@@ -252,7 +253,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
     m_bgTextureSelected = CCLabelBMFont::create(
         fmt::format("#{:02}", m_bgTextureIndex + 1).c_str(), "bigFont.fnt"
     );
-    m_bgTextureSelected->setID("jfpopt-bg-texture");
+    m_bgTextureSelected->setID("jfpopt-bg-texture"_spr);
     m_bgTextureSelected->setPosition({0, -110});
     m_bgTextureSelected->setScale(0.75f);
 
@@ -322,20 +323,20 @@ void VisualsOptPopup::onToggle(CCObject* object) {
     auto chkID = chk->getID();
     bool toggled = !chk->isToggled();
 
-    if (chkID == "jfpopt-meter-marks-chk") {
+    if (chkID == "jfpopt-meter-marks-chk"_spr) {
         m_meterMarks = toggled;
         if (toggled) {
             m_markIntMenu->setOpacity(255);
         } else {
             m_markIntMenu->setOpacity(127);
         }
-    } else if (chkID == "jfpopt-low-visibility-chk") {
+    } else if (chkID == "jfpopt-low-visibility-chk"_spr) {
         m_lowVisiblity = toggled;
-    } else if (chkID == "jfpopt-corner-pieces-chk") {
+    } else if (chkID == "jfpopt-corner-pieces-chk"_spr) {
         m_cornerPieces = toggled;
-    } else if (chkID == "jfpopt-finish-line-chk") {
+    } else if (chkID == "jfpopt-finish-line-chk"_spr) {
         m_finishLine = toggled;
-    } else if (chkID == "jfpopt-hide-icon-chk") {
+    } else if (chkID == "jfpopt-hide-icon-chk"_spr) {
         m_hideIcon = toggled;
     } else {
         log::warn("Unknown toggle: {}", chkID);
@@ -348,7 +349,7 @@ void VisualsOptPopup::onEnumDecrease(CCObject* object) {
     std::string labelText;
     auto* frameCache = CCSpriteFrameCache::get();
 
-    if (lbl->getID() == "jfpopt-bg-texture") {
+    if (lbl->getID() == "jfpopt-bg-texture"_spr) {
         if (m_bgTextureIndex == 0) m_bgTextureIndex = m_bgTextureIndexLen;
         m_bgTextureIndex -= 1;
         labelText = fmt::format("#{:02}", m_bgTextureIndex + 1);
@@ -357,7 +358,7 @@ void VisualsOptPopup::onEnumDecrease(CCObject* object) {
             fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex + 1).c_str()
         )->displayFrame();
         m_bgTexturePicSpr->setDisplayFrame(newBgTexture);
-    } else if (lbl->getID() == "jfpopt-color-mode") {
+    } else if (lbl->getID() == "jfpopt-color-mode"_spr) {
         if (m_colorModeIndex == 0) m_colorModeIndex = m_colorModeIndexLen;
         m_colorModeIndex -= 1;
         labelText = JFPGen::ColorModeLabel.at(m_colorModeIndex);
@@ -378,7 +379,7 @@ void VisualsOptPopup::onEnumIncrease(CCObject* object) {
     std::string labelText;
     auto* frameCache = CCSpriteFrameCache::get();
 
-    if (lbl->getID() == "jfpopt-bg-texture") {
+    if (lbl->getID() == "jfpopt-bg-texture"_spr) {
         m_bgTextureIndex += 1;
         if (m_bgTextureIndex >= m_bgTextureIndexLen) m_bgTextureIndex = 0;
         labelText = fmt::format("#{:02}", m_bgTextureIndex + 1);
@@ -387,7 +388,7 @@ void VisualsOptPopup::onEnumIncrease(CCObject* object) {
             fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex + 1).c_str()
         )->displayFrame();
         m_bgTexturePicSpr->setDisplayFrame(newBgTexture);
-    } else if (lbl->getID() == "jfpopt-color-mode") {
+    } else if (lbl->getID() == "jfpopt-color-mode"_spr) {
         m_colorModeIndex += 1;
         if (m_colorModeIndex >= m_colorModeIndexLen) m_colorModeIndex = 0;
         labelText = JFPGen::ColorModeLabel.at(m_colorModeIndex);

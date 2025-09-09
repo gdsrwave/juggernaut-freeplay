@@ -21,8 +21,8 @@ protected:
     TextInput* m_chInput;
     CCLabelBMFont* m_rulesSelected;
 
-    int8_t m_crIndex = mod->getSavedValue<int8_t>("opt-0-corridor-rules");
-    int8_t m_crIndexLen = static_cast<int8_t>(JFPGen::CorridorRulesLabel.size());
+    uint8_t m_crIndex = mod->getSavedValue<uint8_t>("opt-0-corridor-rules");
+    uint8_t m_crIndexLen = static_cast<uint8_t>(JFPGen::CorridorRulesLabel.size());
     bool m_seedToggled = mod->getSavedValue<bool>("opt-0-using-set-seed");
     bool m_wpb = mod->getSavedValue<bool>("opt-0-widen-playfield-bounds");
 public:

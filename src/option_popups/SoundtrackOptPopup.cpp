@@ -40,7 +40,7 @@ bool SoundtrackOptPopup::setup(std::string const& value) {
     
     auto mSrcTxt = CCLabelBMFont::create("Music Selection:", "bigFont.fnt");
     m_musicSourceSelected = CCLabelBMFont::create("wwwwwwwwwwwwww", "bigFont.fnt");
-    m_musicSourceSelected->setID("jfpopt-music-source");
+    m_musicSourceSelected->setID("jfpopt-music-source"_spr);
 
     auto mSrcLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     mSrcLASpr->setScale(.7f);
@@ -88,7 +88,7 @@ void SoundtrackOptPopup::onClose(CCObject* object) {
 }
 
 void SoundtrackOptPopup::save(CCObject*) {
-    mod->setSavedValue<int8_t>("opt-0-music-source", m_msrcIndex);
+    mod->setSavedValue<uint8_t>("opt-0-music-source", m_msrcIndex);
 
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();
@@ -98,9 +98,9 @@ void SoundtrackOptPopup::onEnumDecrease(CCObject* object) {
     auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
 
-    if (lbl->getID() == "jfpopt-music-source") {
+    if (lbl->getID() == "jfpopt-music-source"_spr) {
+        if (m_msrcIndex == 0) m_msrcIndex = m_msrcIndexLen;
         m_msrcIndex -= 1;
-        if (m_msrcIndex < 0) m_msrcIndex = m_msrcIndexLen - 1;
         std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
         lbl->setCString(mSrcLabelText.c_str());
     } else {
@@ -112,7 +112,7 @@ void SoundtrackOptPopup::onEnumIncrease(CCObject* object) {
     auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
 
-    if (lbl->getID() == "jfpopt-music-source") {
+    if (lbl->getID() == "jfpopt-music-source"_spr) {
         m_msrcIndex += 1;
         if (m_msrcIndex >= m_msrcIndexLen) m_msrcIndex = 0;
         std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);

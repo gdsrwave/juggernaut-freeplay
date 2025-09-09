@@ -40,7 +40,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
     
     auto portalsTxt = CCLabelBMFont::create("Gravity Portals:", "bigFont.fnt");
     m_portalDiffSelected = CCLabelBMFont::create("wwwwwwwwww", "bigFont.fnt");
-    m_portalDiffSelected->setID("jfpopt-gravity-portal-spawn");
+    m_portalDiffSelected->setID("jfpopt-gravity-portal-spawn"_spr);
     if (!m_portalsToggled) m_portalDiffSelected->setOpacity(150);
 
     auto portalsChk = CCMenuItemToggler::createWithStandardSprites(
@@ -48,7 +48,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    portalsChk->setID("jfpopt-portals-chk");
+    portalsChk->setID("jfpopt-portals-chk"_spr);
     portalsChk->toggle(m_portalsToggled);
 
     auto portalsLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -93,7 +93,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    fakesChk->setID("jfpopt-fake-portals-chk");
+    fakesChk->setID("jfpopt-fake-portals-chk"_spr);
     fakesChk->toggle(m_fakesToggled);
     
     m_fakesMenu->setLayout(RowLayout::create()
@@ -118,7 +118,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    udChk->setID("jfpopt-upside-down-chk");
+    udChk->setID("jfpopt-upside-down-chk"_spr);
     udChk->toggle(m_upsideDownToggled);
     
     udMenu->setLayout(RowLayout::create()
@@ -137,7 +137,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
     
     auto pInputsTxt = CCLabelBMFont::create("Allowed Input Types:", "bigFont.fnt");
     m_portalInputSelected = CCLabelBMFont::create("wwwwwwww", "bigFont.fnt");
-    m_portalInputSelected->setID("jfpopt-portal-input-type");
+    m_portalInputSelected->setID("jfpopt-portal-input-type"_spr);
 
     auto pInputsLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     pInputsLASpr->setScale(.7f);
@@ -181,7 +181,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    pwsChk->setID("jfpopt-portals-in-spams-chk");
+    pwsChk->setID("jfpopt-portals-in-spams-chk"_spr);
     pwsChk->toggle(m_portalsWithinSpams);
     
     m_pwsMenu->setLayout(RowLayout::create()
@@ -212,7 +212,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
     
     auto spikesTxt = CCLabelBMFont::create("Corridor Spikes:", "bigFont.fnt");
     m_spikeWavesizeSelected = CCLabelBMFont::create("wwwwww", "bigFont.fnt");
-    m_spikeWavesizeSelected->setID("jfpopt-corridor-spike-spawn");
+    m_spikeWavesizeSelected->setID("jfpopt-corridor-spike-spawn"_spr);
     if (!m_spikesToggled) m_spikeWavesizeSelected->setOpacity(150);
 
     auto spikesChk = CCMenuItemToggler::createWithStandardSprites(
@@ -220,7 +220,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    spikesChk->setID("jfpopt-corridor-spikes-chk");
+    spikesChk->setID("jfpopt-corridor-spikes-chk"_spr);
     spikesChk->toggle(m_spikesToggled);
 
     auto spikesLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -265,7 +265,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         menu_selector(GravHazOptPopup::onToggle),
         1.f
     );
-    fuzzChk->setID("jfpopt-fuzzy-spikes-chk");
+    fuzzChk->setID("jfpopt-fuzzy-spikes-chk"_spr);
     fuzzChk->toggle(m_fuzzToggled);
     
     fuzzMenu->setLayout(RowLayout::create()
@@ -316,7 +316,7 @@ void GravHazOptPopup::onToggle(CCObject* object) {
     auto chkID = chk->getID();
     bool toggled = !chk->isToggled();
 
-    if (chkID == "jfpopt-portals-chk") {
+    if (chkID == "jfpopt-portals-chk"_spr) {
         m_portalsToggled = toggled;
         if (toggled) {
             m_portalDiffSelected->setOpacity(255);
@@ -329,20 +329,20 @@ void GravHazOptPopup::onToggle(CCObject* object) {
             m_pInputsMenu->setOpacity(150);
             m_pwsMenu->setOpacity(150);
         }
-    } else if (chkID == "jfpopt-fake-portals-chk") {
+    } else if (chkID == "jfpopt-fake-portals-chk"_spr) {
         m_fakesToggled = toggled;
-    } else if (chkID == "jfpopt-upside-down-chk") {
+    } else if (chkID == "jfpopt-upside-down-chk"_spr) {
         m_upsideDownToggled = toggled;
-    } else if (chkID == "jfpopt-portals-in-spams-chk") {
+    } else if (chkID == "jfpopt-portals-in-spams-chk"_spr) {
         m_portalsWithinSpams = toggled;
-    } else if (chkID == "jfpopt-corridor-spikes-chk") {
+    } else if (chkID == "jfpopt-corridor-spikes-chk"_spr) {
         m_spikesToggled = toggled;
         if (toggled) {
             m_spikeWavesizeSelected->setOpacity(255);
         } else {
             m_spikeWavesizeSelected->setOpacity(150);
         }
-    } else if (chkID == "jfpopt-fuzzy-spikes-chk") {
+    } else if (chkID == "jfpopt-fuzzy-spikes-chk"_spr) {
         m_fuzzToggled = toggled;
     } else {
         log::info("Unknown toggle: {}", chkID);
@@ -354,15 +354,15 @@ void GravHazOptPopup::onEnumDecrease(CCObject* object) {
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
     std::string labelText;
 
-    if (lbl->getID() == "jfpopt-gravity-portal-spawn") {
+    if (lbl->getID() == "jfpopt-gravity-portal-spawn"_spr) {
         if (m_gpIndex == 0) m_gpIndex = m_gpIndexLen;
         m_gpIndex -= 1;
         labelText = JFPGen::DifficultiesLabel.at(m_gpIndex);
-    } else if (lbl->getID() == "jfpopt-portal-input-type") {
+    } else if (lbl->getID() == "jfpopt-portal-input-type"_spr) {
         if (m_piIndex == 0) m_piIndex = m_piIndexLen;
         m_piIndex -= 1;
         labelText = JFPGen::PortalInputsLabel.at(m_piIndex);
-    } else if (lbl->getID() == "jfpopt-corridor-spike-spawn") {
+    } else if (lbl->getID() == "jfpopt-corridor-spike-spawn"_spr) {
         if (m_spIndex == 0) m_spIndex = m_spIndexLen;
         m_spIndex -= 1;
         labelText = JFPGen::PlacementBySizeLabel.at(m_spIndex);
@@ -378,15 +378,15 @@ void GravHazOptPopup::onEnumIncrease(CCObject* object) {
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
     std::string labelText;
 
-    if (lbl->getID() == "jfpopt-gravity-portal-spawn") {
+    if (lbl->getID() == "jfpopt-gravity-portal-spawn"_spr) {
         m_gpIndex += 1;
         if (m_gpIndex >= m_gpIndexLen) m_gpIndex = 0;
         labelText = JFPGen::DifficultiesLabel.at(m_gpIndex);
-    } else if (lbl->getID() == "jfpopt-portal-input-type") {
+    } else if (lbl->getID() == "jfpopt-portal-input-type"_spr) {
         m_piIndex += 1;
         if (m_piIndex >= m_piIndexLen) m_piIndex = 0;
         labelText = JFPGen::PortalInputsLabel.at(m_piIndex);
-    } else if (lbl->getID() == "jfpopt-corridor-spike-spawn") {
+    } else if (lbl->getID() == "jfpopt-corridor-spike-spawn"_spr) {
         m_spIndex += 1;
         if (m_spIndex >= m_spIndexLen) m_spIndex = 0;
         labelText = JFPGen::PlacementBySizeLabel.at(m_spIndex);

@@ -38,7 +38,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     // STARTING SPEED OPT
     auto sspeedMenu = CCMenu::create();
     auto sspeedTxt = CCLabelBMFont::create("Starting Speed:", "bigFont.fnt");
-    sspeedTxt->setID("jfpopt-starting-speed");
+    sspeedTxt->setID("jfpopt-starting-speed"_spr);
     sspeedMenu->setLayout(RowLayout::create()
         ->setGap(45.f)
         ->setAxisAlignment(AxisAlignment::Start)
@@ -75,11 +75,11 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
         menu_selector(SpeedSizeOptPopup::onToggle),
         1.f
     );
-    cspeedChk->setID("jfpopt-changing-speed-chk");
+    cspeedChk->setID("jfpopt-changing-speed-chk"_spr);
     cspeedChk->toggle(m_changingSpeed);
 
     m_speedDiffSelected = CCLabelBMFont::create("wwwwwwwwww", "bigFont.fnt");
-    m_speedDiffSelected->setID("jfpopt-speed-change-diff");
+    m_speedDiffSelected->setID("jfpopt-speed-change-diff"_spr);
     if (!m_changingSpeed) m_speedDiffSelected->setOpacity(150);
 
     auto cspeedLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -117,7 +117,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     // MIN SPEED OPT
     m_schangesMenu = CCMenu::create();
     auto minSpeedTxt = CCLabelBMFont::create("Selected Speeds:", "bigFont.fnt");
-    minSpeedTxt->setID("jfpopt-selected-speeds");
+    minSpeedTxt->setID("jfpopt-selected-speeds"_spr);
     m_schangesMenu->setLayout(RowLayout::create()
         ->setGap(45.f)
         ->setAxisAlignment(AxisAlignment::Start)
@@ -163,7 +163,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
         menu_selector(SpeedSizeOptPopup::onToggle),
         1.f
     );
-    csizeChk->setID("jfpopt-changing-size-chk");
+    csizeChk->setID("jfpopt-changing-size-chk"_spr);
     csizeChk->toggle(m_changingSize);
     
     csizeMenu->setLayout(RowLayout::create()
@@ -182,7 +182,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     
     auto ssizeTxt = CCLabelBMFont::create("Start as:", "bigFont.fnt");
     m_ssizeSelected = CCLabelBMFont::create("wwwwww", "bigFont.fnt");
-    m_ssizeSelected->setID("jfpopt-starting-size");
+    m_ssizeSelected->setID("jfpopt-starting-size"_spr);
 
     auto ssizeLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     ssizeLASpr->setScale(.7f);
@@ -220,7 +220,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     
     auto tTypeTxt = CCLabelBMFont::create("Size transition type:", "bigFont.fnt");
     m_tTypeSelected = CCLabelBMFont::create("wwwww", "bigFont.fnt");
-    m_tTypeSelected->setID("jfpopt-transition-type");
+    m_tTypeSelected->setID("jfpopt-transition-type"_spr);
 
     auto tTypeLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     tTypeLASpr->setScale(.7f);
@@ -287,7 +287,7 @@ void SpeedSizeOptPopup::onToggle(CCObject* object) {
     auto chkID = chk->getID();
     bool toggled = !chk->isToggled();
 
-    if (chkID == "jfpopt-changing-speed-chk") {
+    if (chkID == "jfpopt-changing-speed-chk"_spr) {
         m_changingSpeed = toggled;
         if (toggled) {
             m_schangesMenu->setOpacity(255);
@@ -296,7 +296,7 @@ void SpeedSizeOptPopup::onToggle(CCObject* object) {
             m_schangesMenu->setOpacity(127);
             m_speedDiffSelected->setOpacity(150);
         }
-    } else if (chkID == "jfpopt-changing-size-chk") {
+    } else if (chkID == "jfpopt-changing-size-chk"_spr) {
         m_changingSize = toggled;
     } else {
         log::info("Unknown toggle: {}", chkID);
@@ -308,7 +308,7 @@ void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
     auto selection = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     std::string titleID = typeinfo_cast<CCLabelBMFont*>(selection->getUserObject())->getID();
 
-    if (titleID == "jfpopt-starting-speed") {
+    if (titleID == "jfpopt-starting-speed"_spr) {
         CCObject* obj2;
         CCARRAY_FOREACH(m_sspeedItems, obj2) {
             if (obj2 == nullptr) continue;
@@ -317,7 +317,7 @@ void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
         m_sspeedIndex = selection->getTag();
         selection->setOpacity(255);
         log::info("ssid: {}", m_sspeedIndex);
-    } else if (titleID == "jfpopt-selected-speeds") {
+    } else if (titleID == "jfpopt-selected-speeds"_spr) {
         int8_t selectedIndex = selection->getTag();
         bool speedEnabled = ((m_speedChangesData >> selectedIndex) & 1);
         if (speedEnabled) {
@@ -337,15 +337,15 @@ void SpeedSizeOptPopup::onEnumDecrease(CCObject* object) {
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
     std::string labelText;
 
-    if (lbl->getID() == "jfpopt-starting-size") {
+    if (lbl->getID() == "jfpopt-starting-size"_spr) {
         if (m_ssizeIndex == 0) m_ssizeIndex = m_ssizeIndexLen;
         m_ssizeIndex -= 1;
         labelText = JFPGen::StartingSizeLabel.at(m_ssizeIndex);
-    } else if (lbl->getID() == "jfpopt-transition-type") {
+    } else if (lbl->getID() == "jfpopt-transition-type"_spr) {
         if (m_tTypeIndex == 0) m_tTypeIndex = m_tTypeIndexLen;
         m_tTypeIndex -= 1;
         labelText = JFPGen::SizeTransitionsLabel.at(m_tTypeIndex);
-    } else if (lbl->getID() == "jfpopt-speed-change-diff") {
+    } else if (lbl->getID() == "jfpopt-speed-change-diff"_spr) {
         if (m_cspeedIndex == 0) m_cspeedIndex = m_cspeedIndexLen;
         m_cspeedIndex -= 1;
         labelText = JFPGen::DifficultiesLabel.at(m_cspeedIndex);
@@ -361,15 +361,15 @@ void SpeedSizeOptPopup::onEnumIncrease(CCObject* object) {
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
     std::string labelText;
 
-    if (lbl->getID() == "jfpopt-starting-size") {
+    if (lbl->getID() == "jfpopt-starting-size"_spr) {
         m_ssizeIndex += 1;
         if (m_ssizeIndex >= m_ssizeIndexLen) m_ssizeIndex = 0;
         labelText = JFPGen::StartingSizeLabel.at(m_ssizeIndex);
-    } else if (lbl->getID() == "jfpopt-transition-type") {
+    } else if (lbl->getID() == "jfpopt-transition-type"_spr) {
         m_tTypeIndex += 1;
         if (m_tTypeIndex >= m_tTypeIndexLen) m_tTypeIndex = 0;
         labelText = JFPGen::SizeTransitionsLabel.at(m_tTypeIndex);
-    } else if (lbl->getID() == "jfpopt-speed-change-diff") {
+    } else if (lbl->getID() == "jfpopt-speed-change-diff"_spr) {
         m_cspeedIndex += 1;
         if (m_cspeedIndex >= m_cspeedIndexLen) m_cspeedIndex = 0;
         labelText = JFPGen::DifficultiesLabel.at(m_cspeedIndex);

@@ -46,7 +46,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
         menu_selector(CorridorOptPopup::onToggle),
         1.f
     );
-    seedChk->setID("jfpopt-seed-chk");
+    seedChk->setID("jfpopt-seed-chk"_spr);
     seedChk->toggle(usingSetSeed);
     std::string seedLoad = numToString(mod->getSavedValue<uint32_t>("opt-0-seed"));
     m_seedInput = TextInput::create(
@@ -55,7 +55,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
         "bigFont.fnt"
     );
     m_seedInput->setString(seedLoad);
-    m_seedInput->setID("jfpopt-seed-input");
+    m_seedInput->setID("jfpopt-seed-input"_spr);
     m_seedInput->setScale(1.f);
     m_seedInput->setMaxCharCount(10);
     m_seedInput->setEnabled(usingSetSeed);
@@ -80,7 +80,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
     
     auto rulesTxt = CCLabelBMFont::create("Corridor Rules:", "bigFont.fnt");
     m_rulesSelected = CCLabelBMFont::create("wwwwwwwwww", "bigFont.fnt");
-    m_rulesSelected->setID("jfpopt-corridor-rules");
+    m_rulesSelected->setID("jfpopt-corridor-rules"_spr);
     auto rulesLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     rulesLASpr->setScale(.7f);
     auto rulesLA = CCMenuItemSpriteExtra::create(
@@ -117,14 +117,14 @@ bool CorridorOptPopup::setup(std::string const& value) {
     auto lengthMenu = CCMenu::create();
 
     auto lengthTxt = CCLabelBMFont::create("Length (m):", "bigFont.fnt");
-    std::string lengthLoad = numToString(mod->getSavedValue<int32_t>("opt-0-length"));
+    std::string lengthLoad = numToString(mod->getSavedValue<uint32_t>("opt-0-length"));
     m_lengthInput = TextInput::create(
         120.f,
         lengthLoad.size() > 0 ? lengthLoad : "400",
         "bigFont.fnt"
     );
     m_lengthInput->setString(lengthLoad);
-    m_lengthInput->setID("jfpopt-length-input");
+    m_lengthInput->setID("jfpopt-length-input"_spr);
     m_lengthInput->setScale(1.f);
     m_lengthInput->setMaxCharCount(10);
     m_lengthInput->setCommonFilter(CommonFilter::Uint);
@@ -146,14 +146,14 @@ bool CorridorOptPopup::setup(std::string const& value) {
     auto chMenu = CCMenu::create();
 
     auto chTxt = CCLabelBMFont::create("Corridor Height (u):", "bigFont.fnt");
-    std::string chLoad = numToString(mod->getSavedValue<int16_t>("opt-0-corridor-height"));
+    std::string chLoad = numToString(mod->getSavedValue<uint16_t>("opt-0-corridor-height"));
     m_chInput = TextInput::create(
         120.f,
         chLoad.size() > 0 ? chLoad : "60",
         "bigFont.fnt"
     );
     m_chInput->setString(chLoad);
-    m_chInput->setID("jfpopt-ch-input");
+    m_chInput->setID("jfpopt-ch-input"_spr);
     m_chInput->setScale(1.f);
     m_chInput->setMaxCharCount(10);
     m_chInput->setCommonFilter(CommonFilter::Uint);
@@ -181,7 +181,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
         menu_selector(CorridorOptPopup::onToggle),
         1.f
     );
-    wpbChk->setID("jfpopt-wide-bounds");
+    wpbChk->setID("jfpopt-wide-bounds"_spr);
     wpbChk->toggle(m_wpb);
     
     wpbMenu->setLayout(RowLayout::create()
@@ -221,14 +221,14 @@ void CorridorOptPopup::save(CCObject*) {
         mod->setSavedValue<bool>("opt-0-using-set-seed", false);
     } else {
         mod->setSavedValue<bool>("opt-0-using-set-seed", m_seedToggled);
-        mod->setSavedValue<uint32_t>("opt-0-seed", numFromString<int32_t>(seedStr).unwrapOr(0));
+        mod->setSavedValue<uint32_t>("opt-0-seed", numFromString<uint32_t>(seedStr).unwrapOr(0));
     }
     mod->setSavedValue<bool>("opt-0-widen-playfield-bounds", m_wpb);
-    mod->setSavedValue<int8_t>("opt-0-corridor-rules", m_crIndex);
-    uint32_t parsedLength = numFromString<int32_t>(m_lengthInput->getString()).unwrapOr(0);
+    mod->setSavedValue<uint8_t>("opt-0-corridor-rules", m_crIndex);
+    uint32_t parsedLength = numFromString<uint32_t>(m_lengthInput->getString()).unwrapOr(0);
     if (parsedLength >= 1 && parsedLength <= 100000) mod->setSavedValue<uint32_t>("opt-0-length", parsedLength);
     uint16_t parsedCH = numFromString<uint16_t>(m_chInput->getString()).unwrapOr(0);
-    if (parsedCH <= 10000) mod->setSavedValue<int16_t>("opt-0-corridor-height", parsedCH);
+    if (parsedCH <= 10000) mod->setSavedValue<uint16_t>("opt-0-corridor-height", parsedCH);
 
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();
@@ -241,9 +241,11 @@ void CorridorOptPopup::onToggle(CCObject* object) {
 
     log::info("chkID: {}", chkID);
 
-    if (chkID == "jfpopt-seed-chk") {
+    if (chkID == "jfpopt-seed-chk"_spr) {
         m_seedInput->setEnabled(toggled);
         m_seedToggled = toggled;
+    } else if (chkID == "jfpopt-wide-bounds"_spr) {
+        m_wpb = toggled;
     } else {
         log::info("Unknown toggle: {}", chkID);
     }
@@ -253,9 +255,9 @@ void CorridorOptPopup::onEnumDecrease(CCObject* object) {
     auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
 
-    if (lbl->getID() == "jfpopt-corridor-rules") {
+    if (lbl->getID() == "jfpopt-corridor-rules"_spr) {
+        if (m_crIndex == 0) m_crIndex = m_crIndexLen;
         m_crIndex -= 1;
-        if (m_crIndex < 0) m_crIndex = m_crIndexLen - 1;
     } else {
         log::info("Unknown toggle: {}", lbl->getID());
     }
@@ -268,7 +270,7 @@ void CorridorOptPopup::onEnumIncrease(CCObject* object) {
     auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
 
-    if (lbl->getID() == "jfpopt-corridor-rules") {
+    if (lbl->getID() == "jfpopt-corridor-rules"_spr) {
         m_crIndex += 1;
         if (m_crIndex >= m_crIndexLen) m_crIndex = 0;
     } else {

@@ -18,8 +18,8 @@ protected:
 
     CCLabelBMFont* m_musicSourceSelected;
 
-    int8_t m_msrcIndex = mod->getSavedValue<int8_t>("opt-0-music-source");
-    int8_t m_msrcIndexLen = static_cast<int8_t>(JFPGen::MusicSourceLabel.size());
+    uint8_t m_msrcIndex = mod->getSavedValue<uint8_t>("opt-0-music-source");
+    uint8_t m_msrcIndexLen = static_cast<uint8_t>(JFPGen::MusicSourceLabel.size());
 public:
     static SoundtrackOptPopup* create(std::string const& text);
 };
