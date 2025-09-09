@@ -383,7 +383,8 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
         message.c_str(),
         "I get it man",
         nullptr,
-        400.f);
+        400.f
+    );
     infoLayer->setID("jfp-info-layer"_spr);
     infoLayer->show();
 }

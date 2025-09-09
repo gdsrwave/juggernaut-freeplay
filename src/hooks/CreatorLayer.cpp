@@ -50,7 +50,7 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
         auto* mod = Mod::get();
 
         // biome 0 (Juggernaut) default options
-        mod->setSavedValue<uint8_t>("opt-0-corridor-rules", 2);
+        mod->setSavedValue<uint8_t>("opt-0-corridor-rules", 5);
         mod->setSavedValue<uint16_t>("opt-0-corridor-height", 60);
         mod->setSavedValue<uint32_t>("opt-0-length", 400);
         mod->setSavedValue<uint8_t>("opt-0-grav-portals-diff", 1);
@@ -59,6 +59,8 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
         mod->setSavedValue<bool>("opt-0-show-meter-marks", true);
         mod->setSavedValue<uint32_t>("opt-0-mark-interval", 100);
         mod->setSavedValue<std::string>("opt-0-filename", "waveman");
+        mod->setSavedValue<uint8_t>("opt-0-music-source", 1);
+        mod->setSavedValue<uint8_t>("opt-0-color-mode", 1);
     
         mod->setSavedValue<bool>("ack-disclaimer", "true");
     }

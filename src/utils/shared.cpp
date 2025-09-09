@@ -230,19 +230,21 @@ const std::map<int, std::string> VisibilityLabel = {
 };
 
 const std::map<int, std::string> ColorModeLabel = {
-    {0, "Washed"},
-    {1, "All Colors"},
-    {2, "Classic Mode"},
-    {3, "Night Mode"}
+    {0, "Random"},
+    {1, "Washed"},
+    {2, "All Colors"},
+    {3, "Classic Mode"},
+    {4, "Night Mode"}
 };
 
 const std::map<int, std::string> CorridorRulesLabel = {
-    {0, "NSNZ"},
-    {1, "NoSpam"},
-    {2, "Juggernaut"},
-    {3, "Unrestricted"},
-    {4, "LRD"},
-    {5, "Limp"}
+    {0, "Random"},
+    {1, "NSNZ"},
+    {2, "NoSpam"},
+    {3, "Juggernaut"},
+    {4, "Unrestricted"},
+    {5, "LRD"},
+    {6, "Limp"},
 };
 
 const std::map<int, std::string> DifficultiesLabel = {

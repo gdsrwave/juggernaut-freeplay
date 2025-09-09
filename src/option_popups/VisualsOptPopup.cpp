@@ -24,6 +24,17 @@ bool VisualsOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(VisualsOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // METERS OPT
     auto metersMenu = CCMenu::create();
 
@@ -127,7 +138,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
     // HIDE ICON OPT
     auto hideIconMenu = CCMenu::create();
 
-    auto hideIconTxt = CCLabelBMFont::create("Hide Icon", "bigFont.fnt");
+    auto hideIconTxt = CCLabelBMFont::create("Hide icon", "bigFont.fnt");
 
     auto hideIconChk = CCMenuItemToggler::createWithStandardSprites(
         this,
@@ -291,9 +302,9 @@ void VisualsOptPopup::onClose(CCObject* object) {
 void VisualsOptPopup::save(CCObject*) {
 
     mod->setSavedValue<bool>("opt-0-show-meter-marks", m_meterMarks);
-    mod->setSavedValue<uint32_t>(
-        "opt-0-mark-interval",
-        numFromString<uint32_t>(m_markIntInput->getString()).unwrapOr(0)
+    uint32_t markIntParsed = numFromString<uint32_t>(m_markIntInput->getString()).unwrapOr(0);
+    if (markIntParsed > 0 && markIntParsed < 100000) mod->setSavedValue<uint32_t>(
+        "opt-0-mark-interval", markIntParsed
     );
     mod->setSavedValue<bool>("opt-0-low-visibility", m_lowVisiblity);
     mod->setSavedValue<bool>("opt-0-add-corner-pieces", m_cornerPieces);
@@ -389,6 +400,32 @@ void VisualsOptPopup::onEnumIncrease(CCObject* object) {
     }
 
     lbl->setCString(labelText.c_str());
+}
+
+void VisualsOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options handling JFP's appearance and visuals\n\n"
+        "<cp>Show Meter Marks</c>: Shows dashed marking lines after so many meters (blocks) have passed\n\n"
+        "<co>Mark Interval (m)</c>: The interval, in meters, at which to spawn mark lines\n- Dependent on <cp>Show Meter Marks</c>\n\n"
+        "<cg>Color Mode</c>: Basic coloring options, separate from complete themes\n"
+        "- Washed: washed out random background color\n"
+        "- All Colors: any random background color\n"
+        "- Classic Mode: classic Juggernaut gray color\n"
+        "- Night Mode: black background with bright randomly colored lines\n"
+        "- Random\n\n"
+        "<cl>Background Texture</c>: Background to use in standard visuals JFP. Can be overridden by themes\n\n"
+        "<cb>Low Visibility</c>: Adds a dark fog to the right of the screen, significantly lowering FOV\n\n"
+        "<cp>Add Corner Pieces</c>: Place corner pieces connecting slopes at their edges\n\n"
+        "<cy>Hide Icon</c>: Hides wave icon during gameplay\n\n"
+        "<cj>Show Finish Line</c>: Shows checkered vertical finish at the corridor's mouth\n\n";
+
+    auto infoLayer = MDPopup::create("Visual Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 VisualsOptPopup* VisualsOptPopup::create(std::string const& text) {

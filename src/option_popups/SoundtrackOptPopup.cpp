@@ -9,7 +9,7 @@ using namespace geode::prelude;
 bool SoundtrackOptPopup::setup(std::string const& value) {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
-    this->setTitle("Soundtrack Options");
+    this->setTitle("Music Options");
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
 
     // SAVE BUTTON
@@ -24,10 +24,21 @@ bool SoundtrackOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(SoundtrackOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // SOUNDTRACK OPT
     auto mSrcMenu = CCMenu::create();
     
-    auto mSrcTxt = CCLabelBMFont::create("Allowed Input Types:", "bigFont.fnt");
+    auto mSrcTxt = CCLabelBMFont::create("Music Selection:", "bigFont.fnt");
     m_musicSourceSelected = CCLabelBMFont::create("wwwwwwwwwwwwww", "bigFont.fnt");
     m_musicSourceSelected->setID("jfpopt-music-source");
 
@@ -109,6 +120,24 @@ void SoundtrackOptPopup::onEnumIncrease(CCObject* object) {
     } else {
         log::info("Unknown toggle: {}", lbl->getID());
     }
+}
+
+void SoundtrackOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options handling JFP's music and playlist system\n\n"
+        "<cp>RNG Set Seed</c>: Determines JFP's randomizer pattern. A seed gives the same pattern every time\n"
+        "- JFP Soundtrack: Set of music submitted by the JFP developers and playerbase. "
+        "Unfortunately, this list is difficult to download; you can view the full list of song IDs "
+        "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97)."
+        "- Local Music: Shuffle existing mp3 songs in your GD Data folder";
+
+    auto infoLayer = MDPopup::create("Music Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 SoundtrackOptPopup* SoundtrackOptPopup::create(std::string const& text) {

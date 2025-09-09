@@ -24,6 +24,17 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(SpeedSizeOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // STARTING SPEED OPT
     auto sspeedMenu = CCMenu::create();
     auto sspeedTxt = CCLabelBMFont::create("Starting Speed:", "bigFont.fnt");
@@ -57,7 +68,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     // SPAWN SPEEDCHANGES OPT
     auto cspeedMenu = CCMenu::create();
 
-    auto cspeedTxt = CCLabelBMFont::create("Spawn Speed Changes", "bigFont.fnt");
+    auto cspeedTxt = CCLabelBMFont::create("Speed Changes", "bigFont.fnt");
 
     auto cspeedChk = CCMenuItemToggler::createWithStandardSprites(
         this,
@@ -208,7 +219,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     auto tTypeMenu = CCMenu::create();
     
     auto tTypeTxt = CCLabelBMFont::create("Size transition type:", "bigFont.fnt");
-    m_tTypeSelected = CCLabelBMFont::create("wwwwww", "bigFont.fnt");
+    m_tTypeSelected = CCLabelBMFont::create("wwwww", "bigFont.fnt");
     m_tTypeSelected->setID("jfpopt-transition-type");
 
     auto tTypeLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -367,6 +378,28 @@ void SpeedSizeOptPopup::onEnumIncrease(CCObject* object) {
     }
 
     lbl->setCString(labelText.c_str());
+}
+
+void SpeedSizeOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options controlling gameplay speed\n\n"
+        "<cp>Starting Speed</c>: Controls initial speed present at the corridor entrance\n\n"
+        "<co>Speed Changes</c>: Enables speed changes in JFP, with 3 spawning difficulties available\n\n"
+        "<cb>Selected Speeds</c>: Speed changes that can spawn in JFP (multi-select)\n- Dependent on <co>Speed Changes</c>\n\n\n"
+        "#### Options controlling wave size\n\n"
+        "<cp>Start As</c>: The size (big or miniwave) at which the JFP corridors start\n\n"
+        "<cg>Spawn Size Portals</c>: Enables size portal spawning in JFP\n\n"
+        "<cy>Size Transition Type</c>: Controls the transition types between bigwave and miniwave.\n"
+        "- Type A spawns size portals diagonally and adds 1 block of height to miniwave, as seen in **Random Wave**\n"
+        "- Type B spawns size portals upright and adds no extra miniwave height, as seen in **CorroZ**";
+
+    auto infoLayer = MDPopup::create("Speed/Wave Size Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 SpeedSizeOptPopup* SpeedSizeOptPopup::create(std::string const& text) {

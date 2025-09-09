@@ -13,6 +13,7 @@ protected:
     void onEnumDecrease(CCObject* object);
     void onEnumIncrease(CCObject* object);
     void save(CCObject*);
+    void onInfo(CCObject* object);
 
     Mod* mod = Mod::get();
 

@@ -24,6 +24,17 @@ bool GravHazOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(GravHazOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // GRAVITY PORTAL SPAWNING OPT
     auto portalsMenu = CCMenu::create();
     
@@ -384,6 +395,27 @@ void GravHazOptPopup::onEnumIncrease(CCObject* object) {
     }
 
     lbl->setCString(labelText.c_str());
+}
+
+void GravHazOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options controlling gravity portals\n\n"
+        "<cp>Gravity Portals</c>: Enables gravity portals in JFP, with 3 spawning difficulties available\n\n"
+        "<co>Fake Portals</c>: Spawn portals not of the opposite gravity\n- Dependent on <cp>Gravity Portals</c>\n\n"
+        "<cb>Start Upside Down</c>: Adds a yellow portal to the corridor's entrance\n\n"
+        "<cg>Allowed Input Types</c>: Allows only generating certain gameplay situations, such as holding into portals or falling into portals\n- Dependent on <cp>Gravity Portals</c>\n\n"
+        "<cy>Spawn Within Spams</c>: Unchecking prevents portals from appearing inside long spam corridors. Good to turn off in Unrestricted CR\n- Dependent on <cp>Gravity Portals</c>\n\n\n"
+        "#### Options controlling hazards (spikes)\n\n"
+        "<cp>Corridor Spikes</c>: Enables spike spawning on corridor sides. Defaults to both bigwave and miniwave, but allows targeting either.\n\n"
+        "<co>Fuzzy Spikes</c>: Enables fuzz";
+
+    auto infoLayer = MDPopup::create("Gravity Portal/Hazard Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 GravHazOptPopup* GravHazOptPopup::create(std::string const& text) {

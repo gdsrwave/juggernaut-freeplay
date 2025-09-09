@@ -25,6 +25,17 @@ bool CorridorOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(CorridorOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // SET SEED OPT
     auto seedMenu = CCMenu::create();
 
@@ -214,8 +225,10 @@ void CorridorOptPopup::save(CCObject*) {
     }
     mod->setSavedValue<bool>("opt-0-widen-playfield-bounds", m_wpb);
     mod->setSavedValue<int8_t>("opt-0-corridor-rules", m_crIndex);
-    mod->setSavedValue<int32_t>("opt-0-length", numFromString<int32_t>(m_lengthInput->getString()).unwrapOr(0));
-    mod->setSavedValue<int16_t>("opt-0-corridor-height", numFromString<int16_t>(m_chInput->getString()).unwrapOr(0));
+    uint32_t parsedLength = numFromString<int32_t>(m_lengthInput->getString()).unwrapOr(0);
+    if (parsedLength >= 1 && parsedLength <= 100000) mod->setSavedValue<uint32_t>("opt-0-length", parsedLength);
+    uint16_t parsedCH = numFromString<uint16_t>(m_chInput->getString()).unwrapOr(0);
+    if (parsedCH <= 10000) mod->setSavedValue<int16_t>("opt-0-corridor-height", parsedCH);
 
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();
@@ -264,6 +277,28 @@ void CorridorOptPopup::onEnumIncrease(CCObject* object) {
 
     std::string crLabelText = JFPGen::CorridorRulesLabel.at(m_crIndex);
     lbl->setCString(crLabelText.c_str());
+}
+
+void CorridorOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options related to Juggernaut corridor generation\n\n"
+        "<cp>RNG Set Seed</c>: Determines JFP's randomizer pattern. A seed gives the same pattern every time\n\n"
+        "<co>Corridor Rules</c>: Rules dictating how the corridor pattern can and can't generate.\n"
+        "- NSNZ = \"No Spam, No Zigzagging,\" which prevents some intensive patterns.\n"
+        "- LRD = \"Low Respectful Density,\" which removes spam and tends away from doubleclick inputs.\n\n"
+        "<cb>Length (m)</c>: Corridor Length in meters (1 meter = 1 block)\n\n"
+        "<cg>Corridor Height (u)</c>: Corridor height in units (60u ch = 2 blocks)\n"
+        "- IMPORTANT: You may notice that using mini wave, by default, actually adds 30 to this corridor height. This is due to transitions "
+        "between bigwave and miniwave as controlled by the <cy>Size Transition Type</c> option. See Speed/Wave Size Options for more information.\n\n"
+        "<cy>Widen Playfield Bounds</c>: Extends corridor boundaries by 1 block on the top/bottom";
+
+    auto infoLayer = MDPopup::create("Corridor Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 CorridorOptPopup* CorridorOptPopup::create(std::string const& text) {

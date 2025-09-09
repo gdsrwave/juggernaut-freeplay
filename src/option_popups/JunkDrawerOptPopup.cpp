@@ -25,6 +25,17 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
     saveBtnMenu->setPosition({200.f, 30.f});
     m_mainLayer->addChild(saveBtnMenu);
 
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(JunkDrawerOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
     // LMAO BUTTON OPT
     auto lmaoBtnMenu = CCMenu::create();
 
@@ -124,7 +135,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
     // AUTOSAVE OPT
     auto autoSaveMenu = CCMenu::create();
 
-    auto autoSaveTxt = CCLabelBMFont::create("Autosave on Close", "bigFont.fnt");
+    auto autoSaveTxt = CCLabelBMFont::create("Autosave option popups", "bigFont.fnt");
 
     auto autoSaveChk = CCMenuItemToggler::createWithStandardSprites(
         this,
@@ -194,6 +205,24 @@ void JunkDrawerOptPopup::onToggle(CCObject* object) {
     } else {
         log::info("Unknown toggle: {}", chkID);
     }
+}
+
+void JunkDrawerOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Miscellaneous Options/Metaoptions\n\n"
+        "<cp>LMAO Button</c>: WiseTree button used to access the main menu\n\n"
+        "<co>Waveman Button</c>: Button for generating JFP levels directly to your created levels list\n\n"
+        "<cb>Theme Creator Tools</c>: Popup in the level editor for exporting object sets in JFPT block format. Access via a button in the Edit tab\n\n"
+        "<cg>Autosave Option Popups</c>: Saves your options every time you exit one of the popup windows\n\n"
+        "<cr>Debug</c>";
+
+    auto infoLayer = MDPopup::create("Junk Drawer Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
 }
 
 JunkDrawerOptPopup* JunkDrawerOptPopup::create(std::string const& text) {
