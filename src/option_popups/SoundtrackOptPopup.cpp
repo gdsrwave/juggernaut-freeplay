@@ -129,7 +129,7 @@ void SoundtrackOptPopup::onInfo(CCObject*) {
         "- JFP Soundtrack: Set of music submitted by the JFP developers and playerbase. "
         "Unfortunately, this list is difficult to download; you can view the full list of song IDs "
         "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97)."
-        "- Local Music: Shuffle existing mp3 songs in your GD Data folder";
+        "- Local Music: Shuffle existing mp3 songs in your GD Data folder\n\n\n\n\n";
 
     auto infoLayer = MDPopup::create("Music Options Info",
         info,

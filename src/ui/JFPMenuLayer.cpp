@@ -374,7 +374,6 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
     std::string playCt = geode::utils::numToString(
         Mod::get()->getSavedValue<uint32_t>("total-played", 0));
     std::string message = "Advanced Random Wave Generation\n\n"
-        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
         "Special thanks to the Geode community and to early playtesters;"
         " you made this possible!\n"
         "Total Rounds Played: " + playCt;

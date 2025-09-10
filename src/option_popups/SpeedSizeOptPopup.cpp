@@ -107,7 +107,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     cspeedMenu->addChild(m_speedDiffSelected);
     cspeedMenu->addChild(cspeedRA);
     cspeedMenu->setPosition({20.f, 195.f});
-    cspeedMenu->setScale(0.5);
+    cspeedMenu->setScale(0.41);
     cspeedMenu->setAnchorPoint({0, 0.5});
     cspeedMenu->updateLayout();
 

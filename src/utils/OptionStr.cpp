@@ -24,6 +24,9 @@ std::string exportSettings(const std::vector<PackedEntry>& entries) {
         }
     }
 
+    uint8_t ver = readStoredNum(bytes, 0, 6);
+    if (ver == 37) v37tov38(bytes);
+
     static const char b64_table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     std::string res;
@@ -44,7 +47,7 @@ std::string exportSettings(const std::vector<PackedEntry>& entries) {
     return res + lenSuffix;
 }
 
-void importSettings(std::string packed) {
+void importSettingsOld(std::string packed) {
     auto* mod = Mod::get();
 
     size_t ls = packed.find('+');
@@ -59,7 +62,7 @@ void importSettings(std::string packed) {
     static const char b64_table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     std::vector<uint8_t> bytes;
-
+    
     int val = 0, valb = -8;
     for (char c : dataPack) {
         const char* p = std::strchr(b64_table, c);
@@ -72,6 +75,9 @@ void importSettings(std::string packed) {
             valb -= 8;
         }
     }
+
+    uint8_t ver = readStoredNum(bytes, 0, 6);
+    if (ver == 37) v37tov38(bytes);
 
     // std::string bitStr;
     // for (int i = 0; i < (bytes.size() * 8); i++) {
@@ -181,21 +187,150 @@ void importSettings(std::string packed) {
         std::string scstr = (sc_i >= 0 && sc_i < diffs.size()) ? diffs[sc_i] : "None";
         mod->setSettingValue<std::string>("changing-speed", scstr);
 
-        std::string sizeStr = readStoredNum(bytes, 90, 3) ? "Mini" : "Big";
+        std::string sizeStr = readStoredNum(bytes, 90, 2) ? "Mini" : "Big";
         mod->setSettingValue<std::string>("starting-size", sizeStr);
 
         mod->setSettingValue<bool>("changing-size",
-            static_cast<bool>(readStoredNum(bytes, 93, 3)));
+            static_cast<bool>(readStoredNum(bytes, 92, 3)));
 
-        std::string ttStr = readStoredNum(bytes, 96, 2) ? "Type A" : "Type B";
+        std::string ttStr = readStoredNum(bytes, 95, 2) ? "Type A" : "Type B";
         mod->setSettingValue<std::string>("transition-type", ttStr);
 
         mod->setSettingValue<bool>("portals-in-spams",
-            !static_cast<bool>(readStoredNum(bytes, 98, 2)));
+            !static_cast<bool>(readStoredNum(bytes, 97, 2)));
     }
 }
 
-int readStoredNum(const std::vector<uint8_t>& bytes, int offset, int size) {
+void v37tov38(std::vector<uint8_t>& bytes) {
+    uint8_t startingSpeed = readStoredNum(bytes, 10, 3);
+    if (startingSpeed == 5) startingSpeed = 0;
+    else if (startingSpeed == 0) startingSpeed = 5;
+    writeStoredNum(bytes, 10, 3, startingSpeed);
+
+    uint8_t corridorRules = readStoredNum(bytes, 64, 4);
+    if (corridorRules == 5) corridorRules = 0;
+    else if (corridorRules < 5) corridorRules++;
+    writeStoredNum(bytes, 64, 4, corridorRules);
+
+    uint8_t colorMode = readStoredNum(bytes, 80, 3);
+    if (colorMode == 4) colorMode = 0;
+    else if (colorMode < 4) colorMode++;
+    writeStoredNum(bytes, 80, 3, colorMode);
+
+    uint8_t tType = readStoredNum(bytes, 95, 2);
+    if (tType == 1) tType = 0;
+    else if (tType == 0) tType = 1;
+
+    uint8_t maxSpeed = readStoredNum(bytes, 13, 3);
+    uint8_t minSpeed = readStoredNum(bytes, 16, 3);
+    if (maxSpeed == 5) maxSpeed = 0;
+    else if (maxSpeed == 0) maxSpeed = 5;
+    if (minSpeed == 5) minSpeed = 0;
+    else if (minSpeed == 0) minSpeed = 5;
+    uint8_t selectedSpeeds = 0;
+    if (maxSpeed >= minSpeed && maxSpeed <= 4) {
+        for (uint8_t i = minSpeed; i <= maxSpeed; ++i) {
+            selectedSpeeds |= (1 << i);
+        }
+    }
+    writeStoredNum(bytes, 13, 6, selectedSpeeds);
+
+    FLAlertLayer::create("Alert", "This code was copied from an older version of JFP.\n"
+        "Please import, refresh, and copy the latest version of this code.", "OK")->show();
+}
+
+void importSettings(std::string packed) {
+    auto* mod = Mod::get();
+
+    size_t ls = packed.find('+');
+    if (ls == std::string::npos) {
+        return FLAlertLayer::create("Error", "Length suffix not found", "OK")->show();
+    }
+    int length = geode::utils::numFromString<int>(packed.substr(ls + 1, std::string::npos)).unwrapOr(-1);
+    mod->setSettingValue("length", length);
+
+    std::string dataPack = packed.substr(0, ls);
+
+    static const char b64_table[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    std::vector<uint8_t> bytes;
+    
+    int val = 0, valb = -8;
+    for (char c : dataPack) {
+        const char* p = std::strchr(b64_table, c);
+        if (!p) continue;
+        int idx = static_cast<int>(p - b64_table);
+        val = (val << 6) | idx;
+        valb += 6;
+        if (valb >= 0) {
+            bytes.push_back(static_cast<uint8_t>((val >> valb) & 0xFF));
+            valb -= 8;
+        }
+    }
+
+    uint8_t ver = readStoredNum(bytes, 0, 6);
+    // this was added in JFP 1.7.0; option codes have their own versioning, which changes
+    // when code-breaking changes are made to the options system. intended to not be often.
+    if (ver < 38) v37tov38(bytes);
+
+    uint8_t biome = readStoredNum(bytes, 6, 4);
+    if (biome != static_cast<uint8_t>(JFPGen::JFPBiome::Juggernaut)) return;
+
+    mod->setSavedValue<uint8_t>("opt-0-starting-speed", readStoredNum(bytes, 10, 3));
+    mod->setSavedValue<uint8_t>("opt-0-speed-changes", readStoredNum(bytes, 13, 6));
+    mod->setSavedValue<bool>(
+        "opt-0-widen-playfield-bounds",
+        static_cast<bool>(readStoredNum(bytes, 43, 1))
+    );
+    mod->setSavedValue<uint32_t>("opt-0-corridor-height", readStoredNum(bytes, 44, 8));
+    mod->setSavedValue<uint8_t>("opt-0-corridor-rules", readStoredNum(bytes, 64, 4));
+    bool usingPortals = static_cast<bool>(readStoredNum(bytes, 68, 3));
+    mod->setSavedValue<bool>("opt-0-using-grav-portals", usingPortals);
+    if (usingPortals)
+        mod->setSavedValue<uint8_t>("opt-0-grav-portals-diff", readStoredNum(bytes, 68, 3) - 1);
+    mod->setSavedValue<bool>(
+        "opt-0-fake-grav-portals",
+        static_cast<bool>(readStoredNum(bytes, 71, 1))
+    );
+    mod->setSavedValue<bool>(
+        "opt-0-grav-portal-start",
+        static_cast<bool>(readStoredNum(bytes, 72, 2))
+    );
+    mod->setSavedValue<uint8_t>("opt-0-portal-input-types", readStoredNum(bytes, 74, 3));
+    mod->setSavedValue<bool>(
+        "opt-0-add-corner-pieces",
+        static_cast<bool>(readStoredNum(bytes, 77, 1))
+    );
+    mod->setSavedValue<bool>(
+        "opt-0-low-visibility",
+        static_cast<bool>(readStoredNum(bytes, 78, 2))
+    );
+    mod->setSavedValue<uint8_t>("opt-0-color-mode", readStoredNum(bytes, 80, 3));
+    bool usingSpikes = static_cast<bool>(readStoredNum(bytes, 83, 2));
+    mod->setSavedValue<bool>("opt-0-using-corridor-spikes", usingSpikes);
+    if (usingSpikes)
+        mod->setSavedValue<uint8_t>("opt-0-spike-placement-types", readStoredNum(bytes, 83, 2) - 1);
+    mod->setSavedValue<bool>(
+        "opt-0-corridor-fuzz",
+        static_cast<bool>(readStoredNum(bytes, 85, 2))
+    );
+    bool usingSpeed = static_cast<bool>(readStoredNum(bytes, 87, 3));
+    mod->setSavedValue<bool>("opt-0-using-speed-changes", usingSpeed);
+    if (usingSpeed)
+        mod->setSavedValue<uint8_t>("opt-0-speed-changes-diff", readStoredNum(bytes, 87, 3) - 1);
+    mod->setSavedValue<uint8_t>("opt-0-starting-size", readStoredNum(bytes, 90, 2));
+    mod->setSavedValue<bool>(
+        "opt-0-using-size-changes",
+        static_cast<bool>(readStoredNum(bytes, 92, 3))
+    );
+    mod->setSavedValue<uint8_t>("opt-0-size-transition-type", readStoredNum(bytes, 95, 2));
+    mod->setSavedValue<bool>(
+        "opt-0-remove-portals-in-spams",
+        static_cast<bool>(readStoredNum(bytes, 97, 2))
+    );
+}
+
+int readStoredNum(std::vector<uint8_t>& bytes, int offset, int size) {
     int res = 0;
     for (int i = 0; i < size; i++) {
         int bitIndex = offset + i;
@@ -210,11 +345,111 @@ int readStoredNum(const std::vector<uint8_t>& bytes, int offset, int size) {
     return res;
 }
 
+void writeStoredNum(std::vector<uint8_t>& bytes, int offset, int size, int value) {
+    for (int i = 0; i < size; i++) {
+        int bitIndex = offset + i;
+        int byteIndex = bitIndex / 8;
+        int bitInByte = 7 - (bitIndex % 8);
+        if (byteIndex < bytes.size()) {
+            if (value & (1 << (size - i - 1))) {
+                bytes[byteIndex] |= (1 << bitInByte);
+            } else {
+                bytes[byteIndex] &= ~(1 << bitInByte);
+            }
+        }
+    }
+}
+
+std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
+    std::vector<PackedEntry> resSettings;
+    auto* mod = Mod::get();
+
+    if (biome != JFPGen::JFPBiome::Juggernaut) return resSettings;
+
+    resSettings.push_back(PackedEntry{
+        6, 38
+    });
+    resSettings.push_back(PackedEntry{
+        4, static_cast<uint32_t>(biome)
+    });
+    resSettings.push_back(PackedEntry{
+        3, mod->getSavedValue<uint32_t>("opt-0-starting-speed")
+    });
+    resSettings.push_back(PackedEntry{
+        6, mod->getSavedValue<uint32_t>("opt-0-speed-changes")
+    });
+    resSettings.push_back(PackedEntry{
+        12, 255
+    });
+    resSettings.push_back(PackedEntry{
+        12, 45
+    });
+    resSettings.push_back(PackedEntry{
+        1, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-widen-playfield-bounds"))
+    });
+    resSettings.push_back(PackedEntry{
+        8, mod->getSavedValue<uint32_t>("opt-0-corridor-height")
+    });
+    resSettings.push_back(PackedEntry{
+        12, 135
+    });
+    resSettings.push_back(PackedEntry{
+        4, mod->getSavedValue<uint32_t>("opt-0-corridor-rules")
+    });
+    bool usingGP = mod->getSavedValue<bool>("opt-0-using-grav-portals");
+    resSettings.push_back(PackedEntry{
+        3, usingGP ? mod->getSavedValue<uint32_t>("opt-0-grav-portals-diff") + 1 : 0
+    });
+    resSettings.push_back(PackedEntry{
+        1, mod->getSavedValue<uint32_t>("opt-0-fake-grav-portals")
+    });
+    resSettings.push_back(PackedEntry{
+        2, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-grav-portal-start"))
+    });
+    resSettings.push_back(PackedEntry{
+        3, mod->getSavedValue<uint32_t>("opt-0-portal-input-types")
+    });
+    resSettings.push_back(PackedEntry{
+        1, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-add-corner-pieces"))
+    });
+    resSettings.push_back(PackedEntry{
+        2, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-low-visibility"))
+    });
+    resSettings.push_back(PackedEntry{
+        3, mod->getSavedValue<uint32_t>("opt-0-color-mode")
+    });
+    bool usingSpikes = mod->getSavedValue<bool>("opt-0-using-corridor-spikes");
+    resSettings.push_back(PackedEntry{
+        2, usingSpikes ? mod->getSavedValue<uint32_t>("opt-0-spike-placement-types") + 1 : 0
+    });
+    resSettings.push_back(PackedEntry{
+        2, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-corridor-fuzz"))
+    });
+    bool usingSpeed = mod->getSavedValue<bool>("opt-0-using-speed-changes");
+    resSettings.push_back(PackedEntry{
+        3, usingSpeed ? mod->getSavedValue<uint32_t>("opt-0-speed-changes-diff") + 1 : 0
+    });
+    resSettings.push_back(PackedEntry{
+        2, mod->getSavedValue<uint32_t>("opt-0-starting-size")
+    });
+    resSettings.push_back(PackedEntry{
+        3, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-using-size-changes"))
+    });
+    resSettings.push_back(PackedEntry{
+        2, mod->getSavedValue<uint32_t>("opt-0-size-transition-type")
+    });
+    resSettings.push_back(PackedEntry{
+        2, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-remove-portals-in-spams"))
+    });
+
+    return resSettings;
+}
+
 // the way the Geode settings system works, and the specificity of what JFP
 // actually saves in option strings, makes it rather extra to do this in a
 // more formulaic/elegant way, at least for right now. I might revisit at
 // a later date. -M
-std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
+std::vector<PackedEntry> getSettingsOld(JFPGen::JFPBiome biome) {
     std::vector<PackedEntry> resSettings;
     auto* mod = Mod::get();
 
