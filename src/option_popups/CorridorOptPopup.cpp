@@ -146,7 +146,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
     auto chMenu = CCMenu::create();
 
     auto chTxt = CCLabelBMFont::create("Corridor Height (u):", "bigFont.fnt");
-    std::string chLoad = numToString(mod->getSavedValue<uint16_t>("opt-0-corridor-height"));
+    std::string chLoad = numToString(mod->getSavedValue<uint8_t>("opt-0-corridor-height"));
     m_chInput = TextInput::create(
         120.f,
         chLoad.size() > 0 ? chLoad : "60",
@@ -227,8 +227,8 @@ void CorridorOptPopup::save(CCObject*) {
     mod->setSavedValue<uint8_t>("opt-0-corridor-rules", m_crIndex);
     uint32_t parsedLength = numFromString<uint32_t>(m_lengthInput->getString()).unwrapOr(0);
     if (parsedLength >= 1 && parsedLength <= 100000) mod->setSavedValue<uint32_t>("opt-0-length", parsedLength);
-    uint16_t parsedCH = numFromString<uint16_t>(m_chInput->getString()).unwrapOr(0);
-    if (parsedCH <= 10000) mod->setSavedValue<uint16_t>("opt-0-corridor-height", parsedCH);
+    uint8_t parsedCH = numFromString<uint8_t>(m_chInput->getString()).unwrapOr(0);
+    mod->setSavedValue<uint8_t>("opt-0-corridor-height", parsedCH);
 
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();

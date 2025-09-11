@@ -84,7 +84,7 @@ class $modify(PlayLayer) {
 
         const std::string& progressText = m_percentageLabel->getString();
         int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345);
-        int length = Mod::get()->getSettingValue<int>("length");
+        int length = Mod::get()->getSavedValue<int>("opt-0-length");
 
         std::string meterLabel;
         if (playerMeters < -160) {

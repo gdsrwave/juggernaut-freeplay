@@ -42,7 +42,7 @@ std::string exportSettings(const std::vector<PackedEntry>& entries) {
     if (valb > -6) res.push_back(b64_table[((val << 8) >> (valb + 8)) & 0x3F]);
 
     std::string lenSuffix =
-        fmt::format("+{}", Mod::get()->getSettingValue<uint32_t>("length"));
+        fmt::format("+{}", Mod::get()->getSavedValue<uint32_t>("opt-0-length"));
 
     return res + lenSuffix;
 }

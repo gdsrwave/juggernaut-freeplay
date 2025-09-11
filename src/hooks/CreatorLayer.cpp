@@ -46,7 +46,7 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
         CCDirector::sharedDirector()->pushScene(jlTransition);
     }
 
-    void loadDefaults() {
+    void loadDefaults(bool full = false) {
         auto* mod = Mod::get();
 
         // biome 0 (Juggernaut) default options
@@ -61,7 +61,36 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
         mod->setSavedValue<std::string>("opt-0-filename", "waveman");
         mod->setSavedValue<uint8_t>("opt-0-music-source", 1);
         mod->setSavedValue<uint8_t>("opt-0-color-mode", 1);
-    
+        mod->setSavedValue<uint8_t>("opt-u-starting-speed", 4);
+        mod->setSavedValue<bool>("opt-0-background-texture", 1);
+
+        // biome 0 full reload
+        if (full) {
+            mod->setSavedValue<bool>("opt-u-waveman-button-shown", false);
+            mod->setSavedValue<bool>("opt-u-theme-creator-tools", false);
+            mod->setSavedValue<bool>("opt-u-debug", false);
+            mod->setSavedValue<bool>("opt-0-using-set-seed", false);
+            mod->setSavedValue<uint8_t>("opt-0-seed", 0);
+            mod->setSavedValue<bool>("opt-0-using-speed-changes", false);
+            mod->setSavedValue<bool>("opt-0-using-size-changes", false);
+            mod->setSavedValue<uint8_t>("opt-0-starting-size", 0);
+            mod->setSavedValue<uint8_t>("opt-0-size-transition-type", 0);
+            mod->setSavedValue<bool>("opt-u-save-on-close", false);
+            mod->setSavedValue<bool>("opt-0-widen-playfield-bounds", false);
+            mod->setSavedValue<bool>("opt-0-low-visibility", false);
+            mod->setSavedValue<bool>("opt-0-add-corner-pieces", false);
+            mod->setSavedValue<bool>("opt-0-show-finish-line", false);
+            mod->setSavedValue<bool>("opt-0-hide-icon", false);
+            mod->setSavedValue<bool>("opt-0-using-grav-portals", false);
+            mod->setSavedValue<bool>("opt-0-grav-portal-start", false);
+            mod->setSavedValue<bool>("opt-0-fake-grav-portals", false);
+            mod->setSavedValue<bool>("opt-0-remove-portals-in-spams", false);
+            mod->setSavedValue<uint8_t>("opt-0-portal-input-types", 0);
+            mod->setSavedValue<bool>("opt-0-using-corridor-spikes", false);
+            mod->setSavedValue<bool>("opt-0-corridor-fuzz", false);
+            mod->setSavedValue<uint8_t>("opt-0-spike-placement-types", 0);
+        }
+
         mod->setSavedValue<bool>("ack-disclaimer", "true");
     }
 

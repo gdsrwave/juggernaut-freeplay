@@ -375,7 +375,7 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
         Mod::get()->getSavedValue<uint32_t>("total-played", 0));
     std::string message = "Advanced Random Wave Generation\n\n"
         "Special thanks to the Geode community and to early playtesters;"
-        " you made this possible!\n"
+        " you made this possible!\n\n"
         "Total Rounds Played: " + playCt;
 
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",

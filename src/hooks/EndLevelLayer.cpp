@@ -17,7 +17,7 @@ class $modify(EndLevelLayer) {
         auto* playLayer = GameManager::sharedState()->getPlayLayer();
         int playerMeters = (
             static_cast<int>(playLayer->m_player1->m_position.x) - 345);
-        int length = Mod::get()->getSettingValue<int>("length");
+        int length = Mod::get()->getSavedValue<int>("opt-0-length");
 
         std::string meterLabel;
         playerMeters = playerMeters / 30;

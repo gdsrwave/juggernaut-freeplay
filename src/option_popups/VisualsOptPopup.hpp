@@ -26,7 +26,7 @@ protected:
     CCMenu* m_markIntMenu;
 
     uint8_t m_bgTextureIndex = mod->getSavedValue<uint8_t>("opt-0-background-texture");
-    uint8_t m_bgTextureIndexLen = 59;
+    uint8_t m_bgTextureIndexLen = 60;
     uint8_t m_colorModeIndex = mod->getSavedValue<uint8_t>("opt-0-color-mode");
     uint8_t m_colorModeIndexLen = static_cast<uint8_t>(JFPGen::ColorModeLabel.size());
     bool m_meterMarks = mod->getSavedValue<bool>("opt-0-show-meter-marks");

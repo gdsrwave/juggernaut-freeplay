@@ -244,15 +244,16 @@ bool VisualsOptPopup::setup(std::string const& value) {
     bgtTitleTxt->setScale(0.9f);
 
     m_bgTexturePicSpr = CCSprite::create(
-        fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex + 1).c_str()
+        fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex == 0 ? 13 : m_bgTextureIndex).c_str()
     );
     m_bgTexturePicSpr->setScale(180.f / m_bgTexturePicSpr->getContentSize().height);
     m_bgTexturePicSpr->setColor({29, 120, 86});
-    //bgTexturePicSpr->setColor({255, 136, 237});
+    if (m_bgTextureIndex == 0) m_bgTexturePicSpr->setColor({200, 200, 200});
 
     m_bgTextureSelected = CCLabelBMFont::create(
-        fmt::format("#{:02}", m_bgTextureIndex + 1).c_str(), "bigFont.fnt"
+        fmt::format("#{:02}", m_bgTextureIndex).c_str(), "bigFont.fnt"
     );
+    if (m_bgTextureIndex == 0) m_bgTextureSelected->setCString("Random");
     m_bgTextureSelected->setID("jfpopt-bg-texture"_spr);
     m_bgTextureSelected->setPosition({0, -110});
     m_bgTextureSelected->setScale(0.75f);
@@ -352,10 +353,16 @@ void VisualsOptPopup::onEnumDecrease(CCObject* object) {
     if (lbl->getID() == "jfpopt-bg-texture"_spr) {
         if (m_bgTextureIndex == 0) m_bgTextureIndex = m_bgTextureIndexLen;
         m_bgTextureIndex -= 1;
-        labelText = fmt::format("#{:02}", m_bgTextureIndex + 1);
+        labelText = fmt::format("#{:02}", m_bgTextureIndex);
+        if (m_bgTextureIndex == 0) {
+            labelText = "Random";
+            m_bgTexturePicSpr->setColor({200, 200, 200});
+        } else {
+            m_bgTexturePicSpr->setColor({29, 120, 86});
+        }
         
         auto* newBgTexture = CCSprite::create(
-            fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex + 1).c_str()
+            fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex == 0 ? 13 : m_bgTextureIndex).c_str()
         )->displayFrame();
         m_bgTexturePicSpr->setDisplayFrame(newBgTexture);
     } else if (lbl->getID() == "jfpopt-color-mode"_spr) {
@@ -382,10 +389,16 @@ void VisualsOptPopup::onEnumIncrease(CCObject* object) {
     if (lbl->getID() == "jfpopt-bg-texture"_spr) {
         m_bgTextureIndex += 1;
         if (m_bgTextureIndex >= m_bgTextureIndexLen) m_bgTextureIndex = 0;
-        labelText = fmt::format("#{:02}", m_bgTextureIndex + 1);
+        labelText = fmt::format("#{:02}", m_bgTextureIndex);
+        if (m_bgTextureIndex == 0) {
+            labelText = "Random";
+            m_bgTexturePicSpr->setColor({200, 200, 200});
+        } else {
+            m_bgTexturePicSpr->setColor({29, 120, 86});
+        }
 
         auto* newBgTexture = CCSprite::create(
-            fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex + 1).c_str()
+            fmt::format("game_bg_{:02}_001.png", m_bgTextureIndex == 0 ? 13 : m_bgTextureIndex).c_str()
         )->displayFrame();
         m_bgTexturePicSpr->setDisplayFrame(newBgTexture);
     } else if (lbl->getID() == "jfpopt-color-mode"_spr) {

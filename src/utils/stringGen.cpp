@@ -130,8 +130,8 @@ std::string jfpNewStringGen(LevelData ldata) {
     std::string levelBuildSeg2 = fmt::format(
         "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
         fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed)));
-    const bool cornerPieces = Mod::get()->getSettingValue<bool>("corners");
-    const bool hideIcon = Mod::get()->getSettingValue<bool>("hide-icon");
+    const bool cornerPieces = Mod::get()->getSavedValue<bool>("opt-0-add-corner-pieces");
+    const bool hideIcon = Mod::get()->getSavedValue<bool>("opt-0-hide-icon");
 
     std::string level = levelCommonBaseSeg;
     if (!overrideBank["override-base"]) level += levelBaseSeg;
@@ -484,10 +484,10 @@ std::string jfpNewStringGen(LevelData ldata) {
     }
 
     // Meter-Marks
-    const int64_t markInterval = Mod::get()->getSettingValue<int64_t>("marker-interval");
+    const uint16_t markInterval = Mod::get()->getSavedValue<uint16_t>("opt-0-mark-interval");
     std::string metermarksStr = "";
     std::string currentMark;
-    if (Mod::get()->getSettingValue<bool>("marks") && markInterval > 0) {
+    if (Mod::get()->getSavedValue<bool>("opt-0-show-meter-marks") && markInterval > 0) {
         int meters = markInterval;
         double markHeight;
         for (int j = 0; j < (biome.options.length / markInterval); j++) {
@@ -513,7 +513,7 @@ std::string jfpNewStringGen(LevelData ldata) {
     level += metermarksStr;
 
     // Finish Line
-    if (Mod::get()->getSettingValue<bool>("finish-line")) {
+    if (Mod::get()->getSavedValue<bool>("opt-0-show-finish-line")) {
         fmt::dynamic_format_arg_store<fmt::format_context> args;
         args.push_back(fmt::arg("pos1", x+7.5));
         args.push_back(fmt::arg("pos2", x+22.5));

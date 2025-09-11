@@ -732,13 +732,13 @@ std::vector<std::string> tagConflicts(ThemeMetadata tmd) {
     std::vector<std::string> conflicts;
 
     const bool isBigPresent =
-            mod->getSettingValue<std::string>("starting-size") == "Big" ||
-        mod->getSettingValue<bool>("changing-size");
+            mod->getSavedValue<uint8_t>("opt-0-starting-size") == 0 ||
+        mod->getSavedValue<bool>("opt-0-using-size-changes");
     const bool isMiniPresent =
-            mod->getSettingValue<std::string>("starting-size") == "Mini" ||
-        mod->getSettingValue<bool>("changing-size");
-    const bool isTypeA = mod->getSettingValue<bool>("changing-size") &&
-        (mod->getSettingValue<std::string>("transition-type") == "Type A" ? true : false);
+            mod->getSavedValue<uint8_t>("opt-0-starting-size") == 1 ||
+        mod->getSavedValue<bool>("opt-0-using-size-changes");
+    const bool isTypeA = mod->getSavedValue<bool>("opt-0-using-size-changes") &&
+        !(mod->getSavedValue<uint8_t>("opt-0-size-transition-type"));
 
     if (isMiniPresent && std::find(tmd.tags.begin(), tmd.tags.end(), "bigwave-only") !=
             tmd.tags.end()) {
