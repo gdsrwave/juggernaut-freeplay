@@ -197,6 +197,17 @@ bool VisualsOptPopup::setup(std::string const& value) {
     cmTitleTxt->setPosition({0, 110});
     cmTitleTxt->setScale(0.9f);
 
+    m_mmPicSpr = CCSprite::createWithSpriteFrameName("mark.png"_spr);
+    m_mmPicSpr->setScale(180.f / m_mmPicSpr->getContentSize().height);
+    m_mmPicSpr->setZOrder(2);
+    if (!m_meterMarks) m_flPicSpr->setVisible(false);
+
+    m_flPicSpr = CCSprite::createWithSpriteFrameName("finishline.png"_spr);
+    m_flPicSpr->setScale(180.f / m_flPicSpr->getContentSize().height);
+    m_flPicSpr->setZOrder(2);
+    m_flPicSpr->setOpacity(170);
+    if (!m_finishLine) m_flPicSpr->setVisible(false);
+
     m_colorModePicSpr = CCSprite::createWithSpriteFrameName(
         fmt::format("jfp_cm_{}.png"_spr, m_colorModeIndex).c_str()
     );
@@ -232,6 +243,8 @@ bool VisualsOptPopup::setup(std::string const& value) {
     colorModeMenu->addChild(colorModeLA);
     colorModeMenu->addChild(colorModeRA);
     colorModeMenu->addChild(m_colorModeSelected);
+    colorModeMenu->addChild(m_mmPicSpr);
+    colorModeMenu->addChild(m_flPicSpr);
     colorModeMenu->setPosition({100.f, 110.f});
     colorModeMenu->setAnchorPoint({0.f, 0.f});
     colorModeMenu->setScale(0.5f);
@@ -328,8 +341,10 @@ void VisualsOptPopup::onToggle(CCObject* object) {
         m_meterMarks = toggled;
         if (toggled) {
             m_markIntMenu->setOpacity(255);
+            m_mmPicSpr->setVisible(true);
         } else {
             m_markIntMenu->setOpacity(127);
+            m_mmPicSpr->setVisible(false);
         }
     } else if (chkID == "jfpopt-low-visibility-chk"_spr) {
         m_lowVisiblity = toggled;
@@ -337,6 +352,11 @@ void VisualsOptPopup::onToggle(CCObject* object) {
         m_cornerPieces = toggled;
     } else if (chkID == "jfpopt-finish-line-chk"_spr) {
         m_finishLine = toggled;
+        if (toggled) {
+            m_flPicSpr->setVisible(true);
+        } else {
+            m_flPicSpr->setVisible(false);
+        }
     } else if (chkID == "jfpopt-hide-icon-chk"_spr) {
         m_hideIcon = toggled;
     } else {

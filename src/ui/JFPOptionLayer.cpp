@@ -6,6 +6,7 @@
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/general.hpp>
 #include "./OptionStrPopup.hpp"
+#include "../utils/OptionStr.hpp"
 #include "../option_popups/CorridorOptPopup.hpp"
 #include "../option_popups/GravHazOptPopup.hpp"
 #include "../option_popups/SoundtrackOptPopup.hpp"
@@ -88,24 +89,16 @@ bool JFPOptionLayer::init() {
         this,
         menu_selector(JFPOptionLayer::onOptionsLaunch));
     optionsBtn12->setID("jfp-options-1-2");
-
-    // auto oldOptionSprite = CircleButtonSprite::createWithSpriteFrameName(
-    //     "options_s.png"_spr, 1.f,
-    //     CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    // oldOptionSprite->setScale(1.1f);
-    // auto oldOptionButton = CCMenuItemSpriteExtra::create(
-    //     oldOptionSprite,
-    //     this, menu_selector(JFPOptionLayer::onVisualsButton));
-    // oldOptionButton->setID("jfp-options-0-1"_spr);
-
-    // auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
-    //     "options_s.png"_spr, 1.f,
-    //     CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    // optionSprite->setScale(1.1f);
-    // auto optionButton = CCMenuItemSpriteExtra::create(
-    //     optionSprite,
-    //     this, menu_selector(JFPOptionLayer::onSpeedButton));
-    // optionButton->setID("jfp-options-0-2"_spr);
+    
+    auto resetBtnMenu = CCMenu::create();
+    auto resetBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_deleteBtn_001.png"),
+        this,
+        menu_selector(JFPOptionLayer::onReset));
+    resetBtn->setScale(0.7f);
+    resetBtnMenu->addChild(resetBtn);
+    resetBtnMenu->setPosition({windowDim.width - 25.f, 25.f});
+    addChild(resetBtnMenu);
 
     auto menu = CCMenu::create();
 
@@ -138,9 +131,22 @@ void JFPOptionLayer::onBack(CCObject* object) {
     JFPGenericLayer::onBack(object);
 }
 
+void JFPOptionLayer::onReset(CCObject* object) {
+    createQuickPopup(
+        "JFP",
+        "Are you sure you want to <cr>reset</c> all options "
+        "to <cy>default</c>?",
+        "Cancel", "Reset",
+        [this](auto, bool btn2) {
+            if (btn2) {
+                loadDefaults(true);
+            }
+        }
+    );
+}
+
 void JFPOptionLayer::onOptionsLaunch(CCObject* object) {
     std::string selectorID = typeinfo_cast<CCNode*>(object)->getID();
-    log::info("{}", selectorID);
     if (selectorID == "jfp-options-0-0") {
         CorridorOptPopup::create("")->show();
     } else if (selectorID == "jfp-options-0-1") {

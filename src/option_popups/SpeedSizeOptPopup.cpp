@@ -299,12 +299,11 @@ void SpeedSizeOptPopup::onToggle(CCObject* object) {
     } else if (chkID == "jfpopt-changing-size-chk"_spr) {
         m_changingSize = toggled;
     } else {
-        log::info("Unknown toggle: {}", chkID);
+        log::warn("Unknown toggle: {}", chkID);
     }
 }
 
 void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
-    log::info("{}", m_sspeedItems->count());
     auto selection = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
     std::string titleID = typeinfo_cast<CCLabelBMFont*>(selection->getUserObject())->getID();
 
@@ -316,7 +315,6 @@ void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
         }
         m_sspeedIndex = selection->getTag();
         selection->setOpacity(255);
-        log::info("ssid: {}", m_sspeedIndex);
     } else if (titleID == "jfpopt-selected-speeds"_spr) {
         int8_t selectedIndex = selection->getTag();
         bool speedEnabled = ((m_speedChangesData >> selectedIndex) & 1);
@@ -328,7 +326,7 @@ void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
             selection->setOpacity(255);
         }
     } else {
-        log::info("Unknown toggle: {}", titleID);
+        log::warn("Unknown toggle: {}", titleID);
     }
 }
 
@@ -350,7 +348,7 @@ void SpeedSizeOptPopup::onEnumDecrease(CCObject* object) {
         m_cspeedIndex -= 1;
         labelText = JFPGen::DifficultiesLabel.at(m_cspeedIndex);
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     lbl->setCString(labelText.c_str());
@@ -374,7 +372,7 @@ void SpeedSizeOptPopup::onEnumIncrease(CCObject* object) {
         if (m_cspeedIndex >= m_cspeedIndexLen) m_cspeedIndex = 0;
         labelText = JFPGen::DifficultiesLabel.at(m_cspeedIndex);
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     lbl->setCString(labelText.c_str());

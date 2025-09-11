@@ -345,7 +345,7 @@ void GravHazOptPopup::onToggle(CCObject* object) {
     } else if (chkID == "jfpopt-fuzzy-spikes-chk"_spr) {
         m_fuzzToggled = toggled;
     } else {
-        log::info("Unknown toggle: {}", chkID);
+        log::warn("Unknown toggle: {}", chkID);
     }
 }
 
@@ -367,7 +367,7 @@ void GravHazOptPopup::onEnumDecrease(CCObject* object) {
         m_spIndex -= 1;
         labelText = JFPGen::PlacementBySizeLabel.at(m_spIndex);
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     lbl->setCString(labelText.c_str());
@@ -391,7 +391,7 @@ void GravHazOptPopup::onEnumIncrease(CCObject* object) {
         if (m_spIndex >= m_spIndexLen) m_spIndex = 0;
         labelText = JFPGen::PlacementBySizeLabel.at(m_spIndex);
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     lbl->setCString(labelText.c_str());

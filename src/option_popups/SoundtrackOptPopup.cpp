@@ -104,7 +104,7 @@ void SoundtrackOptPopup::onEnumDecrease(CCObject* object) {
         std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
         lbl->setCString(mSrcLabelText.c_str());
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 }
 
@@ -118,14 +118,14 @@ void SoundtrackOptPopup::onEnumIncrease(CCObject* object) {
         std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
         lbl->setCString(mSrcLabelText.c_str());
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 }
 
 void SoundtrackOptPopup::onInfo(CCObject*) {
     const char* info =
         "#### Options handling JFP's music and playlist system\n\n"
-        "<cp>RNG Set Seed</c>: Determines JFP's randomizer pattern. A seed gives the same pattern every time\n"
+        "<cp>Music Selection</c>: Determines where the in-level songs are pulled from\n"
         "- JFP Soundtrack: Set of music submitted by the JFP developers and playerbase. "
         "Unfortunately, this list is difficult to download; you can view the full list of song IDs "
         "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97)."

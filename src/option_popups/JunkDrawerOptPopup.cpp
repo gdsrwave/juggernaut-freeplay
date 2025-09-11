@@ -10,7 +10,6 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Junk Drawer");
-    log::info("{}", m_debug);
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
 
     // SAVE BUTTON
@@ -181,7 +180,6 @@ void JunkDrawerOptPopup::save(CCObject*) {
     mod->setSavedValue<bool>("opt-u-theme-creator-tools", m_themeTools);
     mod->setSavedValue<bool>("opt-u-debug", m_debug);
     mod->setSavedValue<bool>("opt-u-save-on-close", m_autosave);
-    log::info("saved {}", m_debug);
 
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();
@@ -203,7 +201,7 @@ void JunkDrawerOptPopup::onToggle(CCObject* object) {
     } else if (chkID == "jfpopt-autosave-chk"_spr) {
         m_autosave = toggled;
     } else {
-        log::info("Unknown toggle: {}", chkID);
+        log::warn("Unknown toggle: {}", chkID);
     }
 }
 

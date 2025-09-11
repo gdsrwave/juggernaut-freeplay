@@ -10,7 +10,6 @@ bool CorridorOptPopup::setup(std::string const& value) {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Corridor Options");
-    log::info("abcdgfe");
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
 
     // SAVE BUTTON
@@ -50,17 +49,17 @@ bool CorridorOptPopup::setup(std::string const& value) {
     seedChk->toggle(usingSetSeed);
     std::string seedLoad = numToString(mod->getSavedValue<uint32_t>("opt-0-seed"));
     m_seedInput = TextInput::create(
-        150.f,
+        180.f,
         seedLoad.size() > 0 ? seedLoad : "2147483647",
         "bigFont.fnt"
     );
     m_seedInput->setString(seedLoad);
     m_seedInput->setID("jfpopt-seed-input"_spr);
     m_seedInput->setScale(1.f);
-    m_seedInput->setMaxCharCount(10);
     m_seedInput->setEnabled(usingSetSeed);
-    m_seedInput->setCommonFilter(CommonFilter::Uint);
-    
+    m_seedInput->setFilter("0123456789");
+    m_seedInput->setMaxCharCount(11);
+
     seedMenu->setLayout(RowLayout::create()
         ->setGap(5.f)
         ->setAxisAlignment(AxisAlignment::Start)
@@ -215,7 +214,6 @@ void CorridorOptPopup::onClose(CCObject* object) {
 }
 
 void CorridorOptPopup::save(CCObject*) {
-    log::info("{}", m_seedToggled);
     std::string seedStr = m_seedInput->getString();
     if (seedStr.empty()) {
         mod->setSavedValue<bool>("opt-0-using-set-seed", false);
@@ -247,7 +245,7 @@ void CorridorOptPopup::onToggle(CCObject* object) {
     } else if (chkID == "jfpopt-wide-bounds"_spr) {
         m_wpb = toggled;
     } else {
-        log::info("Unknown toggle: {}", chkID);
+        log::warn("Unknown toggle: {}", chkID);
     }
 }
 
@@ -259,7 +257,7 @@ void CorridorOptPopup::onEnumDecrease(CCObject* object) {
         if (m_crIndex == 0) m_crIndex = m_crIndexLen;
         m_crIndex -= 1;
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     std::string crLabelText = JFPGen::CorridorRulesLabel.at(m_crIndex);
@@ -274,7 +272,7 @@ void CorridorOptPopup::onEnumIncrease(CCObject* object) {
         m_crIndex += 1;
         if (m_crIndex >= m_crIndexLen) m_crIndex = 0;
     } else {
-        log::info("Unknown toggle: {}", lbl->getID());
+        log::warn("Unknown toggle: {}", lbl->getID());
     }
 
     std::string crLabelText = JFPGen::CorridorRulesLabel.at(m_crIndex);
@@ -289,9 +287,9 @@ void CorridorOptPopup::onInfo(CCObject*) {
         "- NSNZ = \"No Spam, No Zigzagging,\" which prevents some intensive patterns.\n"
         "- LRD = \"Low Respectful Density,\" which removes spam and tends away from doubleclick inputs.\n\n"
         "<cb>Length (m)</c>: Corridor Length in meters (1 meter = 1 block)\n\n"
-        "<cg>Corridor Height (u)</c>: Corridor height in units (60u ch = 2 blocks)\n"
-        "- IMPORTANT: You may notice that using mini wave, by default, actually adds 30 to this corridor height. This is due to transitions "
-        "between bigwave and miniwave as controlled by the <cy>Size Transition Type</c> option. See Speed/Wave Size Options for more information.\n\n"
+        "<cg>Corridor Height (u)</c>: Corridor height in units (60u ch = 2 blocks)\n\n"
+        "IMPORTANT: By default, JFP actually adds 30 to this corridor height in miniwave. This is due to transitions "
+        "between bigwave and miniwave, which are controlled by the <cy>Size Transition Type</c> option.\n\nSee Speed/Wave Size Options for more information.\n\n"
         "<cy>Widen Playfield Bounds</c>: Extends corridor boundaries by 1 block on the top/bottom";
 
     auto infoLayer = MDPopup::create("Corridor Options Info",

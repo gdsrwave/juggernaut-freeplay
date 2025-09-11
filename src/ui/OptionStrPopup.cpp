@@ -37,7 +37,7 @@ bool OptionStrPopup::setup(std::string const& value) {
 
 void OptionStrPopup::clickImport(CCObject* object) {
     std::string input = m_inputOptTxt->getString();
-    log::info("Importing Theme {}", input);
+    log::info("Importing {}", input);
     importSettings(input);
 
     OptionStrPopup::onClose(object);
@@ -58,8 +58,4 @@ OptionStrPopup *OptionStrPopup::create(std::string const& text) {
 
     delete ret;
     return nullptr;
-}
-
-OptionStrPopup::~OptionStrPopup() {
-    if (this->getParent() != nullptr) this->removeAllChildrenWithCleanup(true);
 }

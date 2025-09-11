@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "./Ninja.hpp"
 
 struct BitField {
     uint64_t seg1;
@@ -31,3 +32,4 @@ int readStoredNum(std::vector<uint8_t>& bytes, int offset, int size);
 void writeStoredNum(std::vector<uint8_t>& bytes, int offset, int size, int value);
 std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome);
 std::vector<PackedEntry> getSettingsOld(JFPGen::JFPBiome biome);
+void loadDefaults(bool fullReset = false);

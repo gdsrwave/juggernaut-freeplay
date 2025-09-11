@@ -22,6 +22,8 @@ protected:
 
     CCSprite* m_colorModePicSpr;
     CCSprite* m_bgTexturePicSpr;
+    CCSprite* m_mmPicSpr;
+    CCSprite* m_flPicSpr;
 
     CCMenu* m_markIntMenu;
 
