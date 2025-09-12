@@ -18,6 +18,7 @@
 #include "../utils/OptionStr.hpp"
 #include "../utils/Theming.hpp"
 #include "./OptionStrPopup.hpp"
+#include "./ThemeSelectPopup.hpp"
 
 std::mutex mtx;
 std::condition_variable cv;
@@ -260,7 +261,7 @@ bool JFPMenuLayer::init() {
 }
 
 void JFPMenuLayer::onOptionButton(CCObject*) {
-    openSettingsPopup(Mod::get());
+    ThemeSelectPopup::create("")->show();
 }
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
@@ -332,8 +333,11 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             "JFP",
             message.c_str(),
             "Continue", nullptr,
-            [&](bool b1, auto) {
+            [=](bool b1, auto) {
                 if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
+                else {
+                    return true;
+                }
             });
     } else {
         dir->replaceScene(JFPScreenshotLayer::scene());
@@ -355,7 +359,6 @@ void JFPMenuLayer::onAutoGen() {
     }
     auto newScene = PlayLayer::scene(level, false, false);
     // seems to work better than pushScene?
-    log::info("z");
     CCDirector::sharedDirector()->replaceScene(newScene);
 }
 

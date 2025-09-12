@@ -51,7 +51,7 @@ void OptionStrPopup::onClose(CCObject* object) {
 
 OptionStrPopup *OptionStrPopup::create(std::string const& text) {
     auto ret = new OptionStrPopup();
-    if (ret->initAnchored(240.f, 140.f, text)) {
+    if (ret->initAnchored(240.f, 140.f, text, "GJ_square05.png")) {
         ret->autorelease();
         return ret;
     }

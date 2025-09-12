@@ -28,7 +28,6 @@ bool JFPScreenshotLayer::init() {
         return false;
     }
 
-    log::info("bbb");
 
     // auto windowDim = CCDirector::sharedDirector()->getWinSize();
     // auto backgroundSprite2 = CCSprite::createWithSpriteFrameName(
@@ -60,8 +59,6 @@ bool JFPScreenshotLayer::init() {
 
     addChild(rt);
 
-
-
     return true;
 }
 
@@ -92,14 +89,12 @@ void JFPScreenshotLayer::onAutoGen() {
     }
     auto newScene = PlayLayer::scene(level, false, false);
     // seems to work better than pushScene?
-    log::info("z");
     CCDirector::sharedDirector()->replaceScene(newScene);
 
 }
 
 void JFPScreenshotLayer::onEnterTransitionDidFinish() {
 
-    log::info("a");
     JFPGenericLayer::onEnterTransitionDidFinish();
     queueInMainThread([=]() {
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
