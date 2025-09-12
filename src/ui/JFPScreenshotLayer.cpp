@@ -13,14 +13,14 @@
 
 
 JFPScreenshotLayer* JFPScreenshotLayer::create() {
-    auto ret = new JFPScreenshotLayer();
-    if (ret && ret->init()) {
+    auto ret = new JFPScreenshotLayer;
+    if (ret->init()) {
         ret->autorelease();
-    } else {
-        delete ret;
-        ret = nullptr;
+        return ret;
     }
-    return ret;
+
+    delete ret;
+    return nullptr;
 }
 
 bool JFPScreenshotLayer::init() {

@@ -18,7 +18,7 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(JunkDrawerOptPopup::save));
+        saveBtnS, this, menu_selector(JunkDrawerOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -167,22 +167,25 @@ bool JunkDrawerOptPopup::setup(std::string const& value) {
 
 void JunkDrawerOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        JunkDrawerOptPopup::save(object);
+        JunkDrawerOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void JunkDrawerOptPopup::save(CCObject*) {
+void JunkDrawerOptPopup::onSave(CCObject*) {
+    JunkDrawerOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void JunkDrawerOptPopup::save() {
     mod->setSettingValue<bool>("lmao-button", m_lmaoButton);
     mod->setSavedValue<bool>("opt-u-waveman-button-shown", m_wavemanButton);
     mod->setSavedValue<bool>("opt-u-theme-creator-tools", m_themeTools);
     mod->setSavedValue<bool>("opt-u-debug", m_debug);
     mod->setSavedValue<bool>("opt-u-save-on-close", m_autosave);
-
-    Notification::create("Saved Successfully",
-        NotificationIcon::Success, 0.5f)->show();
 }
 
 void JunkDrawerOptPopup::onToggle(CCObject* object) {

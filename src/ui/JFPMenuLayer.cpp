@@ -25,14 +25,14 @@ std::condition_variable cv;
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
 JFPMenuLayer* JFPMenuLayer::create() {
-    auto ret = new JFPMenuLayer();
-    if (ret && ret->init()) {
+    auto ret = new JFPMenuLayer;
+    if (ret->init()) {
         ret->autorelease();
-    } else {
-        delete ret;
-        ret = nullptr;
+        return ret;
     }
-    return ret;
+
+    delete ret;
+    return nullptr;
 }
 
 GJGameLevel* createGameLevel() {
@@ -422,7 +422,6 @@ CCScene* JFPMenuLayer::scene() {
 }
 
 void JFPMenuLayer::onEnterTransitionDidFinish() {
-    log::info("a");
     JFPGenericLayer::onEnterTransitionDidFinish();
 }
 

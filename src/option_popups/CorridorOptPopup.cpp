@@ -18,7 +18,7 @@ bool CorridorOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(CorridorOptPopup::save));
+        saveBtnS, this, menu_selector(CorridorOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -206,14 +206,20 @@ bool CorridorOptPopup::setup(std::string const& value) {
 
 void CorridorOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        CorridorOptPopup::save(object);
+        CorridorOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void CorridorOptPopup::save(CCObject*) {
+void CorridorOptPopup::onSave(CCObject*) {
+    CorridorOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void CorridorOptPopup::save() {
     std::string seedStr = m_seedInput->getString();
     if (seedStr.empty()) {
         mod->setSavedValue<bool>("opt-0-using-set-seed", false);
@@ -227,9 +233,6 @@ void CorridorOptPopup::save(CCObject*) {
     if (parsedLength >= 1 && parsedLength <= 100000) mod->setSavedValue<uint32_t>("opt-0-length", parsedLength);
     uint8_t parsedCH = numFromString<uint8_t>(m_chInput->getString()).unwrapOr(0);
     mod->setSavedValue<uint8_t>("opt-0-corridor-height", parsedCH);
-
-    Notification::create("Saved Successfully",
-        NotificationIcon::Success, 0.5f)->show();
 }
 
 void CorridorOptPopup::onToggle(CCObject* object) {

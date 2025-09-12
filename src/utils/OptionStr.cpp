@@ -601,10 +601,10 @@ void loadDefaults(bool fullReset) {
     mod->setSavedValue<uint8_t>("opt-0-speed-changes", 9);
     mod->setSavedValue<bool>("opt-0-show-meter-marks", true);
     mod->setSavedValue<uint32_t>("opt-0-mark-interval", 100);
-    mod->setSavedValue<std::string>("opt-0-filename", "waveman");
+    mod->setSavedValue<std::string>("opt-u-filename", "waveman");
     mod->setSavedValue<uint8_t>("opt-0-music-source", 1);
     mod->setSavedValue<uint8_t>("opt-0-color-mode", 1);
-    mod->setSavedValue<uint8_t>("opt-u-starting-speed", 4);
+    mod->setSavedValue<uint8_t>("opt-0-starting-speed", 3);
     mod->setSavedValue<bool>("opt-0-background-texture", 1);
 
     // biome 0 full reload

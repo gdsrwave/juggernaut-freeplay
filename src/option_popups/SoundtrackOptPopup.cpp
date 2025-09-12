@@ -18,7 +18,7 @@ bool SoundtrackOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(SoundtrackOptPopup::save));
+        saveBtnS, this, menu_selector(SoundtrackOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -80,18 +80,21 @@ bool SoundtrackOptPopup::setup(std::string const& value) {
 
 void SoundtrackOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        SoundtrackOptPopup::save(object);
+        SoundtrackOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void SoundtrackOptPopup::save(CCObject*) {
-    mod->setSavedValue<uint8_t>("opt-0-music-source", m_msrcIndex);
-
+void SoundtrackOptPopup::onSave(CCObject*) {
+    SoundtrackOptPopup::save();
     Notification::create("Saved Successfully",
         NotificationIcon::Success, 0.5f)->show();
+}
+
+void SoundtrackOptPopup::save() {
+    mod->setSavedValue<uint8_t>("opt-0-music-source", m_msrcIndex);
 }
 
 void SoundtrackOptPopup::onEnumDecrease(CCObject* object) {

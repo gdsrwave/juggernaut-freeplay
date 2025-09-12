@@ -18,7 +18,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(SpeedSizeOptPopup::save));
+        saveBtnS, this, menu_selector(SpeedSizeOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -262,14 +262,20 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
 
 void SpeedSizeOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        SpeedSizeOptPopup::save(object);
+        SpeedSizeOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void SpeedSizeOptPopup::save(CCObject*) {
+void SpeedSizeOptPopup::onSave(CCObject*) {
+    SpeedSizeOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void SpeedSizeOptPopup::save() {
     mod->setSavedValue<uint8_t>("opt-0-starting-speed", m_sspeedIndex);
     mod->setSavedValue<uint8_t>("opt-0-speed-changes", m_speedChangesData);
     mod->setSavedValue<bool>("opt-0-using-speed-changes", m_changingSpeed);
@@ -277,9 +283,6 @@ void SpeedSizeOptPopup::save(CCObject*) {
     mod->setSavedValue<uint8_t>("opt-0-starting-size", m_ssizeIndex);
     mod->setSavedValue<uint8_t>("opt-0-size-transition-type", m_tTypeIndex);
     mod->setSavedValue<uint8_t>("opt-0-speed-changes-diff", m_cspeedIndex);
-
-    Notification::create("Saved Successfully",
-        NotificationIcon::Success, 0.5f)->show();
 }
 
 void SpeedSizeOptPopup::onToggle(CCObject* object) {
@@ -309,7 +312,8 @@ void SpeedSizeOptPopup::onEnumSelect(CCObject* object) {
 
     if (titleID == "jfpopt-starting-speed"_spr) {
         CCObject* obj2;
-        CCARRAY_FOREACH(m_sspeedItems, obj2) {
+        for (int i = 0; i < m_sspeedItems->count(); i++) {
+            obj2 = m_sspeedItems->objectAtIndex(i);
             if (obj2 == nullptr) continue;
             static_cast<CCMenuItemSpriteExtra*>(obj2)->setOpacity(127);
         }

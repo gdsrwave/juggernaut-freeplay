@@ -18,7 +18,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(VisualsOptPopup::save));
+        saveBtnS, this, menu_selector(VisualsOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -200,7 +200,7 @@ bool VisualsOptPopup::setup(std::string const& value) {
     m_mmPicSpr = CCSprite::createWithSpriteFrameName("mark.png"_spr);
     m_mmPicSpr->setScale(180.f / m_mmPicSpr->getContentSize().height);
     m_mmPicSpr->setZOrder(2);
-    if (!m_meterMarks) m_flPicSpr->setVisible(false);
+    if (!m_meterMarks) m_mmPicSpr->setVisible(false);
 
     m_flPicSpr = CCSprite::createWithSpriteFrameName("finishline.png"_spr);
     m_flPicSpr->setScale(180.f / m_flPicSpr->getContentSize().height);
@@ -307,14 +307,20 @@ bool VisualsOptPopup::setup(std::string const& value) {
 
 void VisualsOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        VisualsOptPopup::save(object);
+        VisualsOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void VisualsOptPopup::save(CCObject*) {
+void VisualsOptPopup::onSave(CCObject*) {
+    VisualsOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void VisualsOptPopup::save() {
 
     mod->setSavedValue<bool>("opt-0-show-meter-marks", m_meterMarks);
     uint32_t markIntParsed = numFromString<uint32_t>(m_markIntInput->getString()).unwrapOr(0);
@@ -327,9 +333,6 @@ void VisualsOptPopup::save(CCObject*) {
     mod->setSavedValue<bool>("opt-0-hide-icon", m_hideIcon);
     mod->setSavedValue<uint8_t>("opt-0-color-mode", m_colorModeIndex);
     mod->setSavedValue<uint8_t>("opt-0-background-texture", m_bgTextureIndex);
-
-    Notification::create("Saved Successfully",
-        NotificationIcon::Success, 0.5f)->show();
 }
 
 void VisualsOptPopup::onToggle(CCObject* object) {

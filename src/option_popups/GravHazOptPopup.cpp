@@ -18,7 +18,7 @@ bool GravHazOptPopup::setup(std::string const& value) {
         "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.7f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(GravHazOptPopup::save));
+        saveBtnS, this, menu_selector(GravHazOptPopup::onSave));
 
     saveBtnMenu->addChild(saveBtn);
     saveBtnMenu->setPosition({200.f, 30.f});
@@ -288,14 +288,20 @@ bool GravHazOptPopup::setup(std::string const& value) {
 
 void GravHazOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
-        GravHazOptPopup::save(object);
+        GravHazOptPopup::save();
     }
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
     this->removeFromParentAndCleanup(true);
 }
 
-void GravHazOptPopup::save(CCObject*) {
+void GravHazOptPopup::onSave(CCObject*) {
+    GravHazOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void GravHazOptPopup::save() {
     mod->setSavedValue<bool>("opt-0-using-grav-portals", m_portalsToggled);
     mod->setSavedValue<bool>("opt-0-grav-portal-start", m_upsideDownToggled);
     mod->setSavedValue<bool>("opt-0-fake-grav-portals", m_fakesToggled);
@@ -306,9 +312,6 @@ void GravHazOptPopup::save(CCObject*) {
     mod->setSavedValue<bool>("opt-0-using-corridor-spikes", m_spikesToggled);
     mod->setSavedValue<bool>("opt-0-corridor-fuzz", m_fuzzToggled);
     mod->setSavedValue<uint8_t>("opt-0-spike-placement-types", m_spIndex);
-
-    Notification::create("Saved Successfully",
-        NotificationIcon::Success, 0.5f)->show();
 }
 
 void GravHazOptPopup::onToggle(CCObject* object) {

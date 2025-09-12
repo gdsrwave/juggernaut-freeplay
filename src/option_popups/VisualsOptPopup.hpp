@@ -11,7 +11,8 @@ protected:
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
     void onEnumIncrease(CCObject* object);
-    void save(CCObject*);
+    void onSave(CCObject* object);
+    void save();
     void onInfo(CCObject* object);
 
     Mod* mod = Mod::get();

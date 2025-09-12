@@ -3,18 +3,15 @@
 #include "Geode/binding/FLAlertLayer.hpp"
 #include "Geode/utils/cocos.hpp"
 
-// JFPGenericLayer.cpp takes reference from Cvolton/BetterInfo. -M
-// https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
-
 JFPGenericLayer* JFPGenericLayer::create() {
-    auto ret = new JFPGenericLayer();
-    if (ret && ret->init()) {
+    auto ret = new JFPGenericLayer;
+    if (ret->init()) {
         ret->autorelease();
-    } else {
-        delete ret;
-        ret = nullptr;
+        return ret;
     }
-    return ret;
+
+    delete ret;
+    return nullptr;
 }
 
 bool JFPGenericLayer::init(bool defaults) {

@@ -16,14 +16,14 @@
 
 
 JFPOptionLayer* JFPOptionLayer::create() {
-    auto ret = new JFPOptionLayer();
-    if (ret && ret->init()) {
+    auto ret = new JFPOptionLayer;
+    if (ret->init()) {
         ret->autorelease();
-    } else {
-        delete ret;
-        ret = nullptr;
+        return ret;
     }
-    return ret;
+
+    delete ret;
+    return nullptr;
 }
 
 bool JFPOptionLayer::init() {
