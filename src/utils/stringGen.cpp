@@ -79,7 +79,7 @@ std::string jfpStringGen(bool compress) {
     // every att. however, I'm holding off on this because of possibilities
     // during biome system buildout and the introduction of presets. -M
     std::string themeString = ThemeGen::parseTheme(
-        Mod::get()->getSettingValue<std::string>("active-theme"), ldata);
+        Mod::get()->getSavedValue<std::string>("active-theme"), ldata);
 
     std::string levelString = jfpNewStringGen(ldata);
     levelString = colorStringGen() + kStringGen() + levelString + themeString;

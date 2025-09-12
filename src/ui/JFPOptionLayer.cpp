@@ -95,9 +95,9 @@ bool JFPOptionLayer::init() {
         CCSprite::createWithSpriteFrameName("GJ_deleteBtn_001.png"),
         this,
         menu_selector(JFPOptionLayer::onReset));
-    resetBtn->setScale(0.7f);
-    resetBtnMenu->addChild(resetBtn);
+    resetBtnMenu->setScale(0.7f);
     resetBtnMenu->setPosition({windowDim.width - 25.f, 25.f});
+    resetBtnMenu->addChild(resetBtn);
     addChild(resetBtnMenu);
 
     auto menu = CCMenu::create();

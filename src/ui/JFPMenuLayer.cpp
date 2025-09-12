@@ -9,7 +9,6 @@
 #include "JFPMenuLayer.hpp"
 #include "JFPOptionLayer.hpp"
 #include "JFPScreenshotLayer.hpp"
-#include "./ThemeSelect.hpp"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/general.hpp>
@@ -153,7 +152,7 @@ bool JFPMenuLayer::init() {
     oldOptionSprite->setScale(1.1f);
     auto oldOptionButton = CCMenuItemSpriteExtra::create(
         oldOptionSprite,
-        this, menu_selector(JFPMenuLayer::onOptionButton));
+        this, menu_selector(JFPMenuLayer::onThemeButton));
     oldOptionButton->setID("jfp-option-button"_spr);
 
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
@@ -260,7 +259,7 @@ bool JFPMenuLayer::init() {
     return true;
 }
 
-void JFPMenuLayer::onOptionButton(CCObject*) {
+void JFPMenuLayer::onThemeButton(CCObject*) {
     ThemeSelectPopup::create("")->show();
 }
 
@@ -320,7 +319,7 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
     auto dir = CCDirector::sharedDirector();
 
     std::string themeName =
-        Mod::get()->getSettingValue<std::string>("active-theme");
+        Mod::get()->getSavedValue<std::string>("active-theme");
     auto tmd = ThemeGen::parseThemeMeta(themeName);
     auto conflicts = ThemeGen::tagConflicts(tmd);
 
@@ -360,17 +359,6 @@ void JFPMenuLayer::onAutoGen() {
     auto newScene = PlayLayer::scene(level, false, false);
     // seems to work better than pushScene?
     CCDirector::sharedDirector()->replaceScene(newScene);
-}
-
-void JFPMenuLayer::onThemeButton(CCObject*) {
-    auto themeSelectLayer = GJDropDownLayer::create(
-        "Select Theme", 220.f, true);
-    themeSelectLayer->setID("theme-select-layer"_spr);
-    themeSelectLayer->setContentSize({640, 480});
-    themeSelectLayer->setAnchorPoint({0.5f, 0.5f});
-    themeSelectLayer->setPosition({0, 0});
-    themeSelectLayer->addChild(ThemeSelectLayer::create());
-    CCScene::get()->addChild(themeSelectLayer);
 }
 
 void JFPMenuLayer::onInfoButton(CCObject*) {

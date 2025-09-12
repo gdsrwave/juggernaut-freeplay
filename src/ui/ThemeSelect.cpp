@@ -42,6 +42,13 @@ bool ThemeSelectLayer::init() {
     return true;
 }
 
+CCScene* ThemeSelectLayer::scene() {
+    auto layer = ThemeSelectLayer::create();
+    auto scene = CCScene::create();
+    scene->addChild(layer);
+    return scene;
+}
+
 ThemeSelectOuterMenu* ThemeSelectOuterMenu::create() {
     auto ret = new ThemeSelectOuterMenu();
     if (ret && ret->init()) {
