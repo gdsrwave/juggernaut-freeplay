@@ -1,7 +1,6 @@
 // Copyright 2025 GDSRWave
 #include <memory>
 #include <string>
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "JFPScreenshotLayer.hpp"
 #include "JFPMenuLayer.hpp"
 #include <Geode/ui/GeodeUI.hpp>

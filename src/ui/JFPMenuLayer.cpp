@@ -5,7 +5,6 @@
 #include <mutex>    
 #include <string>
 #include <thread>
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "JFPMenuLayer.hpp"
 #include "JFPOptionLayer.hpp"
 #include "JFPScreenshotLayer.hpp"
@@ -138,27 +137,18 @@ bool JFPMenuLayer::init() {
     // auto optTxt = CCLabelBMFont::create("", "goldFont.fnt");
 
     auto themeSprite = CircleButtonSprite::createWithSpriteFrameName(
-        "snoop_s.png"_spr, 1.f,
+        "paint_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    themeSprite->setScale(1.1f);
+    themeSprite->setScale(1.0f);
     auto themeButton = CCMenuItemSpriteExtra::create(
         themeSprite,
         this, menu_selector(JFPMenuLayer::onThemeButton));
     themeButton->setID("jfp-theme-button"_spr);
 
-    auto oldOptionSprite = CircleButtonSprite::createWithSpriteFrameName(
-        "options_s.png"_spr, 1.f,
-        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    oldOptionSprite->setScale(1.1f);
-    auto oldOptionButton = CCMenuItemSpriteExtra::create(
-        oldOptionSprite,
-        this, menu_selector(JFPMenuLayer::onThemeButton));
-    oldOptionButton->setID("jfp-option-button"_spr);
-
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
         "options_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    optionSprite->setScale(1.1f);
+    optionSprite->setScale(1.0f);
     auto optionButton = CCMenuItemSpriteExtra::create(
         optionSprite,
         this, menu_selector(JFPMenuLayer::openOptions));
@@ -167,7 +157,7 @@ bool JFPMenuLayer::init() {
     auto autoGenSprite = CircleButtonSprite::createWithSpriteFrameName(
         "dabbink_s.png"_spr, 1.125f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    autoGenSprite->setScale(1.1f);
+    autoGenSprite->setScale(1.3f);
     auto autoGenButton = CCMenuItemSpriteExtra::create(
         autoGenSprite,
         this,
@@ -222,8 +212,8 @@ bool JFPMenuLayer::init() {
     menu->setContentSize({300.f, 240.f});
     menu->setLayout(RowLayout::create()
         ->setGap(7.f));
+    menu->addChild(themeButton);
     menu->addChild(autoGenButton);
-    menu->addChild(oldOptionButton);
     menu->addChild(optionButton);
     addChild(menu);
 

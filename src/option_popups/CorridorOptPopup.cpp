@@ -240,8 +240,6 @@ void CorridorOptPopup::onToggle(CCObject* object) {
     auto chkID = chk->getID();
     bool toggled = !chk->isToggled();
 
-    log::info("chkID: {}", chkID);
-
     if (chkID == "jfpopt-seed-chk"_spr) {
         m_seedInput->setEnabled(toggled);
         m_seedToggled = toggled;

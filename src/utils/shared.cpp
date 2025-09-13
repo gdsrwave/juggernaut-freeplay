@@ -1,7 +1,5 @@
 // Copyright 2025 GDSRWave
 #include <fmt/core.h>
-#include <Geode/cocos/platform/CCFileUtils.h>
-#include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include <cmath>
 #include <filesystem>
 #include <map>
@@ -11,9 +9,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/ui/BasedButtonSprite.hpp>
 #include <Geode/binding/LocalLevelManager.hpp>
-#include <Geode/ui/GeodeUI.hpp>
-#include <Geode/utils/cocos.hpp>
-#include <Geode/utils/file.hpp>
 #include "shared.hpp"
 
 using namespace geode::prelude;
@@ -64,6 +59,7 @@ void setupJFPDirectories(bool bypass) {
         log::info("Loading .jfpt files into themes directory: {}", themesDir);
         // Source directory for .jfpt files
         std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+        Mod::get()->setSavedValue<int>("ack-theme-update", 1);
 
         for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
             auto fileStr = fileName.path().filename().string();

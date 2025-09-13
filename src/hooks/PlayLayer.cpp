@@ -56,10 +56,6 @@ class $modify(PlayLayer) {
             state = JFPGen::AutoJFP::JustRestarted;
         }
 
-        Mod::get()->setSavedValue<uint32_t>(
-            "total-played",
-            Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1);
-
         globalAtt = m_attempts;
 
         PlayLayer::onQuit();

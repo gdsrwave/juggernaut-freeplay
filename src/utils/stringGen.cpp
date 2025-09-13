@@ -2,17 +2,10 @@
 #include "StringGen.hpp"
 #include <fmt/core.h>
 #include <fmt/args.h>
-#include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include <Geode/cocos/platform/CCFileUtils.h>
 #include <random>
 #include <string>
 #include <cmath>
 #include <Geode/Geode.hpp>
-#include <Geode/ui/BasedButtonSprite.hpp>
-#include <Geode/binding/LocalLevelManager.hpp>
-#include <Geode/ui/GeodeUI.hpp>
-#include <Geode/utils/cocos.hpp>
-#include <Geode/utils/file.hpp>
 #include "./shared.hpp"
 #include "./Theming.hpp"
 #include "./Ninja.hpp"
@@ -346,13 +339,13 @@ std::string jfpNewStringGen(LevelData ldata) {
         if (seg.options.speedChange != SpeedChange::None) {
             int speedID = convertSpeed(seg.options.speedChange);
 
-            int spY = y + currentCH/2 + 15 * (seg.y_swing == 1 ? -1 : 1);
+            int spY = y + currentCH/2 + 14 * (seg.y_swing == 1 ? -1 : 1);
             if (mini && seg.y_swing == 1) spY -= 30;
             int spR = (mini ? 63.435 : 45) * -seg.y_swing;
             float speedFactor = (mini ? 0.3 : 0.5) * (currentCH / 60.0);
             level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},64,1,67,1;",
                     fmt::arg("speedID", speedID),
-                    fmt::arg("x", x - 15),
+                    fmt::arg("x", x - 14),
                     fmt::arg("y", spY),
                     fmt::arg("r", spR),
                     fmt::arg("factor", speedFactor));
@@ -540,7 +533,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         xP = 285 - portalNormal + portalPos;
         yP = 75 + portalNormal + portalPos;
         if (startingMini) {
-            yP -= 30;
+            yP -= 60;
             xP += 15;
         }
         rPdeg = startingMini ? 26.565 : 45;

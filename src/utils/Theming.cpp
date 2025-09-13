@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 #include <Geode/Geode.hpp>
-#include <Geode/utils/cocos.hpp>
-#include <Geode/utils/file.hpp>
 #include "./Ninja.hpp"
 #include "./shared.hpp"
 
@@ -249,12 +247,18 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     }
     std::vector<std::string> lines;
     std::string line;
+    uint32_t ctr = 0;
     while (std::getline(file, line)) {
         lines.push_back(line);
+        ctr++;
+        if (ctr > 20000) break; 
     }
     file.close();
 
     for (const auto& l : lines) {
+        if (l.length() > 1000) {
+            continue;
+        }
         if (l == "# color #") {
             inAddcolor = true;
             continue;
@@ -541,8 +545,14 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             continue;
         }
 
-        if (l == "# pattern #") {
-            inPattern = true;
+        if (l.find("# pattern") == 0 && l.back() == '#') {
+            int pStart = 0, pRepeat = 0;
+            std::istringstream iss(l.substr(9, l.size() - 10));
+            if (iss >> pStart >> pRepeat) {
+                patternGen.start = pStart;
+                patternGen.repeat = pRepeat;
+                inPattern = true;
+            }
             continue;
         } else if (l == "# end pattern #") {
             inPattern = false;
@@ -553,27 +563,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             continue;
         }
         if (inPattern) {
-            auto pos = l.find(':');
-            if (pos != std::string::npos) {
-                std::string key = l.substr(0, pos);
-                std::string value = l.substr(pos + 1);
-
-                key.erase(0, key.find_first_not_of(" \t\r\n"));
-                key.erase(key.find_last_not_of(" \t\r\n") + 1);
-                value.erase(0, value.find_first_not_of(" \t\r\n"));
-                value.erase(value.find_last_not_of(" \t\r\n") + 1);
-
-                if (key == "Data") {
-                    patternGen.data = value;
-                } else if (key == "Start") {
-                    patternGen.start = geode::utils::numFromString<int>(value).unwrapOr(195);
-                } else if (key == "Repeat") {
-                    patternGen.repeat = geode::utils::numFromString<int>(value).unwrapOr(30);
-                    if (patternGen.repeat < 1 && patternGen.repeat != 30) {
-                        patternGen.repeat = 1;
-                    }
-                }
-            }
+            patternGen.data.push_back(l);
             continue;
         }
     }
@@ -584,12 +574,14 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         int loopCount = std::min((trueLength / pattern.repeat) + 1, 1000);
         int n = pattern.start;
         for (int i = 0; i < loopCount; ++i) {
-            themeGen += parseAddBlock(
-                pattern.data,
-                n, 0,
-                biome.options.maxHeight,
-                biome.options.minHeight,
-                biome.options.corridorHeight);
+            for (const auto blockData : pattern.data) {
+                themeGen += parseAddBlock(
+                    blockData,
+                    n, 0,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    biome.options.corridorHeight);
+            }
             n += pattern.repeat;
         }
     }

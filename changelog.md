@@ -1,3 +1,13 @@
+# JFP 1.7.0 (September 13, 2025)
+- Options overhaul: new and improved Options Menu
+- Theme Menu: easily pick and manage your JFP themes ingame!
+- Large compatibility fix (Mega Hack, QOLMod, PlatformerSaves)
+- Added random Starting Size option
+- Upgraded speed changes: Instead of min and max speed, you can select any combination of speed changes
+- Minor changes to theme language
+- Added Launch button to Geode settings page
+- Bugfixes and touch-ups
+
 # JFP 1.6.8 (August 26, 2025)
 - Added option for size-exclusive spike placement
 - Added Limp corridor rule (all big clicks)

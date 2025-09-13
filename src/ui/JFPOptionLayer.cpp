@@ -1,7 +1,6 @@
 // Copyright 2025 GDSRWave
 #include <memory>
 #include <string>
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "JFPOptionLayer.hpp"
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/general.hpp>
@@ -96,7 +95,9 @@ bool JFPOptionLayer::init() {
         this,
         menu_selector(JFPOptionLayer::onReset));
     resetBtnMenu->setScale(0.7f);
-    resetBtnMenu->setPosition({windowDim.width - 25.f, 25.f});
+    resetBtnMenu->setAnchorPoint({1, 0});
+    resetBtnMenu->setPosition({windowDim.width - resetBtnMenu->getContentSize().width - 25.f, 25.f});
+    resetBtn->setPositionX(resetBtnMenu->getContentSize().width);
     resetBtnMenu->addChild(resetBtn);
     addChild(resetBtnMenu);
 

@@ -50,20 +50,6 @@
 			"name": "Alternate Launcher",
 			"description": "Alternate button used to access the JFP main menu. LMAO button preferred.",
 			"type": "custom:jfp-alt-launcher"
-		},
-        "themes-title": {
-            "name": "Theming",
-            "type": "title"
-        },
-		"active-theme": {
-			"name": "Theme",
-			"description": "The active JFP theme file (.jfpt). Leaving this blank will load no theme.",
-			"type": "string",
-			"default": ""
-		},
-		"reload-themes": {
-			"name": "",
-			"type": "custom:reload-themes"
 		}
 	}
 }

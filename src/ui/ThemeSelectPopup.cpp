@@ -56,6 +56,9 @@ bool ThemeSelectPopup::setup(std::string const& value) {
         Mod::get()->getSavedValue<std::string>("active-theme");
 
     auto localPath = CCFileUtils::sharedFileUtils();
+    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
+    if (!std::filesystem::is_directory(jfpDir)) setupJFPDirectories(true);
+
     std::string fp = std::string(localPath->getWritablePath()) + "/jfp/themes/";
 
     for (const auto& entry : std::filesystem::directory_iterator(fp)) {
@@ -73,6 +76,18 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     m_themeUseBtns = CCArray::create();
 
     auto activeThemeName = Mod::get()->getSavedValue<std::string>("active-theme");
+
+    std::string currentBiome = "Juggernaut";
+
+    for (auto it = m_themeFiles.begin(); it != m_themeFiles.end(); ) {
+        std::string themeFile = *it;
+        auto tmd = ThemeGen::parseThemeMeta(themeFile);
+        if (tmd.biome != currentBiome) {
+            it = m_themeFiles.erase(it);
+        } else {
+            ++it;
+        }
+    }
 
     for (size_t i = 0; i < m_themeFiles.size(); i++) {
         auto tmd = ThemeGen::parseThemeMeta(m_themeFiles.at(i));
@@ -147,7 +162,65 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     scrl->m_contentLayer->updateLayout();
     scrl->moveToTop();
 
+    const int THEME_UPDATE_VER = 1;
+    if (Mod::get()->getSavedValue<int>("ack-theme-update", 0) != THEME_UPDATE_VER) {
+        Mod::get()->setSavedValue<int>("ack-theme-update", THEME_UPDATE_VER);
+
+        queueInMainThread([=]() {
+            ThemeSelectPopup::onReload(nullptr, true);
+        });
+    }
+
+    // OPEN FOLDER
+    auto folderMenu = CCMenu::create();
+    auto folderSpr = CircleButtonSprite::createWithSpriteFrameName(
+        "gj_folderBtn_001.png", 1.f,
+        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    auto folderButton = CCMenuItemSpriteExtra::create(
+        folderSpr,
+        this, menu_selector(ThemeSelectPopup::onClickFolder));
+    folderMenu->setPosition({10.f, 10.f});
+    folderMenu->addChild(folderButton);
+    m_mainLayer->addChild(folderMenu);
+
+    // RESTORE DEFAULTS
+    auto restoreMenu = CCMenu::create();
+    auto restoreSpr = CircleButtonSprite::createWithSpriteFrameName(
+        "restorefolder.png"_spr, 1.f,
+        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    auto restoreButton = CCMenuItemSpriteExtra::create(
+        restoreSpr,
+        this, menu_selector(ThemeSelectPopup::onClickReload));
+    
+    restoreMenu->setPosition({m_mainLayer->getContentSize().width - 10.f, 10.f});
+    restoreMenu->addChild(restoreButton);
+    m_mainLayer->addChild(restoreMenu);
+
+    // DESELECT BUTTON
+    auto saveBtnMenu = CCMenu::create();
+    auto saveBtnS = ButtonSprite::create(
+        "Deselect All", "bigFont.fnt", "GJ_button_01.png", 1.f);
+    saveBtnS->setScale(0.6f);
+    auto saveBtn = CCMenuItemSpriteExtra::create(
+        saveBtnS, this, menu_selector(ThemeSelectPopup::onDeselect));
+
+    saveBtnMenu->addChild(saveBtn);
+    saveBtnMenu->setPosition({200.f, 22.f});
+    m_mainLayer->addChild(saveBtnMenu);
+
     return true;
+}
+
+void ThemeSelectPopup::onDeselect(CCObject* object) {
+    if (m_activeThemeIndex >= 0) {
+        auto activeBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(m_themeUseBtns->objectAtIndex(m_activeThemeIndex));
+        if (activeBtn != nullptr) {
+            activeBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
+            activeBtn->setEnabled(true);
+        }
+    }
+    m_activeThemeIndex = -1;
+    Mod::get()->setSavedValue<std::string>("active-theme", "");
 }
 
 void ThemeSelectPopup::onSelectTheme(CCObject* object) {
@@ -167,6 +240,53 @@ void ThemeSelectPopup::onSelectTheme(CCObject* object) {
 
         Mod::get()->setSavedValue<std::string>("active-theme", m_themeFiles.at(newIndex));
     }
+}
+
+void ThemeSelectPopup::onClickFolder(CCObject*) {
+    auto localPath = CCFileUtils::sharedFileUtils();
+    file::openFolder(std::string(localPath->getWritablePath()) + "jfp\\themes\\");
+}
+
+void ThemeSelectPopup::onClickReload(CCObject* object) {
+    ThemeSelectPopup::onReload(object, false);
+}
+
+void ThemeSelectPopup::onReload(CCObject* object, bool update) {
+    std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+    std::vector<std::string> themeFiles;
+    for (const auto& fileName :
+            std::filesystem::directory_iterator(srcDir)) {
+        auto fileStr = fileName.path().filename().string();
+        if (fileStr.size() >= 5 &&
+                fileStr.substr(fileStr.size() - 5) == ".jfpt") {
+            themeFiles.push_back(fileStr);
+        }
+    }
+
+    const char* messageLead;
+    std::string messageSuccess = "Successfully reloaded default themes.";
+    if (update) {
+        messageLead = "An important <cl>update</c> is available for the default JFP themes. Update now?";
+        messageSuccess = "Successfully updated default themes.";
+    } else {
+        messageLead = "Are you sure you want to restore the default themes?";
+    }
+    std::string message = std::string(messageLead) +
+        "\nThe following files will be overwritten:\n" +
+        fmt::format("{}", fmt::join(themeFiles, ", "));
+    auto jfpConfirm = createQuickPopup(
+        "JFP",
+        message.c_str(),
+        "No", "Yes",
+        [messageSuccess](bool b1, bool b2) {
+            if (b2) {
+                log::info("Reloading themes...");
+                setupJFPDirectories(true);
+                FLAlertLayer::create(nullptr, "JFP",
+                    messageSuccess, "OK", nullptr
+                )->show();
+            }
+        });
 }
 
 void ThemeSelectPopup::onClose(CCObject* object) {

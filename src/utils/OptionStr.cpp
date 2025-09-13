@@ -220,6 +220,7 @@ void v37tov38(std::vector<uint8_t>& bytes) {
     uint8_t tType = readStoredNum(bytes, 95, 2);
     if (tType == 1) tType = 0;
     else if (tType == 0) tType = 1;
+    writeStoredNum(bytes, 95, 2, tType);
 
     uint8_t maxSpeed = readStoredNum(bytes, 13, 3);
     uint8_t minSpeed = readStoredNum(bytes, 16, 3);
@@ -593,7 +594,7 @@ void loadDefaults(bool fullReset) {
     auto* mod = Mod::get();
 
     // biome 0 (Juggernaut) default options
-    mod->setSavedValue<uint8_t>("opt-0-corridor-rules", 5);
+    mod->setSavedValue<uint8_t>("opt-0-corridor-rules", 1);
     mod->setSavedValue<uint16_t>("opt-0-corridor-height", 60);
     mod->setSavedValue<uint32_t>("opt-0-length", 400);
     mod->setSavedValue<uint8_t>("opt-0-grav-portals-diff", 1);
