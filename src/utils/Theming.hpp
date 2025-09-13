@@ -44,7 +44,7 @@ struct ThemeMatch {
 
 struct RepeatingPattern {
     int id;
-    std::string data;
+    std::vector<std::string> data;
     int start = 195;
     int repeat = 300;
 };

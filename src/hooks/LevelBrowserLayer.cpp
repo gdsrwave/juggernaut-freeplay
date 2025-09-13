@@ -26,7 +26,7 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
             return false;
         }
 
-        if (Mod::get()->getSettingValue<bool>("waveman-button")) {
+        if (Mod::get()->getSavedValue<bool>("opt-u-waveman-button-shown")) {
             if (s->m_searchType != SearchType::MyLevels) return true;
             auto genButton = CCMenuItemSpriteExtra::create(
                 CircleButtonSprite::createWithSpriteFrameName(

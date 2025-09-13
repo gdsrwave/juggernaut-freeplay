@@ -15,6 +15,7 @@
 #include <Geode/modify/CreatorLayer.hpp>
 #include "../ui/JFPMenuLayer.hpp"
 #include "../utils/StringGen.hpp"
+#include "../utils/OptionStr.hpp"
 
 using namespace geode::prelude;
 
@@ -55,15 +56,14 @@ class $modify(GenerateLevelLayer, CreatorLayer) {
             "instability (particularly when exiting the game) and are choosing"
             "to continue anyway.\n\nRemember to back up your data!";
 
-        if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+        if (!Mod::get()->getSavedValue<bool>("ack-disclaimer")) {
             createQuickPopup(
                 "JFP",
                 warningMsg,
                 "I Understand", nullptr,
                 [&](bool b1, auto) {
                     if (b1) {
-                        Mod::get()->setSavedValue<bool>(
-                            "ackDisclaimer", "true");
+                        loadDefaults();
                         onJFPConfirm();
                     }
                 });

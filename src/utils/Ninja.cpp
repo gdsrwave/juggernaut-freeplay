@@ -12,6 +12,9 @@
 using namespace geode::prelude;
 
 JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
+
+bool att1 = false;
+int globalAtt = 1;
 // Use std::vector for colorBank, but provide a pushOrReplaceColor function
 std::vector<JFPGen::Color> colorBank = {
     JFPGen::Color{1000, {128, 128, 128}, false, 1.0f},
@@ -105,7 +108,7 @@ SpeedChange convertFloatSpeedEnum(float speed) {
     else if (speed == 2.0f) return SpeedChange::Speed2x;
     else if (speed == 3.0f) return SpeedChange::Speed3x;
     else if (speed == 4.0f) return SpeedChange::Speed4x;
-    return SpeedChange::None;
+    return SpeedChange::Random;
 }
 
 float convertSpeedToFloat(const std::string& speed) {
@@ -152,108 +155,99 @@ bool orientationMatch(int prevO[11], const std::vector<int> pattern) {
     return true;
 }
 
-std::map<std::string, int> portalOddsMap = {
-    {"Light", 40},
-    {"Balanced", 10},
-    {"Aggressive", 3},
+std::map<Difficulties, int> portalOddsMap = {
+    {Difficulties::Light, 40},
+    {Difficulties::Balanced, 10},
+    {Difficulties::Aggressive, 3},
 };
 
-std::map<std::string, int> speedOddsMap = {
-    {"Light", 60},
-    {"Balanced", 10},
-    {"Aggressive", 5},
+std::map<Difficulties, int> speedOddsMap = {
+    {Difficulties::Light, 60},
+    {Difficulties::Balanced, 10},
+    {Difficulties::Aggressive, 5},
 };
 
 LevelData generateJFPLevel() {
     auto* mod = Mod::get();
-    const bool optSpikes = mod->getSettingValue<bool>("corridor-spikes");
-    const bool optFakePortals =
-        mod->getSettingValue<bool>("fake-gravity-portals");
-    const bool optFuzz = mod->getSettingValue<bool>("fuzzy-spikes");
-    const bool optLowvis = mod->getSettingValue<bool>("low-vis");
-    const bool optTeleportals = false;  // TODO(M): Bring Teleportals back
-    bool gravity = mod->getSettingValue<bool>("upside-start");
 
-    std::string colorModeStr = mod->getSettingValue<std::string>("color-mode");
-    ColorMode optColorMode = ColorMode::Washed;
-    if (colorModeStr == "All Colors")
-        optColorMode = ColorMode::AllColors;
-    else if (colorModeStr == "Classic Mode")
-        optColorMode = ColorMode::ClassicMode;
-    else if (colorModeStr == "Night Mode")
-        optColorMode = ColorMode::NightMode;
+    // random device setups - used with modulo to generate integers in a range
+    std::random_device rd;
+    uint32_t seed = 0;
+    if (mod->getSavedValue<bool>("opt-0-using-set-seed")) {
+        seed = mod->getSavedValue<uint32_t>("opt-0-seed");
+    } else {
+        seed = rd();
+    }
 
-    std::string spikeStr = mod->getSettingValue<std::string>("spike-placement");
-    PlacementBySize optSpikePlacement = PlacementBySize::Both;
-    if (spikeStr == "Big Wave") optSpikePlacement = PlacementBySize::Big;
-    else if (spikeStr == "Mini Wave") optSpikePlacement = PlacementBySize::Mini;
+    mod->setSavedValue<uint32_t>("global-seed", seed);
 
-    std::string corridorRulesStr =
-        mod->getSettingValue<std::string>("corridor-rules");
-    CorridorRules optCorridorRules = CorridorRules::Unrestricted;
-    if (corridorRulesStr == "NS")
-        optCorridorRules = CorridorRules::NoSpam;
-    else if (corridorRulesStr == "NSNZ")
-        optCorridorRules = CorridorRules::NoSpamNoZigzag;
-    else if (corridorRulesStr == "LRD")
-        optCorridorRules = CorridorRules::LRD;
-    else if (corridorRulesStr == "Juggernaut")
-        optCorridorRules = CorridorRules::Juggernaut;
-    else if (corridorRulesStr == "Limp")
-        optCorridorRules = CorridorRules::Limp;
+    std::mt19937 segmentRNG(seed);
+    std::mt19937 portalRNG(seed);
+    std::mt19937 fakePortalRNG(seed);
+    std::mt19937 songRNG(seed);
+    std::mt19937 bgRNG(seed);
+    std::mt19937 speedRNG(seed);
+    std::mt19937 spikeRNG(seed);
+    std::mt19937 sizeRNG(seed);
+    std::mt19937 roptRNG(seed);
 
-    std::string portalInputsStr =
-        mod->getSettingValue<std::string>("portal-inputs");
-    PortalInputs optPortalInputs = PortalInputs::Both;
-    if (portalInputsStr == "Releases") optPortalInputs = PortalInputs::Releases;
-    else if (portalInputsStr == "Holds") optPortalInputs = PortalInputs::Holds;
+    const bool optTeleportals = false;  // RIP. (10 September 2025) -M
 
-    std::string portalsStr = mod->getSettingValue<std::string>("portals");
-    Difficulties optPortals = Difficulties::None;
-    if (portalsStr == "Light") optPortals = Difficulties::Light;
-    else if (portalsStr == "Balanced") optPortals = Difficulties::Balanced;
-    else if (portalsStr == "Aggressive") optPortals = Difficulties::Aggressive;
+    const bool optLowvis = mod->getSavedValue<bool>("opt-0-low-visibility");
+    const bool optSpikes = mod->getSavedValue<bool>("opt-0-using-corridor-spikes");
+    const bool optFakePortals = mod->getSavedValue<bool>("opt-0-fake-grav-portals");
+    const bool optFuzz = mod->getSavedValue<bool>("opt-0-corridor-fuzz");
+    bool gravity = mod->getSavedValue<bool>("opt-0-grav-portal-start");
+    const bool cw = mod->getSavedValue<bool>("opt-0-widen-playfield-bounds");
+    
+    ColorMode optColorMode =
+        static_cast<ColorMode>(mod->getSavedValue<uint8_t>("opt-0-color-mode"));
+    if (optColorMode == ColorMode::Random) {
+        optColorMode = static_cast<ColorMode>(bgRNG() % 4 + 1);
+    }
+    const PlacementBySize optSpikePlacement =
+        static_cast<PlacementBySize>(mod->getSavedValue<uint8_t>("opt-0-spike-placement-types"));
+    CorridorRules optCorridorRules = 
+        static_cast<CorridorRules>(mod->getSavedValue<uint8_t>("opt-0-corridor-rules"));
+    if (optCorridorRules == CorridorRules::Random) {
+        optCorridorRules = static_cast<CorridorRules>(roptRNG() % 6 + 1);
+    }
+    const PortalInputs optPortalInputs =
+        static_cast<PortalInputs>(mod->getSavedValue<uint8_t>("opt-0-portal-input-types"));
+    const bool upo = mod->getSavedValue<bool>("opt-0-using-grav-portals");
+    const Difficulties optPortals =
+        static_cast<Difficulties>(upo ? mod->getSavedValue<uint8_t>("opt-0-grav-portals-diff") + 1 : 0);
 
-    const bool removeSpamPortals = !(mod->getSettingValue<bool>("portals-in-spams"));
-
-    std::string cspeedStr = mod->getSettingValue<std::string>("changing-speed");
-    Difficulties optChangingSpeed = Difficulties::None;
-    if (cspeedStr == "Light") optChangingSpeed = Difficulties::Light;
-    else if (cspeedStr == "Balanced") optChangingSpeed = Difficulties::Balanced;
-    else if (cspeedStr == "Aggressive")
-        optChangingSpeed = Difficulties::Aggressive;
-
-    std::string ssizeStr = mod->getSettingValue<std::string>("starting-size");
-    bool mini = false;
-    if (ssizeStr == "Mini") mini = true;
-    bool changingSize = mod->getSettingValue<bool>("changing-size");
-
-    std::string scTypeStr = mod->getSettingValue<std::string>("transition-type");
-    bool typeA = true;
-    if (scTypeStr == "Type B") typeA = false;
-
-    auto getSpeedChange = [](const std::string& speedStr) -> SpeedChange {
-        if (speedStr == "0.5x") return SpeedChange::Speed05x;
-        else if (speedStr == "1x") return SpeedChange::Speed1x;
-        else if (speedStr == "2x") return SpeedChange::Speed2x;
-        else if (speedStr == "3x") return SpeedChange::Speed3x;
-        else if (speedStr == "4x") return SpeedChange::Speed4x;
-        return SpeedChange::None;
+    const bool ucs = mod->getSavedValue<bool>("opt-0-using-speed-changes");
+    const Difficulties optChangingSpeed =
+        static_cast<Difficulties>(ucs ? mod->getSavedValue<uint8_t>("opt-0-speed-changes-diff") + 1 : 0);
+    const bool removeSpamPortals = mod->getSavedValue<bool>("opt-0-remove-portals-in-spams");
+    const uint8_t optSpeedsRaw = mod->getSavedValue<uint8_t>("opt-0-speed-changes");
+    std::map<SpeedChange, bool> optSpeedChanges = {
+        {SpeedChange::Speed05x, static_cast<bool>(optSpeedsRaw & 1)},
+        {SpeedChange::Speed1x,  static_cast<bool>(optSpeedsRaw & 2)},
+        {SpeedChange::Speed2x,  static_cast<bool>(optSpeedsRaw & 4)},
+        {SpeedChange::Speed3x,  static_cast<bool>(optSpeedsRaw & 8)},
+        {SpeedChange::Speed4x,  static_cast<bool>(optSpeedsRaw & 16)}
     };
+    const SpeedChange optSpeed =
+        static_cast<SpeedChange>(mod->getSavedValue<uint8_t>("opt-0-starting-speed") + 1);
 
-    std::string maxSpeedStr = mod->getSettingValue<std::string>("max-speed");
-    std::string minSpeedStr = mod->getSettingValue<std::string>("min-speed");
-    std::string speedStr = mod->getSettingValue<std::string>("starting-speed");
-    SpeedChange optMaxSpeed = getSpeedChange(maxSpeedStr);
-    SpeedChange optMinSpeed = getSpeedChange(minSpeedStr);
-    SpeedChange optSpeed = getSpeedChange(speedStr);
-    float maxSpeedFloat = convertSpeedToFloat(optMaxSpeed);
-    float minSpeedFloat = convertSpeedToFloat(optMinSpeed);
+    const WaveSize optStartingSizeEnum =
+        static_cast<WaveSize>(mod->getSavedValue<uint8_t>("opt-0-starting-size"));
+    bool mini;
+    if (optStartingSizeEnum == WaveSize::Random) {
+        mini = static_cast<bool>(roptRNG() % 2);
+    } else {
+        mini = static_cast<bool>(optStartingSizeEnum);
+    }
+    bool changingSize = mod->getSavedValue<bool>("opt-0-using-size-changes");
+    bool typeA = !(static_cast<bool>(mod->getSavedValue<uint8_t>("opt-0-size-transition-type")));
 
-    double optCorridorHeight = mod->getSettingValue<double>("corridor-height");
+    uint8_t optCorridorHeight = mod->getSavedValue<uint8_t>("opt-0-corridor-height");
 
-    int64_t optLength = mod->getSettingValue<int64_t>("length");
-    if (optLength <= 0) optLength = 1;
+    uint32_t optLength = mod->getSavedValue<uint32_t>("opt-0-length");
+    if (optLength < 1) optLength = 1;
     int y_swing = 0, cX = 345, cY = 135;
     int maxHeight = 255, minHeight = 45;
 
@@ -261,7 +255,6 @@ LevelData generateJFPLevel() {
         cY -= 90;
         cX -= 30;
     }
-    const bool cw = mod->getSettingValue<bool>("corridor-widening");
     if (cw) {
         maxHeight += 30;
         minHeight -= 30;
@@ -270,7 +263,7 @@ LevelData generateJFPLevel() {
     std::vector<Segment> segments(optLength);
     LevelData levelData = {
         .name = "JFP Level",
-        .seed = 0,
+        .seed = seed,
         .biomes = {
             {
                 .x_initial = cX,
@@ -297,26 +290,6 @@ LevelData generateJFPLevel() {
         }
     };
 
-    // random device setups - used with modulo to generate integers in a range
-    std::random_device rd;
-    uint32_t seed = 0;
-    std::string seedStr = mod->getSettingValue<std::string>("seed");
-    if (!seedStr.empty())
-        seed = geode::utils::numFromString<uint32_t>(seedStr).unwrapOr(0);
-    if (seed == 0) seed = rd();
-
-    levelData.seed = seed;
-    mod->setSavedValue<uint32_t>("global-seed", seed);
-
-    std::mt19937 segmentRNG(seed);
-    std::mt19937 portalRNG(seed);
-    std::mt19937 fakePortalRNG(seed);
-    std::mt19937 songRNG(seed);
-    std::mt19937 bgRNG(seed);
-    std::mt19937 speedRNG(seed);
-    std::mt19937 spikeRNG(seed);
-    std::mt19937 sizeRNG(seed);
-
     std::vector<int> antiZigzagMax = {1, -1, 1, -1, -1, 1, -1, 1, 1, -1};
     std::vector<int> antiZigzagMin = {-1, 1, -1, 1, 1, -1, 1, -1, -1, 1};
     std::vector<int> antiZigzagStd1 = {-1, 1, -1, 1, 1, -1, 1, -1, -1, 1, -1};
@@ -342,23 +315,21 @@ LevelData generateJFPLevel() {
     int spikeSide = 0;
     int relMaxHeight = maxHeight - (optCorridorHeight);
     if (mini && typeA) relMaxHeight -= 30;
-    float currentSpeed = convertSpeedToFloat(optSpeed);
+    SpeedChange currentSpeed = optSpeed;
     bool specialRules = false;
     bool lowRespectfulDensity = false;
     int8_t y_bias = -1;
     Portals currentPortal;
 
-    std::string musicSource = mod->getSettingValue<std::string>("level-song-source");
-    if (musicSource == "Local Music") {
+    MusicSources musicSource =
+        static_cast<MusicSources>(mod->getSavedValue<uint8_t>("opt-0-music-source"));
+    if (musicSource == MusicSources::LocalFiles) {
         auto songsList = getUserSongs();
         levelData.biomes[0].song = songsList[songRNG() % (songsList.size())];
     } else {
         levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
     }
 
-    if (colorModeStr == "Random") {
-        optColorMode = static_cast<ColorMode>(bgRNG() % 4);
-    }
     std::array<int, 3> backgroundColor = {28, 28, 28};
     std::array<int, 3> lineColor = {255, 255, 255};
     if (optColorMode == JFPGen::ColorMode::NightMode) {
@@ -403,7 +374,7 @@ LevelData generateJFPLevel() {
     pushColor(JFPGen::Color{1000, backgroundColor, false, 1.0f});
     pushColor(JFPGen::Color{1004, lineColor, false, 1.0f});
 
-    uint8_t bgImage = Mod::get()->getSettingValue<int>("background-image");
+    uint8_t bgImage = Mod::get()->getSavedValue<uint8_t>("opt-0-background-texture");
     if (bgImage > 0) {
         kBank["kA6"] = geode::utils::numToString(bgImage);
     } else {
@@ -411,13 +382,6 @@ LevelData generateJFPLevel() {
     }
 
     RawCR cr;
-    if (corridorRulesStr == "Random") {
-        // Currently uses bgRNG as to not interfere with segmentRNG calc. May
-        // change later. Also, I might add size enum elems for repeatability. -M
-        int crRoll = bgRNG() % 6;
-        if (crRoll >= 5) crRoll++;
-        optCorridorRules = static_cast<CorridorRules>(crRoll);
-    }
     if (optCorridorRules == CorridorRules::NoSpamNoZigzag) {
         cr.NZ = true;
         cr.NS = true;
@@ -613,7 +577,7 @@ LevelData generateJFPLevel() {
             midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None &&
                 segments[i - 1].y_swing != y_swing) {
-            portalOdds = portalRNG() % portalOddsMap.at(portalsStr);
+            portalOdds = portalRNG() % portalOddsMap.at(optPortals);
 
             if (
                 optPortalInputs == PortalInputs::Releases && (
@@ -643,24 +607,26 @@ LevelData generateJFPLevel() {
             (
                 (orientationMatch(segments, i, antiSpeedspam1) && y_swing == -1) ||
                 (orientationMatch(segments, i, antiSpeedspam2) && y_swing == 1)) &&
-            maxSpeedFloat > minSpeedFloat
+            optSpeedsRaw != 0
         ) {
-            speedOdds = speedRNG() % speedOddsMap.at(cspeedStr);
+            speedOdds = speedRNG() % speedOddsMap.at(optChangingSpeed);
             if (speedOdds == 0) {
                 double speedFactor = 0.5 * (optCorridorHeight / 60.0);
                 int spY = cY + optCorridorHeight / 2 +
                     (optCorridorHeight / 4) * ((segments[i].y_swing == 1) ? -1 : 1);
                 int spR = (segments[i].y_swing == 1) ? -45 : 45;
-                float newSpeed = currentSpeed;
-                int minSpeedMod = (minSpeedFloat == 0.5) ? 0 : minSpeedFloat;
-
-                for (int tries = 0; tries < 10 && newSpeed == currentSpeed; ++tries) {
-                    if (maxSpeedFloat == 0.5) break;
-                    newSpeed = minSpeedMod + (speedRNG() %
-                        (static_cast<int>(maxSpeedFloat - minSpeedMod + 1)));
-                    if (newSpeed == 0) newSpeed = 0.5;
+                SpeedChange newSpeed = currentSpeed;
+                
+                std::vector<SpeedChange> availableSpeeds;
+                for (const auto& [speed, enabled] : optSpeedChanges) {
+                    if (enabled && speed != currentSpeed) {
+                        availableSpeeds.push_back(speed);
+                    }
                 }
-                SpeedChange newSpeedEnum = convertFloatSpeedEnum(newSpeed);
+                if (!availableSpeeds.empty()) {
+                    newSpeed = availableSpeeds[speedRNG() % availableSpeeds.size()];
+                }
+
                 currentSpeed = newSpeed;
             }
         }
@@ -693,7 +659,6 @@ LevelData generateJFPLevel() {
             segments[i].options.isFuzzy = true;
         }
 
-        auto csEnum = convertFloatSpeedEnum(currentSpeed);
         segments[i] = Segment{
             .coords = std::make_pair(cX, cY),
             .y_swing = y_swing,
@@ -702,7 +667,7 @@ LevelData generateJFPLevel() {
                 .isSpikeM = segments[i].options.isSpikeM,
                 .spikeSide = static_cast<bool>(spikeSide),
                 .isPortal = currentPortal,
-                .speedChange = speedOdds == 0 ? csEnum : SpeedChange::None,
+                .speedChange = speedOdds == 0 ? currentSpeed : SpeedChange::None,
                 .isFuzzy = segments[i].options.isFuzzy,
                 .mini = mini,
                 .isTransition = false

@@ -8,18 +8,20 @@
 
 extern JFPGen::AutoJFP state;
 
+extern bool att1;
+
+extern int globalAtt;
+
 namespace JFPGen {
 
-extern std::map<std::string, int> portalOddsMap;
-extern std::map<std::string, int> speedOddsMap;
-
 enum class SpeedChange : int {
-    None = 0,
-    Speed1x = 1,
-    Speed2x = 2,
-    Speed3x = 3,
-    Speed4x = 4,
-    Speed05x = 5
+    None = -1,
+    Random = 0,
+    Speed05x = 1,
+    Speed1x = 2,
+    Speed2x = 3,
+    Speed3x = 4,
+    Speed4x = 5
 };
 
 enum class Visibility : int {
@@ -29,20 +31,21 @@ enum class Visibility : int {
 };
 
 enum class ColorMode : int {
-    Washed = 0,
-    AllColors = 1,
-    ClassicMode = 2,
-    NightMode = 3
+    Random = 0,
+    Washed = 1,
+    AllColors = 2,
+    ClassicMode = 3,
+    NightMode = 4
     // Random = 4
 };
 
 enum class CorridorRules : int {
-    NoSpamNoZigzag = 0,
-    NoSpam = 1,
-    Juggernaut = 2,
-    Unrestricted = 3,
-    LRD = 4,
-    // Random = 5
+    Random = 0,
+    NoSpamNoZigzag = 1,
+    NoSpam = 2,
+    Juggernaut = 3,
+    Unrestricted = 4,
+    LRD = 5,
     Limp = 6
 };
 
@@ -76,10 +79,21 @@ enum class PortalInputs : int {
     Holds = 2
 };
 
+enum class MusicSources : int {
+    JFPSoundtrack = 0,
+    LocalFiles = 1
+};
+
 enum class PlacementBySize : int {
     Both = 0,
     Big = 1,
     Mini = 2
+};
+
+enum class WaveSize : int {
+    Big = 0,
+    Mini = 1,
+    Random = 2
 };
 
 enum class JFPBiome : int {
@@ -149,6 +163,9 @@ struct Color {
     int copyColor = -1;
     std::string special = "";
 };
+
+extern std::map<Difficulties, int> portalOddsMap;
+extern std::map<Difficulties, int> speedOddsMap;
 
 int convertFloatSpeed(float speed);
 SpeedChange convertFloatSpeedEnum(float speed);

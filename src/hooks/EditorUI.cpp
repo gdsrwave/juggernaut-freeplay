@@ -38,7 +38,7 @@ class $modify(EditorUI) {
     bool init(LevelEditorLayer* editorLayer) {
         if (!EditorUI::init(editorLayer)) return false;
 
-        bool ttb = Mod::get()->getSettingValue<bool>("theming-toolbox");
+        bool ttb = Mod::get()->getSavedValue<bool>("opt-u-theme-creator-tools");
         if (!ttb) return true;
 
         EditorTabs::addTab(this, TabType::EDIT, "themetools"_spr,

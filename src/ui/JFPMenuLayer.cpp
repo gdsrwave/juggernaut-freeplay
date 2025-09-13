@@ -1,9 +1,13 @@
 // Copyright 2025 GDSRWave
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>    
 #include <string>
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include <thread>
 #include "JFPMenuLayer.hpp"
-#include "./ThemeSelect.hpp"
+#include "JFPOptionLayer.hpp"
+#include "JFPScreenshotLayer.hpp"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/general.hpp>
@@ -12,21 +16,25 @@
 #include "../utils/OptionStr.hpp"
 #include "../utils/Theming.hpp"
 #include "./OptionStrPopup.hpp"
+#include "./ThemeSelectPopup.hpp"
+
+std::mutex mtx;
+std::condition_variable cv;
 
 // Reference: https://github.com/Cvolton/betterinfo-geode/blob/de80d5c843b1d6e5fc28816b1aeede1178ae9095/src/layers/CustomCreatorLayer.cpp
 
 JFPMenuLayer* JFPMenuLayer::create() {
-    auto ret = new JFPMenuLayer();
-    if (ret && ret->init()) {
+    auto ret = new JFPMenuLayer;
+    if (ret->init()) {
         ret->autorelease();
-    } else {
-        delete ret;
-        ret = nullptr;
+        return ret;
     }
-    return ret;
+
+    delete ret;
+    return nullptr;
 }
 
-static GJGameLevel* createGameLevel() {
+GJGameLevel* createGameLevel() {
     std::srand(std::time(0));
     std::string levelString = "<?xml version=\"1.0\"?>"
         "<plist version=\"1.0\" gjver=\"2.0\"><dict><k>root</k>"
@@ -129,9 +137,9 @@ bool JFPMenuLayer::init() {
     // auto optTxt = CCLabelBMFont::create("", "goldFont.fnt");
 
     auto themeSprite = CircleButtonSprite::createWithSpriteFrameName(
-        "snoop_s.png"_spr, 1.f,
+        "paint_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    themeSprite->setScale(1.1f);
+    themeSprite->setScale(1.0f);
     auto themeButton = CCMenuItemSpriteExtra::create(
         themeSprite,
         this, menu_selector(JFPMenuLayer::onThemeButton));
@@ -140,16 +148,16 @@ bool JFPMenuLayer::init() {
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
         "options_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    optionSprite->setScale(1.1f);
+    optionSprite->setScale(1.0f);
     auto optionButton = CCMenuItemSpriteExtra::create(
         optionSprite,
-        this, menu_selector(JFPMenuLayer::onOptionButton));
+        this, menu_selector(JFPMenuLayer::openOptions));
     optionButton->setID("jfp-option-button"_spr);
 
     auto autoGenSprite = CircleButtonSprite::createWithSpriteFrameName(
         "dabbink_s.png"_spr, 1.125f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
-    autoGenSprite->setScale(1.1f);
+    autoGenSprite->setScale(1.3f);
     auto autoGenButton = CCMenuItemSpriteExtra::create(
         autoGenSprite,
         this,
@@ -204,13 +212,14 @@ bool JFPMenuLayer::init() {
     menu->setContentSize({300.f, 240.f});
     menu->setLayout(RowLayout::create()
         ->setGap(7.f));
+    menu->addChild(themeButton);
     menu->addChild(autoGenButton);
     menu->addChild(optionButton);
     addChild(menu);
 
     menu2->setID("inf-menu"_spr);
-    menu2->setAnchorPoint({0, 0});
-    menu2->setPosition({214, 125});
+    menu2->setAnchorPoint({0.5, 0.5});
+    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 35.f});
     menu2->addChild(garageBtn);
     menu2->addChild(urBtnMenu);
     menu2->setLayout(RowLayout::create()
@@ -240,8 +249,8 @@ bool JFPMenuLayer::init() {
     return true;
 }
 
-void JFPMenuLayer::onOptionButton(CCObject*) {
-    openSettingsPopup(Mod::get());
+void JFPMenuLayer::onThemeButton(CCObject*) {
+    ThemeSelectPopup::create("")->show();
 }
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
@@ -289,16 +298,18 @@ void JFPMenuLayer::onGarageButton(CCObject*) {
 
 void JFPMenuLayer::onAutoGenButton(CCObject*) {
     if (state != JFPGen::AutoJFP::NotInAutoJFP) return;
-    if (!Mod::get()->getSavedValue<bool>("ackDisclaimer")) {
+    if (!Mod::get()->getSavedValue<bool>("ack-disclaimer")) {
         FLAlertLayer::create("JFP",
             "Please accept the disclaimer to continue!", "OK")->show();
         return;
     }
+    state = JFPGen::AutoJFP::InAutoTransition;
+    att1 = true;
 
-    return JFPMenuLayer::onAutoGen();
+    auto dir = CCDirector::sharedDirector();
 
     std::string themeName =
-        Mod::get()->getSettingValue<std::string>("active-theme");
+        Mod::get()->getSavedValue<std::string>("active-theme");
     auto tmd = ThemeGen::parseThemeMeta(themeName);
     auto conflicts = ThemeGen::tagConflicts(tmd);
 
@@ -311,17 +322,20 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             "JFP",
             message.c_str(),
             "Continue", nullptr,
-            [&](bool b1, auto) {
-                if (b1) return JFPMenuLayer::onAutoGen();
+            [=](bool b1, auto) {
+                if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
+                else {
+                    return true;
+                }
             });
     } else {
-        JFPMenuLayer::onAutoGen();
+        dir->replaceScene(JFPScreenshotLayer::scene());
     }
+    return;
 }
 
 void JFPMenuLayer::onAutoGen() {
     jfpActive = true;
-    state = JFPGen::AutoJFP::JustStarted;
     Mod::get()->setSavedValue<uint32_t>(
         "total-played",
         Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1);
@@ -337,31 +351,20 @@ void JFPMenuLayer::onAutoGen() {
     CCDirector::sharedDirector()->replaceScene(newScene);
 }
 
-void JFPMenuLayer::onThemeButton(CCObject*) {
-    auto themeSelectLayer = GJDropDownLayer::create(
-        "Select Theme", 220.f, true);
-    themeSelectLayer->setID("theme-select-layer"_spr);
-    themeSelectLayer->setContentSize({640, 480});
-    themeSelectLayer->setAnchorPoint({0.5f, 0.5f});
-    themeSelectLayer->setPosition({0, 0});
-    themeSelectLayer->addChild(ThemeSelectLayer::create());
-    CCScene::get()->addChild(themeSelectLayer);
-}
-
 void JFPMenuLayer::onInfoButton(CCObject*) {
     std::string playCt = geode::utils::numToString(
         Mod::get()->getSavedValue<uint32_t>("total-played", 0));
     std::string message = "Advanced Random Wave Generation\n\n"
-        "Contributors:\nMartin C. (gdsrwave)\nsyzzi (theyareonit)\n\n"
         "Special thanks to the Geode community and to early playtesters;"
-        " you made this possible!\n"
+        " you made this possible!\n\n"
         "Total Rounds Played: " + playCt;
 
     auto infoLayer = FLAlertLayer::create(nullptr, "Juggernaut Freeplay",
         message.c_str(),
         "I get it man",
         nullptr,
-        400.f);
+        400.f
+    );
     infoLayer->setID("jfp-info-layer"_spr);
     infoLayer->show();
 }
@@ -374,6 +377,12 @@ void JFPMenuLayer::onTwitterButton(CCObject*) {
     CCApplication::sharedApplication()->openURL("https://twitter.com/shiestykahuna");
 }
 
+void JFPMenuLayer::openOptions(CCObject*) {
+    auto optsLayer = JFPOptionLayer::scene();
+    auto jlTransition = CCTransitionFade::create(0.5, optsLayer);
+    CCDirector::sharedDirector()->pushScene(jlTransition);
+}
+
 CCScene* JFPMenuLayer::scene() {
     auto scene = CCScene::create();
     auto layer = JFPMenuLayer::create();
@@ -384,5 +393,17 @@ CCScene* JFPMenuLayer::scene() {
             std::string(CCFileUtils::sharedFileUtils()->getWritablePath()) + "jfpLoop.mp3";
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
     }
+    // queueInMainThread([=]() {
+    //     std::this_thread::sleep_for(std::chrono::seconds(2));
+    //     if (state != JFPGen::AutoJFP::NotInAutoJFP) {
+    //         layer->onAutoGen();
+    //     }
+    // });
     return scene;
 }
+
+void JFPMenuLayer::onEnterTransitionDidFinish() {
+    JFPGenericLayer::onEnterTransitionDidFinish();
+}
+
+

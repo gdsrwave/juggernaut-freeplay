@@ -5,7 +5,7 @@
 #include <vector>
 
 // Sets up the JFP directories and copies .jfpt files to the themes directory
-// if needed. If bypass is true, always copy .jfpt files.
+// if needed. If bypass is true, always copy .jfpt files. -M
 void setupJFPDirectories(bool bypass = false);
 std::vector<int> getUserSongs();
 void setupJFPMusic();
@@ -24,10 +24,10 @@ namespace JFPGen {
 
 enum class AutoJFP : int {
     NotInAutoJFP = 0,
-    JustStarted = 1,
+    InAutoTransition = 1,
     JustRestarted = 2,
-    PlayingLevelAtt1 = 3,
-    PlayingLevel = 4,
+    PlayingLevel = 3,
+    InAutoTransitionAtt1 = 4,
 };
 
 extern const char* levelCommonBaseSeg;
@@ -36,6 +36,18 @@ extern const char* levelStartingBase;
 extern const char* levelStartingBase2;
 extern const char* lowVis;
 extern const char* finishLine;
+
+extern const std::map<int, std::string> VisibilityLabel;
+extern const std::map<int, std::string> ColorModeLabel;
+extern const std::map<int, std::string> CorridorRulesLabel;
+extern const std::map<int, std::string> DifficultiesLabel;
+extern const std::map<int, std::string> PortalsLabel;
+extern const std::map<int, std::string> PortalInputsLabel;
+extern const std::map<int, std::string> PlacementBySizeLabel;
+extern const std::map<int, std::string> StartingSizeLabel;
+extern const std::map<int, std::string> MusicSourceLabel;
+extern const std::map<int, std::string> SizeTransitionsLabel;
+extern const std::map<int, std::string> JFPBiomeLabel;
 
 }  // namespace JFPGen
 

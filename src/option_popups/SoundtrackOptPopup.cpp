@@ -1,0 +1,155 @@
+#pragma once
+#include <string>
+#include <Geode/Geode.hpp>
+#include "SoundtrackOptPopup.hpp"
+#include "../utils/shared.hpp"
+
+using namespace geode::prelude;
+
+bool SoundtrackOptPopup::setup(std::string const& value) {
+    // convenience function provided by Popup
+    // for adding/setting a title to the popup
+    this->setTitle("Music Options");
+    auto windowDim = CCDirector::sharedDirector()->getWinSize();
+
+    // SAVE BUTTON
+    auto saveBtnMenu = CCMenu::create();
+    auto saveBtnS = ButtonSprite::create(
+        "Save", "bigFont.fnt", "GJ_button_01.png", 1.f);
+    saveBtnS->setScale(0.7f);
+    auto saveBtn = CCMenuItemSpriteExtra::create(
+        saveBtnS, this, menu_selector(SoundtrackOptPopup::onSave));
+
+    saveBtnMenu->addChild(saveBtn);
+    saveBtnMenu->setPosition({200.f, 30.f});
+    m_mainLayer->addChild(saveBtnMenu);
+
+    // INFO BUTTON
+    auto infoBtn = CCMenuItemSpriteExtra::create(
+        CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+        this,
+        menu_selector(SoundtrackOptPopup::onInfo));
+    infoBtn->setScale(0.8f);
+    auto infoBtnMenu = CCMenu::create();
+    infoBtnMenu->setPosition({380.f, 260.f});
+    infoBtnMenu->addChild(infoBtn);
+    m_mainLayer->addChild(infoBtnMenu);
+
+    // SOUNDTRACK OPT
+    auto mSrcMenu = CCMenu::create();
+    
+    auto mSrcTxt = CCLabelBMFont::create("Music Selection:", "bigFont.fnt");
+    m_musicSourceSelected = CCLabelBMFont::create("wwwwwwwwwwwwww", "bigFont.fnt");
+    m_musicSourceSelected->setID("jfpopt-music-source"_spr);
+
+    auto mSrcLASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+    mSrcLASpr->setScale(.7f);
+    auto mSrcLA = CCMenuItemSpriteExtra::create(
+        mSrcLASpr, this, menu_selector(SoundtrackOptPopup::onEnumDecrease)
+    );
+    mSrcLA->setUserObject(m_musicSourceSelected);
+
+    auto mSrcRASpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+    mSrcRASpr->setFlipX(true);
+    mSrcRASpr->setScale(.7f);
+    auto mSrcRA = CCMenuItemSpriteExtra::create(
+        mSrcRASpr, this, menu_selector(SoundtrackOptPopup::onEnumIncrease)
+    );
+    mSrcRA->setUserObject(m_musicSourceSelected);
+
+    mSrcMenu->setLayout(RowLayout::create()
+        ->setGap(25.f)
+        ->setAxisAlignment(AxisAlignment::Start)
+    );
+    mSrcMenu->addChild(mSrcTxt);
+    mSrcMenu->addChild(mSrcLA);
+    mSrcMenu->addChild(m_musicSourceSelected);
+    mSrcMenu->addChild(mSrcRA);
+    mSrcMenu->setPosition({20.f, 225.f});
+    mSrcMenu->setAnchorPoint({0, 0.5});
+    mSrcMenu->setScale(0.6f);
+    mSrcMenu->updateLayout();
+
+    std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
+    m_musicSourceSelected->setCString(mSrcLabelText.c_str());
+
+    m_mainLayer->addChild(mSrcMenu);
+
+    return true;
+}
+
+void SoundtrackOptPopup::onClose(CCObject* object) {
+    if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
+        SoundtrackOptPopup::save();
+    }
+    this->setKeypadEnabled(false);
+    this->setTouchEnabled(false);
+    this->removeFromParentAndCleanup(true);
+}
+
+void SoundtrackOptPopup::onSave(CCObject*) {
+    SoundtrackOptPopup::save();
+    Notification::create("Saved Successfully",
+        NotificationIcon::Success, 0.5f)->show();
+}
+
+void SoundtrackOptPopup::save() {
+    mod->setSavedValue<uint8_t>("opt-0-music-source", m_msrcIndex);
+}
+
+void SoundtrackOptPopup::onEnumDecrease(CCObject* object) {
+    auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
+    auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
+
+    if (lbl->getID() == "jfpopt-music-source"_spr) {
+        if (m_msrcIndex == 0) m_msrcIndex = m_msrcIndexLen;
+        m_msrcIndex -= 1;
+        std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
+        lbl->setCString(mSrcLabelText.c_str());
+    } else {
+        log::warn("Unknown toggle: {}", lbl->getID());
+    }
+}
+
+void SoundtrackOptPopup::onEnumIncrease(CCObject* object) {
+    auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
+    auto lbl = typeinfo_cast<CCLabelBMFont*>(arrow->getUserObject());
+
+    if (lbl->getID() == "jfpopt-music-source"_spr) {
+        m_msrcIndex += 1;
+        if (m_msrcIndex >= m_msrcIndexLen) m_msrcIndex = 0;
+        std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
+        lbl->setCString(mSrcLabelText.c_str());
+    } else {
+        log::warn("Unknown toggle: {}", lbl->getID());
+    }
+}
+
+void SoundtrackOptPopup::onInfo(CCObject*) {
+    const char* info =
+        "#### Options handling JFP's music and playlist system\n\n"
+        "<cp>Music Selection</c>: Determines where the in-level songs are pulled from\n"
+        "- JFP Soundtrack: Set of music submitted by the JFP developers and playerbase. "
+        "Unfortunately, this list is difficult to download; you can view the full list of song IDs "
+        "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97)."
+        "- Local Music: Shuffle existing mp3 songs in your GD Data folder\n\n\n\n\n";
+
+    auto infoLayer = MDPopup::create("Music Options Info",
+        info,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
+    infoLayer->show();
+}
+
+SoundtrackOptPopup* SoundtrackOptPopup::create(std::string const& text) {
+    auto ret = new SoundtrackOptPopup();
+    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+        ret->autorelease();
+        return ret;
+    }
+
+    delete ret;
+    return nullptr;
+}

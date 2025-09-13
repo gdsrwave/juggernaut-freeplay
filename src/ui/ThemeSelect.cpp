@@ -1,6 +1,5 @@
 // Copyright 2025 GDSRWave
 #include "ThemeSelect.hpp"
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "../utils/StringGen.hpp"
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/binding/CustomListView.hpp>
@@ -40,6 +39,13 @@ bool ThemeSelectLayer::init() {
     this->addChild(listLayer);
 
     return true;
+}
+
+CCScene* ThemeSelectLayer::scene() {
+    auto layer = ThemeSelectLayer::create();
+    auto scene = CCScene::create();
+    scene->addChild(layer);
+    return scene;
 }
 
 ThemeSelectOuterMenu* ThemeSelectOuterMenu::create() {

@@ -37,7 +37,7 @@ bool OptionStrPopup::setup(std::string const& value) {
 
 void OptionStrPopup::clickImport(CCObject* object) {
     std::string input = m_inputOptTxt->getString();
-    log::info("Importing Theme {}", input);
+    log::info("Importing {}", input);
     importSettings(input);
 
     OptionStrPopup::onClose(object);
@@ -51,15 +51,11 @@ void OptionStrPopup::onClose(CCObject* object) {
 
 OptionStrPopup *OptionStrPopup::create(std::string const& text) {
     auto ret = new OptionStrPopup();
-    if (ret->initAnchored(240.f, 140.f, text)) {
+    if (ret->initAnchored(240.f, 140.f, text, "GJ_square05.png")) {
         ret->autorelease();
         return ret;
     }
 
     delete ret;
     return nullptr;
-}
-
-OptionStrPopup::~OptionStrPopup() {
-    if (this->getParent() != nullptr) this->removeAllChildrenWithCleanup(true);
 }
