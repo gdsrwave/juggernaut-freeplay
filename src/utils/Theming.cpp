@@ -724,10 +724,10 @@ std::vector<std::string> tagConflicts(ThemeMetadata tmd) {
     std::vector<std::string> conflicts;
 
     const bool isBigPresent =
-            mod->getSavedValue<uint8_t>("opt-0-starting-size") == 0 ||
+            mod->getSavedValue<uint8_t>("opt-0-starting-size") != 1 ||
         mod->getSavedValue<bool>("opt-0-using-size-changes");
     const bool isMiniPresent =
-            mod->getSavedValue<uint8_t>("opt-0-starting-size") == 1 ||
+            mod->getSavedValue<uint8_t>("opt-0-starting-size") != 0 ||
         mod->getSavedValue<bool>("opt-0-using-size-changes");
     const bool isTypeA = mod->getSavedValue<bool>("opt-0-using-size-changes") &&
         !(mod->getSavedValue<uint8_t>("opt-0-size-transition-type"));

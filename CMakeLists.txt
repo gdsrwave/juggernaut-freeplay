@@ -8,7 +8,7 @@ else()
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(jfp VERSION 1.7.0)
+project(jfp VERSION 1.7.1)
 
 file(GLOB_RECURSE SOURCES
     src/*.cpp

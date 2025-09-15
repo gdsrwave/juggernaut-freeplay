@@ -59,11 +59,11 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
     if (!std::filesystem::is_directory(jfpDir)) setupJFPDirectories(true);
 
-    std::string fp = std::string(localPath->getWritablePath()) + "/jfp/themes/";
+    std::string fp = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
 
-    for (const auto& entry : std::filesystem::directory_iterator(fp)) {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(fp)) {
         if (entry.is_regular_file()) {
-            auto filename = entry.path().filename().string();
+            auto filename = std::filesystem::relative(entry.path(), fp).string();
             if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
                 continue;
             }
@@ -108,7 +108,12 @@ bool ThemeSelectPopup::setup(std::string const& value) {
         testLabel->setScale(0.6f);
         testMenu->addChild(testLabel);
 
-        auto testFilename = CCLabelBMFont::create((m_themeFiles.at(i) + ".jfpt").c_str(), "bigFont.fnt");
+        std::string filenameLabel = m_themeFiles.at(i) + ".jfpt";
+        if (filenameLabel.length() > 35) {
+            filenameLabel = "..." + filenameLabel.substr(filenameLabel.length() - 33);
+        }
+
+        auto testFilename = CCLabelBMFont::create(filenameLabel.c_str(), "bigFont.fnt");
         testFilename->setAnchorPoint({1.f, 1.f});
         testFilename->setPosition({
             testMenu->getContentSize().width - 6.f,
