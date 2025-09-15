@@ -182,5 +182,6 @@ LevelData generateJFPLevel();
 extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
+extern const std::vector<JFPGen::Color> defaultColorBank;
 
 void pushColor(const JFPGen::Color& color);

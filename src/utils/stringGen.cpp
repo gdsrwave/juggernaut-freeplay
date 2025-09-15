@@ -64,6 +64,8 @@ std::string jfpPackString(const std::string& level, uint32_t seed,
 
 std::string jfpStringGen(bool compress) {
     kBank = defaultKbank;
+    colorBank.clear();
+    colorBank.insert(colorBank.end(), defaultColorBank.begin(), defaultColorBank.end());
     LevelData ldata = generateJFPLevel();
     if (ldata.biomes.empty()) return "";
 
@@ -149,6 +151,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             args.push_back(fmt::arg("ch_1", 90 + currentCH));
             args.push_back(fmt::arg("ch_2", 150 + currentCH));
             args.push_back(fmt::arg("ch_3", 210 + currentCH));
+            args.push_back(fmt::arg("ch_4", 270 + currentCH));
         } else {
             args.push_back(fmt::arg("ch_1", 225 + currentCH));
             args.push_back(fmt::arg("ch_2", 165 + currentCH));
@@ -368,10 +371,11 @@ std::string jfpNewStringGen(LevelData ldata) {
             // this has to use rotations, spikes don't support being flipped
             float scaleS = 1.f;
             float rOffset = 45.f;
+            uint8_t spikeID = 103;
             if (mini) {
                 yS -= 15;
-                scaleS = 0.7f;
                 rOffset = 63.435f;
+                spikeID = 39;
                 if (!spikeSide) xS -= 1;
                 else xS += 1;
             }
@@ -383,7 +387,8 @@ std::string jfpNewStringGen(LevelData ldata) {
             } else if (y_swing == -1 && spikeSide) {
                 rS = -180 + rOffset;
             }
-            level += fmt::format("1,103,2,{xS},3,{yS},6,{rS},64,1,67,1,32,{scaleS};",
+            level += fmt::format("1,{spikeID},2,{xS},3,{yS},6,{rS},64,1,67,1,32,{scaleS};",
+                fmt::arg("spikeID", spikeID),
                 fmt::arg("xS", xS),
                 fmt::arg("yS", yS),
                 fmt::arg("rS", rS),

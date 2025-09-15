@@ -1,3 +1,6 @@
+# JFP 1.7.1 (September 14, 2025)
+- Bugfixes and touch-ups
+
 # JFP 1.7.0 (September 13, 2025)
 - Options overhaul: new and improved Options Menu
 - Theme Menu: easily pick and manage your JFP themes ingame!

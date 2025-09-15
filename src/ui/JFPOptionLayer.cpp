@@ -126,10 +126,30 @@ bool JFPOptionLayer::init() {
 
 void JFPOptionLayer::keyBackClicked() {
     JFPGenericLayer::keyBackClicked();
+
+    if (!GameManager::sharedState()->getGameVariable("0122") &&
+        CCDirector::sharedDirector()->getRunningScene() != nullptr) {
+        auto fileUtils = CCFileUtils::sharedFileUtils();
+        auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+        auto* engine = FMODAudioEngine::get();
+        if (engine) {
+            engine->playMusic(bgmPath, true, 1.0f, 1);
+        }
+    }
 }
 
 void JFPOptionLayer::onBack(CCObject* object) {
     JFPGenericLayer::onBack(object);
+
+    if (!GameManager::sharedState()->getGameVariable("0122") &&
+        CCDirector::sharedDirector()->getRunningScene() != nullptr) {
+        auto fileUtils = CCFileUtils::sharedFileUtils();
+        auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+        auto* engine = FMODAudioEngine::get();
+        if (engine) {
+            engine->playMusic(bgmPath, true, 1.0f, 1);
+        }
+    }
 }
 
 void JFPOptionLayer::onReset(CCObject* object) {

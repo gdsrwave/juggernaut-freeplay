@@ -15,8 +15,9 @@ JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 bool att1 = false;
 int globalAtt = 1;
-// Use std::vector for colorBank, but provide a pushOrReplaceColor function
-std::vector<JFPGen::Color> colorBank = {
+
+std::vector<JFPGen::Color> colorBank = {};
+const std::vector<JFPGen::Color> defaultColorBank = {
     JFPGen::Color{1000, {128, 128, 128}, false, 1.0f},
     JFPGen::Color{1001, {25, 24, 24}, false, 1.0f},
     JFPGen::Color{1009, {0, 102, 255}, false, 1.0f},
