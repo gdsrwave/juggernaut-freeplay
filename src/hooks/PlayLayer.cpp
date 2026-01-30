@@ -116,8 +116,62 @@ class $modify(PlayLayer) {
         if (state == JFPGen::AutoJFP::NotInAutoJFP || att1) {
             return;
         }
+
         PlayLayer::startGame();
         m_attempts = globalAtt;
         PlayLayer::updateAttempts();
+        m_level->m_normalPercent = 0;
+    }
+
+    void showNewBest(bool newReward, int orbs, int diamonds, bool demonKey, bool noRetry, bool noTitle) {
+        if (state == JFPGen::AutoJFP::NotInAutoJFP) {
+            PlayLayer::showNewBest(newReward, orbs, diamonds, demonKey, noRetry, noTitle);
+            return;
+        }
+
+        int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345) / 30;
+        log::info("{} {}", playerMeters, globalBestM);
+        int length = Mod::get()->getSavedValue<int>("opt-0-length");
+
+        if (playerMeters < 0) playerMeters = 0;
+        if (playerMeters > length) {
+            playerMeters = length;
+        }
+
+        if (playerMeters > globalBestM) {
+            globalBestM = playerMeters;
+            PlayLayer::showNewBest(newReward, orbs, diamonds, demonKey, noRetry, noTitle);
+
+            // https://github.com/RayDeeUx/Decimal-Percentages/blob/3bf08d0f06a9ef2d73c63ea8fa82e7a379a94dc3/src/main.cpp#L251
+            queueInMainThread([this, playerMeters] {
+                for (auto obj : CCArrayExt<CCNode*>(this->getChildren())) {
+                    // new best popup is Z 100; this may not be the safest check
+                    if (obj->getZOrder() != 100) continue;
+
+                    for (auto newBestObj : CCArrayExt<CCNode*>(obj->getChildren())) {
+                        CCLabelBMFont* label = typeinfo_cast<CCLabelBMFont*>(newBestObj);
+
+                        if (!label) continue;
+                        const auto& labelString = static_cast<std::string>(label->getString());
+
+                        // add seed and options after finding label
+                        auto windowDim = CCDirector::sharedDirector()->getWinSize();
+
+                        uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
+                        std::string globalOptStr = Mod::get()->getSavedValue<std::string>("global-option-str");
+                        std::string displaySeed = (globalSeed ? geode::utils::numToString(globalSeed) : "Unknown") +
+                            ", " + (globalOptStr != "" ? globalOptStr : "Unknown");
+                        auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "bigFont.fnt");
+                        seedTxt->setAnchorPoint({0.5f, 0.5f});
+                        seedTxt->setPosition({0, -60});
+                        seedTxt->setScale(0.3f);
+                        seedTxt->setOpacity(127);
+                        obj->addChild(seedTxt);
+
+                        return label->setString(fmt::format("{m}m", fmt::arg("m", playerMeters)).c_str());
+                    }
+                }
+            });
+        }
     }
 };

@@ -15,6 +15,7 @@ JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 bool att1 = false;
 int globalAtt = 1;
+int globalBestM = 0;
 
 std::vector<JFPGen::Color> colorBank = {};
 const std::vector<JFPGen::Color> defaultColorBank = {
@@ -92,6 +93,14 @@ std::map<std::string, bool> overrideBank = {
     {"override-slope", false},
     {"override-slope-mini", false}
 };
+
+std::vector<std::string> allowedDef = {
+    "slope", "fuzz", "spike", "blue-portal", "yellow-portal",
+    "speed-05x", "speed-1x", "speed-2x", "speed-3x", "speed-4x",
+    "base", "endup", "enddown", "start"
+};
+std::map<std::string, OverrideGroups> overrideBankS = {};
+
 
 namespace JFPGen {
 

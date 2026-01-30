@@ -11,6 +11,7 @@ extern JFPGen::AutoJFP state;
 extern bool att1;
 
 extern int globalAtt;
+extern int globalBestM;
 
 namespace JFPGen {
 
@@ -183,5 +184,19 @@ extern std::map<std::string, std::string> kBank;
 extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
 extern const std::vector<JFPGen::Color> defaultColorBank;
+
+struct OverrideStatic {
+    bool active = false;
+    bool keep = false;
+    std::vector<std::string> blocks;
+};
+
+struct OverrideGroups {
+    OverrideStatic standard;
+    OverrideStatic mini;
+};
+
+extern std::vector<std::string> allowedDef;
+extern std::map<std::string, OverrideGroups> overrideBankS;
 
 void pushColor(const JFPGen::Color& color);

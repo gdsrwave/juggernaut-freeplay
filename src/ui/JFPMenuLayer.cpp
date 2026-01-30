@@ -331,6 +331,11 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
     } else {
         dir->replaceScene(JFPScreenshotLayer::scene());
     }
+
+    globalBestM = 0;
+    auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+    Mod::get()->setSavedValue<std::string>("global-option-str", exportSettings(settings));
+
     return;
 }
 
