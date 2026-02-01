@@ -85,19 +85,10 @@ std::map<std::string, std::string> kBank = {
     {"kA11", "0"}
 };
 
-std::map<std::string, bool> overrideBank = {
-    {"override-base", false},
-    {"override-enddown", false},
-    {"override-endup", false},
-    {"override-start", false},
-    {"override-slope", false},
-    {"override-slope-mini", false}
-};
-
 std::vector<std::string> allowedDef = {
-    "slope", "fuzz", "spike", "blue-portal", "yellow-portal",
+    "slope", "spike", "blue-portal", "yellow-portal", "mini-portal", "big-portal",
     "speed-05x", "speed-1x", "speed-2x", "speed-3x", "speed-4x",
-    "base", "endup", "enddown", "start"
+    "base", "endup", "enddown", "start", "corridorblock", "corridorblock-fill"
 };
 std::map<std::string, OverrideGroups> overrideBankS = {};
 
@@ -137,6 +128,16 @@ float convertSpeedToFloat(SpeedChange speed) {
         case SpeedChange::Speed3x:  return 3.0f;
         case SpeedChange::Speed4x:  return 4.0f;
         default: return 3.0f;
+    }
+}
+
+int convertSpeed(SpeedChange speed) {
+    switch (speed) {
+        case SpeedChange::Speed05x: return 200;
+        case SpeedChange::Speed1x:  return 201;
+        case SpeedChange::Speed2x:  return 202;
+        case SpeedChange::Speed4x:  return 1334;
+        default: return 203;
     }
 }
 

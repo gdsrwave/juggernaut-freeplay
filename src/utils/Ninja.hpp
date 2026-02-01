@@ -172,6 +172,7 @@ int convertFloatSpeed(float speed);
 SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
+int convertSpeed(JFPGen::SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
 bool orientationMatch(const std::vector<Segment>& segments, int idx,
     const std::vector<int>& pattern, bool strictMini = false);
@@ -181,7 +182,6 @@ LevelData generateJFPLevel();
 }  // namespace JFPGen
 
 extern std::map<std::string, std::string> kBank;
-extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
 extern const std::vector<JFPGen::Color> defaultColorBank;
 

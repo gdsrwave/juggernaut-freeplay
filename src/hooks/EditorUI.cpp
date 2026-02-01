@@ -7,12 +7,12 @@
 using namespace geode::prelude;
 
 void onCopyBtns(EditorUI* ui,
-        ThemeGen::OMType omType = ThemeGen::OMType::None) {
+        ThemeGen::OMType omType = ThemeGen::OMType::None, bool specialOR = false) {
     auto selectedObj = ui->getSelectedObjects();
     std::string res = "# <if|define> #\n";
     for (auto obj : CCArrayExt<GameObject*>(selectedObj)) {
         res += ThemeGen::handleRawBlock(obj->getSaveString(ui->m_editorLayer),
-            omType);
+            omType, specialOR);
         res += ";\n";
     }
     res += "# end <if|define> #";
@@ -84,6 +84,20 @@ class $modify(EditorUI) {
             ceilBtn->setID("jfpt-ceilcpy-btn");
             arr->addObject(ceilBtn);
 
+            // special override export btn
+            auto specialORBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            specialORBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("specialORIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero);
+
+            auto specialORBtn = CCMenuItemExt::createSpriteExtra(
+                specialORBtnSpr,
+                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, true); });
+
+            specialORBtn->setID("jfpt-ceilcpy-btn");
+            arr->addObject(specialORBtn);
+
             // // pattern export btn
             // auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
             // ceilBtnSpr->addChildAtPosition(
@@ -98,7 +112,7 @@ class $modify(EditorUI) {
             // ceilBtn->setID("jfpt-ceilcpy-btn");
             // arr->addObject(ceilBtn);
 
-            // ceiling seg export btn
+            // info btn
             auto infoBtnSpr = CCSprite::createWithSpriteFrameName(
                 "blueBg.png"_spr);
             infoBtnSpr->addChildAtPosition(

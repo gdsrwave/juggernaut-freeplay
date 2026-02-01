@@ -9,7 +9,7 @@ using namespace geode::prelude;
 bool ThemeSelectPopup::setup(std::string const& value) {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
-    this->setTitle("JFP Themes");
+    this->setTitle("Juggernaut Themes");
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
 
     // INFO BUTTON
@@ -302,7 +302,7 @@ void ThemeSelectPopup::onClose(CCObject* object) {
 
 void ThemeSelectPopup::onInfo(CCObject*) {
     const char* info =
-        "<cp>JFP Themes</c> add decoration to your corridor!\n\n"
+        "<cp>Juggernaut Themes</c> add decoration to your corridor!\n\n"
         "Each theme works by scanning the corridor's pattern, then placing blocks dependent on what it finds.\n\n"
         "In addition, themes can set color channels, add repeating block patterns, and change k-Values (background image, ground texture, etc.)\n\n"
         "The default themes are <co>heinous</c>, <cg>gandhi</c>, <cy>ninecircles</c> and <cl>moonmen</c>.\n\n"

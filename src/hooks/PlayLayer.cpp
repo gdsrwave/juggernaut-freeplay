@@ -130,7 +130,6 @@ class $modify(PlayLayer) {
         }
 
         int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345) / 30;
-        log::info("{} {}", playerMeters, globalBestM);
         int length = Mod::get()->getSavedValue<int>("opt-0-length");
 
         if (playerMeters < 0) playerMeters = 0;
@@ -163,7 +162,7 @@ class $modify(PlayLayer) {
                             ", " + (globalOptStr != "" ? globalOptStr : "Unknown");
                         auto seedTxt = CCLabelBMFont::create(displaySeed.c_str(), "bigFont.fnt");
                         seedTxt->setAnchorPoint({0.5f, 0.5f});
-                        seedTxt->setPosition({0, -60});
+                        seedTxt->setPosition({0, -5});
                         seedTxt->setScale(0.3f);
                         seedTxt->setOpacity(127);
                         obj->addChild(seedTxt);
