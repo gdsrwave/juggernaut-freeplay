@@ -61,7 +61,7 @@ enum class InOverride : int {
 };
 
 std::array<int, 3> hexToColor(const std::string& hex);
-bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
     const std::vector<int>& pattern, OMType omType = OMType::Corridor,
     bool typeA = false);
 std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None, bool special = false);

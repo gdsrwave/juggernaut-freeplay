@@ -28,17 +28,21 @@ std::array<int, 3> hexToColor(const std::string& hex) {
 }
 
 // orientationMatch, but modified to account for miniwave and transitions
-bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
+// this function has been heavily souped up to account for extra connector segments, will be cleaned up sometime soon -M
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
         const std::vector<int>& pattern, OMType omType, bool typeA) {
     bool extraSegments = false;
-    if (idx < static_cast<int>(pattern.size())) {
+    int idxOff = idx + offset + 1;
+    int pSize = static_cast<int>(pattern.size());
+    int sSize = static_cast<int>(segments.size());
+    if (idxOff < pSize) {
          auto startORSize = segments[0].options.mini ? overrideBankS["start"].mini : overrideBankS["start"].standard;
          if (!startORSize.active) {
             extraSegments = true;
             //log::info("------");
             //log::info("matchin {} {}", startORSize.active, startORSize.blocks.size());
          }
-    } else if (idx > static_cast<int>(segments.size())) {
+    } else if (idxOff > sSize) {
         OverrideStatic endORSize;
         if (segments.back().y_swing == 1) {
             endORSize = segments.back().options.mini ? overrideBankS["endup"].mini : overrideBankS["endup"].standard;
@@ -49,11 +53,11 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
     }
     
     if (extraSegments && omType != OMType::Corridor) {
-        if (idx < static_cast<int>(pattern.size()) - 10 || idx > static_cast<int>(segments.size() + 10)) {
+        if (idxOff <= -10 || idxOff < pSize - 10 || idxOff > sSize + 10 || idxOff > sSize + pSize + 10) {
             return false;
         }
     } else {
-        if (idx < static_cast<int>(pattern.size()) || idx > static_cast<int>(segments.size())) {
+        if (idxOff <= 0 || idxOff < pSize || idxOff > sSize || idxOff > sSize + pSize) {
             return false;
         }
     }
@@ -61,7 +65,10 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
     bool mini = false;
     bool isTransition = false;
     for (int i = 0; i < pattern.size(); i++) {
-        int j = idx - static_cast<int>(pattern.size()) + i;
+        int j = idxOff - static_cast<int>(pattern.size()) + i;
+        // if (idx == segments.size() - 1) {
+        //     log::info("{} {} {} {} {} {}", idx, offset, j, j > static_cast<int>(segments.size())-1, extraSegments, omType != OMType::Corridor);
+        // }
         if (extraSegments && omType != OMType::Corridor && j < 0) {
             if (omType == OMType::Floor) {
                 y_swing = 1;
@@ -100,7 +107,9 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
         } else if (mini) {
             y_swing *= 2;
         }
-        if (y_swing != pattern[i]) return false;
+        if (y_swing != pattern[i]) {
+            return false;
+        }
     }
     return true;
 }
@@ -774,29 +783,34 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 bool notPatternsOk = true;
                 for (int np = 0; np < match.notPatterns.size(); ++np) {
-                    if (strictOM(
+                    bool notsom = strictOM(
                             biome.segments,
-                            i + match.notOffsets[np] + 1,
+                            i,
+                            match.notOffsets[np],
                             match.notPatterns[np],
                             match.notTypes[np],
-                            biome.options.typeA)) {
+                            biome.options.typeA);
+                    if (notsom) {
                         notPatternsOk = false;
                         break;
                     }
                 }
 
+
                 bool som = strictOM(
                         biome.segments,
-                        i + match.offset + 1,
+                        i,
+                        match.offset,
                         match.pattern,
                         match.omType,
                         biome.options.typeA) ||
                       (match._else && match.pattern.empty());
+                // if (i == biome.segments.size() - 1 && notPatternsOk && som) log::info("this just passed");
                 if (notPatternsOk &&
                     (som)) {
                     for (const auto& block : match.commands) {
                         // calculate extra segment coords
-                        if (i + match.offset + 1 < 0) {
+                        if (i < 0) {
                             const auto& seg = biome.segments[0];
                             x = seg.coords.first + 30 * i;
                             if (match.omType == OMType::Ceiling) {
