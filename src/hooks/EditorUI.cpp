@@ -23,7 +23,10 @@ void onCopyBtns(EditorUI* ui,
 
 void onThemeInfoButton() {
     std::string message = "Definition Types:\n"
-            "base\nenddown\nenddown-mini\nendup\nendup-mini\nstart\nstart-mini";
+            "base\nstart (-mini)\nenddown (-mini), endup (-mini)\nslope (-mini), spike (-mini)\n"
+            "blue-portal (-mini), yellow-portal (-mini)\nbig-portal (-mini), mini-portal (-mini)\n"
+            "speed-05x (-mini), speed-1x (-mini)\nspeed-2x (-mini), speed-3x (-mini), speed-4x (-mini)\n"
+            "corridorblock, corridorblock-fill";
     auto infoLayer = FLAlertLayer::create(nullptr, "JFP",
         message.c_str(),
         "OK",

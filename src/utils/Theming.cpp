@@ -208,151 +208,170 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
     addBlockLine.erase(0, addBlockLine.find_first_not_of(" \t\r\n"));
     addBlockLine.erase(addBlockLine.find_last_not_of(" \t\r\n") + 1);
 
+    size_t repeatPos = addBlockLine.rfind(" repeat ");
+    int repeatDist = 0;
+    if (repeatPos != std::string::npos && repeatPos < addBlockLine.size()-8) {
+        repeatDist = geode::utils::numFromString<int>(addBlockLine.substr(repeatPos + 8)).unwrapOr(0);
+        log::info("{} {}", repeatDist, addBlockLine.substr(repeatPos + 8));
+        addBlockLine = addBlockLine.substr(0, repeatPos);
+    }
 
     // evaluate bracketed arithmetic
-    std::map<char, float> arithValues;
-    size_t i = 0;
-    while (i < addBlockLine.size()) {
-        if (addBlockLine[i] == '[') {
-            size_t end = addBlockLine.find(']', i);
-            if (end != std::string::npos) {
-                std::string expr = addBlockLine.substr(i + 1, end - i - 1);
+    const size_t repetitions = repeatDist != 0 ? 25 : 1;
+    std::string res;
+    for (size_t j = 0; j < repetitions; j++) {
+        std::map<int, float> arithValues;
+        size_t start = 0;
+        while (start < addBlockLine.size()) {
+            size_t comma = addBlockLine.find(',', start);
+            std::string k = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
 
-                expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
-                float value = 0.f;
+            comma = addBlockLine.find(',', start);
+            std::string valuePair = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
 
-                // throw in xpos, ypos, corridorheight values
-                std::string parsedExpr;
-                bool preserveFloat = false;
-                char primary = 0;
-                for (size_t j = 0; j < expr.size(); ++j) {
-                    if (expr[j] == 'X') {
-                        parsedExpr += geode::utils::numToString(X);
-                        if (primary == 0) primary = expr[j];
-                    } else if (expr[j] == 'Y') {
-                        parsedExpr += geode::utils::numToString(Y);
-                        if (primary == 0) primary = expr[j];
-                    } else if (expr[j] == 'C') {
-                        parsedExpr += geode::utils::numToString(corridorHeight);
-                        if (primary == 0) primary = expr[j];
-                    } else if (expr[j] == 'R') {
-                        parsedExpr += geode::utils::numToString(rotation);
-                        if (primary == 0) primary = expr[j];
-                    } else if (expr[j] == 'S') {
-                        parsedExpr += geode::utils::numToString(scale);
-                        if (primary == 0) primary = expr[j];
+            int key = 0;
+            key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+            if (key == -1) {
+                continue;
+            }
+
+            size_t i = 0;
+            while (i < valuePair.size()) {
+                if (valuePair[i] == '[') {
+                    size_t end = valuePair.find(']', i);
+                    if (end != std::string::npos) {
+                        std::string expr = valuePair.substr(i + 1, end - i - 1);
+
+                        expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
+                        float value = 0.f;
+
+                        // throw in xpos, ypos, corridorheight values
+                        std::string parsedExpr;
+                        bool preserveFloat = false;
+                        char primary = 0;
+                        for (size_t j = 0; j < expr.size(); ++j) {
+                            if (expr[j] == 'X') {
+                                parsedExpr += geode::utils::numToString(X);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'Y') {
+                                parsedExpr += geode::utils::numToString(Y);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'C') {
+                                parsedExpr += geode::utils::numToString(corridorHeight);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'R') {
+                                parsedExpr += geode::utils::numToString(rotation);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'S') {
+                                parsedExpr += geode::utils::numToString(scale);
+                                if (primary == 0) primary = expr[j];
+                            } else {
+                                parsedExpr += expr[j];
+                            }
+                        }
+
+                        // evaluate the parsedExpr as a left-to-right sum/diff/prod/quot/mod
+                        float acc = 0.f;
+                        char lastOp = 0;
+                        size_t idx = 0;
+                        while (idx < parsedExpr.size()) {
+                            size_t nextOp = parsedExpr.find_first_of("+-*/%", idx);
+                            std::string numStr = parsedExpr.substr(idx, nextOp - idx);
+                            float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
+                            if (lastOp == 0) {
+                                acc = num;
+                            } else if (lastOp == '+') {
+                                acc += num;
+                            } else if (lastOp == '-') {
+                                acc -= num;
+                            } else if (lastOp == '*') {
+                                acc *= num;
+                            } else if (lastOp == '/') {
+                                acc /= num;
+                            } else if (lastOp == '%') {
+                                acc = std::fmod(acc, num);
+                            }
+                            if (nextOp == std::string::npos) break;
+                            lastOp = parsedExpr[nextOp];
+                            idx = nextOp + 1;
+                        }
+                        value = acc;
+                        arithValues[key] = value;
+                        
+                        i = end + 1;
                     } else {
-                        parsedExpr += expr[j];
+                        i++;
                     }
+                } else {
+                    i++;
                 }
-
-                // evaluate the parsedExpr as a left-to-right sum/diff/prod/quot/mod
-                float acc = 0.f;
-                char lastOp = 0;
-                size_t idx = 0;
-                while (idx < parsedExpr.size()) {
-                    size_t nextOp = parsedExpr.find_first_of("+-*/%", idx);
-                    std::string numStr = parsedExpr.substr(idx, nextOp - idx);
-                    float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
-                    if (lastOp == 0) {
-                        acc = num;
-                    } else if (lastOp == '+') {
-                        acc += num;
-                    } else if (lastOp == '-') {
-                        acc -= num;
-                    } else if (lastOp == '*') {
-                        acc *= num;
-                    } else if (lastOp == '/') {
-                        acc /= num;
-                    } else if (lastOp == '%') {
-                        acc = std::fmod(acc, num);
-                    }
-                    if (nextOp == std::string::npos) break;
-                    lastOp = parsedExpr[nextOp];
-                    idx = nextOp + 1;
-                }
-                value = acc;
-                arithValues[primary] = value;
-
-                // TODO(M): rework this - it's intended to cut around
-                // the field of view to prevent obj hell. should probably
-                // rework the simple arithmetic logic as well, at some point
-                if (expr.find("Y") != std::string::npos) {
-                    if (value > 375 || value < -15) {
-                        return "";
-                    }
-                }
-                
-                i = end + 1;
-            } else {
-                i++;
             }
-        } else {
-            i++;
         }
-    }
+
+        if (arithValues.contains(3) && (arithValues[3] > 375 || arithValues[3] < -15)) {
+            continue;
+        }
     
-    // morph positions which are relative to scale and rotation
-    float xdiff = arithValues['X'] - X;
-    float ydiff = arithValues['Y'] - Y;
-    if (scale < 0.9995 || scale > 1.0005) {
-        if (arithValues['X'] != X) {
-            arithValues['X'] = X + (xdiff) * scale;
-        } else if (arithValues['Y'] != Y) {
-            arithValues['Y'] = Y + (ydiff) * scale;
-        }
-    }
-    xdiff = arithValues['X'] - X;
-    ydiff = arithValues['Y'] - Y;
-    if (rotation > 0.0005 || rotation < -0.0005) {
-        if (arithValues['X'] != X || arithValues['Y'] != Y) {
-            float rotationRad = rotation * M_PI/180;
-            arithValues['X'] = (xdiff * std::cos(rotationRad) + ydiff * std::sin(rotationRad)) + X;
-            arithValues['Y'] = (ydiff * std::cos(rotationRad) - xdiff * std::sin(rotationRad)) + Y;
-            
-        }
-    }
-
-    // replace bracketed values
-    i = 0;
-    std::string result;
-    while (i < addBlockLine.size()) {
-        if (addBlockLine[i] == '[') {
-            size_t end = addBlockLine.find(']', i);
-            if (end != std::string::npos) {
-                std::string expr = addBlockLine.substr(i + 1, end - i - 1);
-
-                expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
-                float value = 0.f;
-
-                // throw in xpos, ypos, corridorheight values
-                bool preserveFloat = false;
-                char primary = 0;
-                for (size_t j = 0; j < expr.size(); ++j) {
-                    if (std::find(std::begin(validVars), std::end(validVars), expr[j]) != std::end(validVars) && primary == 0) {
-                        primary = expr[j];
-                    }
-                    // if (expr[j] == 'R' || expr[j] == 'S') {
-                    //     preserveFloat = true;
-                    // }
-                }
-
-                value = arithValues[primary];
-                result += geode::utils::numToString(value);
-
-                i = end + 1;
-            } else {
-                result += addBlockLine[i++];
+        // morph positions which are relative to scale and rotation
+        if (scale < 0.9995 || scale > 1.0005) {
+            float xdiff = arithValues[2] - X;
+            float ydiff = arithValues[3] - Y;
+            if (arithValues[2] != X) {
+                arithValues[3] = X + (xdiff) * scale;
+            } else if (arithValues[3] != Y) {
+                arithValues[3] = Y + (ydiff) * scale;
             }
-        } else {
-            result += addBlockLine[i++];
         }
-    }
+        if (rotation > 0.0005 || rotation < -0.0005) {
+            float xdiff = arithValues[2] - X;
+            float ydiff = arithValues[3] - Y;
+            if (arithValues[2] != X || arithValues[3] != Y) {
+                float rotationRad = rotation * M_PI/180;
+                arithValues[2] = (xdiff * std::cos(rotationRad) + ydiff * std::sin(rotationRad)) + X;
+                arithValues[3] = (ydiff * std::cos(rotationRad) - xdiff * std::sin(rotationRad)) + Y;
+                
+            }
+        }
 
-    if (!result.empty() && result.back() != ';') {
-        result += ';';
+        // replace bracketed values
+        std::string localRes;
+        start = 0;
+        while (start < addBlockLine.size()) {
+            size_t comma = addBlockLine.find(',', start);
+            std::string k = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+            comma = addBlockLine.find(',', start);
+            std::string valuePair = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+            int key = 0;
+            key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+            if (key == -1) {
+                continue;
+            }
+
+            if (arithValues.contains(key)) {
+                if (key == 2 || key == 3) {
+                    valuePair = geode::utils::numToString<int>(static_cast<int>(arithValues[key]));
+                } else {
+                    valuePair = geode::utils::numToString<float>(arithValues[key]);
+                }
+            }
+
+            if (!localRes.empty()) localRes += ",";
+            localRes += k + "," + valuePair;
+        }
+
+        if (!localRes.empty() && localRes.back() != ';') {
+            localRes += ';';
+        }
+        res += localRes;
+        Y += repeatDist;
     }
-    return result;
+    return res;
 }
 
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) {

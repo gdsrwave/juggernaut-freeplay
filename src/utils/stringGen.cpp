@@ -136,7 +136,8 @@ std::string jfpNewStringGen(LevelData ldata) {
     int currentCH = biome.options.startingMini ? corridorHeightM : corridorHeight;
 
     if (opts.startingMini) {
-        if (!overrideBankS["start-mini"].standard.active || overrideBankS["start-mini"].standard.keep) {
+        if ((!overrideBankS["start"].mini.active || overrideBankS["start"].mini.keep) &&
+                (!overrideBankS["slope"].mini.active || overrideBankS["slope"].mini.keep)) {
             fmt::dynamic_format_arg_store<fmt::format_context> args;
             args.push_back(fmt::arg("ch_1", 90 + currentCH));
             args.push_back(fmt::arg("ch_2", 150 + currentCH));
@@ -147,7 +148,8 @@ std::string jfpNewStringGen(LevelData ldata) {
             level += startingConnectors;
         }
     } else {
-        if (!overrideBankS["start"].standard.active || overrideBankS["start"].standard.keep) {
+        if ((!overrideBankS["start"].standard.active || overrideBankS["start"].standard.keep) &&
+                (!overrideBankS["slope"].standard.active || overrideBankS["slope"].standard.keep)) {
             fmt::dynamic_format_arg_store<fmt::format_context> args;
             args.push_back(fmt::arg("ch_1", 225 + currentCH));
             args.push_back(fmt::arg("ch_2", 165 + currentCH));
@@ -434,7 +436,8 @@ std::string jfpNewStringGen(LevelData ldata) {
     auto lastSegment = biome.segments.back();
     auto& endORgroup = lastSegment.y_swing == 1 ? overrideBankS["endup"] : overrideBankS["enddown"];
     auto& endORSize = lastSegment.options.mini ? endORgroup.mini : endORgroup.standard;
-    if (!endORSize.active || endORSize.keep) {
+    auto& endORSlopeSize = lastSegment.options.mini ? overrideBankS["slope"].mini : overrideBankS["slope"].standard;
+    if ((!endORSize.active || endORSize.keep) && (!endORSlopeSize.active || endORSlopeSize.keep)) {
         int xB = lastSegment.coords.first, yB = lastSegment.coords.second;
         int xT = xB, yT = yB + currentCH;
         if (lastSegment.options.mini) {
