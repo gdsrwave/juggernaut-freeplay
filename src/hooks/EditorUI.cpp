@@ -7,32 +7,61 @@
 using namespace geode::prelude;
 
 void onCopyBtns(EditorUI* ui,
-        ThemeGen::OMType omType = ThemeGen::OMType::None, bool specialOR = false) {
+        ThemeGen::OMType omType = ThemeGen::OMType::None, ThemeGen::JFPTExtraTypes specialOR = ThemeGen::JFPTExtraTypes::None) {
     auto selectedObj = ui->getSelectedObjects();
-    std::string res = "# <if|define> #\n";
+    std::string res = "# if|define #\n";
+    if (specialOR == ThemeGen::JFPTExtraTypes::Pattern) res = "# pattern (starting X coordinate) (units until repeat) #\n";
     for (auto obj : CCArrayExt<GameObject*>(selectedObj)) {
         res += ThemeGen::handleRawBlock(obj->getSaveString(ui->m_editorLayer),
             omType, specialOR);
         res += ";\n";
     }
-    res += "# end <if|define> #";
+    res += specialOR == ThemeGen::JFPTExtraTypes::Pattern ? "# end pattern #" : "# end if|define #";
+    clipboard::write(res);
+    Notification::create(
+        "Copied JFPT block to clipboard", NotificationIcon::Info, 1.f)->show();
+}
+
+void onCopyColorBtn(EditorUI* ui) {
+    auto gjem = ui->m_editorLayer->m_levelSettings->m_effectManager;
+    std::string res = "";
+    for (auto color : CCArrayExt<ColorAction*>(gjem->getAllColorActions())) {
+        if (color->m_colorID == 1005 || color->m_colorID == 1006) continue;
+        if (!res.empty()) res += "\n\n";
+        res += "# color #\n";
+        res += ThemeGen::handleColor(color);
+        res += "# end color #";
+    }
     clipboard::write(res);
     Notification::create(
         "Copied JFPT block to clipboard", NotificationIcon::Info, 1.f)->show();
 }
 
 void onThemeInfoButton() {
-    std::string message = "Definition Types:\n"
-            "base\nstart (-mini)\nenddown (-mini), endup (-mini)\nslope (-mini), spike (-mini)\n"
-            "blue-portal (-mini), yellow-portal (-mini)\nbig-portal (-mini), mini-portal (-mini)\n"
-            "speed-05x (-mini), speed-1x (-mini)\nspeed-2x (-mini), speed-3x (-mini), speed-4x (-mini)\n"
-            "corridorblock, corridorblock-fill";
-    auto infoLayer = FLAlertLayer::create(nullptr, "JFP",
-        message.c_str(),
-        "OK",
-        nullptr,
-        200.f);
-    infoLayer->setID("jfp-themeinfo-layer"_spr);
+    const char* message =
+        "Utilities assisting in the creation of <cp>JFP Themes</c>.\n\n"
+        "The <cl>base exporter</c>, listed first, exports blocks from their absolute position. Useful for the base definition, but not much else.\n\n"
+        "The <co>floor</c> and <co>ceiling exporters</c>, listed second and third, export segments of the corridor.\n"
+        "- These are used for both \"if\" and \"define\" sections in JFPT, so you'll have to manually specify which after pasting into your theme.\n"
+        "- <cr>Move your reference point to (0,0) before using these buttons.</c> These blocks will have relative coordinates depending on your generation, "
+        "so they must be exported relative to the editor's origin point.\n"
+        "- Tip: The \"reference point\" you place at (0,0) for corridor segments is the center of your slope (or, for miniwave, the center of its top half).\n\n"
+        "The <cp>\"special objects\" exporter</c>, listed fourth, accounts for relative coordinates, rotation and scale.\n"
+        "- It is used for definitions of spikes, speed changes, gravity portals, etc. Valid definitions listed below.\n\n"
+        "The <cg>pattern exporter</c>, listed fifth, exports blocks as patterns. Patterns have a relative X coordinate and an absolute Y coordinate.\n"
+        "- This is used for pattern sections only; after pasting, you will have to specify starting coords and a repetition interval.\n\n"
+        "The <cr>c</c><co>o</c><cy>l</c><cg>o</c><cl>r</c><cb>s</c> <cy>exporter</c>, listed sixth, exports all the colors from the opened level.\n\n"
+        "There are currently no utilities for metadata or k sections. You also have to set definitions and figure out matching logic yourself.\n\n"
+        "Definition Types:\n- base\n- start (-mini)\n- enddown (-mini)\n- endup (-mini)\n- slope (-mini)\n- spike (-mini)\n"
+        "- blue-portal (-mini)\n- yellow-portal (-mini)\n- big-portal (-mini)\n- mini-portal (-mini)\n"
+        "- speed-05x (-mini)\n- speed-1x (-mini)\n- speed-2x (-mini)\n- speed-3x (-mini)\n- speed-4x (-mini)\n- corridorblock\n- corridorblock-fill";
+
+    auto infoLayer = MDPopup::create("Theme Creator Tools",
+        message,
+        "OK"
+    );
+    infoLayer->setID("jfpopt-info-layer"_spr);
+    infoLayer->setScale(1.1f);
     infoLayer->show();
 }
 
@@ -96,24 +125,38 @@ class $modify(EditorUI) {
 
             auto specialORBtn = CCMenuItemExt::createSpriteExtra(
                 specialORBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, true); });
+                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Special); });
 
-            specialORBtn->setID("jfpt-ceilcpy-btn");
+            specialORBtn->setID("jfpt-specialcpy-btn");
             arr->addObject(specialORBtn);
 
-            // // pattern export btn
-            // auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            // ceilBtnSpr->addChildAtPosition(
-            //     CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
-            //     Anchor::Center,
-            //     CCPointZero
-            // );
-            // auto ceilBtn = CCMenuItemExt::createSpriteExtra(
-            //     ceilBtnSpr,
-            //     [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); }
-            // );
-            // ceilBtn->setID("jfpt-ceilcpy-btn");
-            // arr->addObject(ceilBtn);
+            // pattern export btn
+            auto patternBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            patternBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero
+            );
+            auto patternBtn = CCMenuItemExt::createSpriteExtra(
+                patternBtnSpr,
+                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Pattern); }
+            );
+            patternBtn->setID("jfpt-patterncpy-btn");
+            arr->addObject(patternBtn);
+
+            // pattern export btn
+            auto colorsBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            colorsBtnSpr->addChildAtPosition(
+                CCSprite::createWithSpriteFrameName("colorsIcon.png"_spr),
+                Anchor::Center,
+                CCPointZero
+            );
+            auto colorsBtn = CCMenuItemExt::createSpriteExtra(
+                colorsBtnSpr,
+                [=](auto) { onCopyColorBtn(ui); }
+            );
+            colorsBtn->setID("jfpt-colorscpy-btn");
+            arr->addObject(colorsBtn);
 
             // info btn
             auto infoBtnSpr = CCSprite::createWithSpriteFrameName(

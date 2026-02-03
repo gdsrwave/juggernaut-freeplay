@@ -6,5 +6,4 @@ using namespace geode::prelude;
 
 $on_mod(Loaded) {
     setupJFPDirectories();
-    setupJFPMusic();
 }

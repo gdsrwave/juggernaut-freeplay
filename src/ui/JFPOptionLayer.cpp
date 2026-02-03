@@ -129,8 +129,7 @@ void JFPOptionLayer::keyBackClicked() {
 
     if (!GameManager::sharedState()->getGameVariable("0122") &&
         CCDirector::sharedDirector()->getRunningScene() != nullptr) {
-        auto fileUtils = CCFileUtils::sharedFileUtils();
-        auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+        auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         auto* engine = FMODAudioEngine::get();
         if (engine) {
             engine->playMusic(bgmPath, true, 1.0f, 1);
@@ -143,8 +142,7 @@ void JFPOptionLayer::onBack(CCObject* object) {
 
     if (!GameManager::sharedState()->getGameVariable("0122") &&
         CCDirector::sharedDirector()->getRunningScene() != nullptr) {
-        auto fileUtils = CCFileUtils::sharedFileUtils();
-        auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+        auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         auto* engine = FMODAudioEngine::get();
         if (engine) {
             engine->playMusic(bgmPath, true, 1.0f, 1);

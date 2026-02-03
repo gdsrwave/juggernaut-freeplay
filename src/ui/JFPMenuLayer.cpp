@@ -394,8 +394,7 @@ CCScene* JFPMenuLayer::scene() {
     scene->addChild(layer);
 
     if (!GameManager::sharedState()->getGameVariable("0122")) {
-        auto bgmPath =
-            std::string(CCFileUtils::sharedFileUtils()->getWritablePath()) + "jfpLoop.mp3";
+        auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
     }
     // queueInMainThread([=]() {

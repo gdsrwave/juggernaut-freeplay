@@ -42,30 +42,26 @@ std::vector<int> getUserSongs() {
 }
 
 void setupJFPDirectories(bool bypass) {
-    auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
+    auto modSavePath = Mod::get()->getSaveDir();
+    auto jfpDir = modSavePath / "themes";
+
+    bool contFlag = bypass;
     if (!std::filesystem::is_directory(jfpDir)) {
         log::info("Creating JFP directory: {}", jfpDir);
         (void)file::createDirectory(jfpDir);
-    }
-    std::string themesDir = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
-
-    bool contFlag = bypass;
-    if (!std::filesystem::is_directory(themesDir)) {
-        (void)file::createDirectory(themesDir);
         contFlag = true;
     }
     if (contFlag) {
-        log::info("Loading .jfpt files into themes directory: {}", themesDir);
+        log::info("Loading .jfpt files into themes directory: {}", jfpDir);
         // Source directory for .jfpt files
         std::filesystem::path srcDir = Mod::get()->getResourcesDir();
-        Mod::get()->setSavedValue<int>("ack-theme-update", 1);
+        Mod::get()->setSavedValue<int>("ack-theme-update", 2);
 
         for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
             auto fileStr = fileName.path().filename().string();
             if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
                 std::filesystem::path srcPath = srcDir / fileStr;
-                std::string dstPath = themesDir + fileStr;
+                std::filesystem::path dstPath = jfpDir / fileStr;
 
                 if (std::filesystem::exists(dstPath)) {
                     if (bypass) {

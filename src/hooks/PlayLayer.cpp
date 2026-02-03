@@ -32,13 +32,13 @@ class $modify(PlayLayer) {
             state = JFPGen::AutoJFP::NotInAutoJFP;
         }
 
+        log::info("2");
         PlayLayer::onQuit();
 
         if (storedState != JFPGen::AutoJFP::NotInAutoJFP &&
             !GameManager::sharedState()->getGameVariable("0122") &&
             CCDirector::sharedDirector()->getRunningScene() != nullptr) {
-            auto fileUtils = CCFileUtils::sharedFileUtils();
-            auto bgmPath = std::string(fileUtils->getWritablePath()) + "jfpLoop.mp3";
+            auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
             auto* engine = FMODAudioEngine::get();
             if (engine) {
                 engine->playMusic(bgmPath, true, 1.0f, 1);
@@ -47,6 +47,7 @@ class $modify(PlayLayer) {
     }
 
     void resetLevel() {
+        log::info("1");
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
             return PlayLayer::resetLevel();
         } else if (state == JFPGen::AutoJFP::InAutoTransition) {
@@ -112,6 +113,7 @@ class $modify(PlayLayer) {
     }
 
     void onEnterTransitionDidFinish() {
+        log::info("i");
         PlayLayer::onEnterTransitionDidFinish();
         if (state == JFPGen::AutoJFP::NotInAutoJFP || att1) {
             return;
@@ -121,6 +123,7 @@ class $modify(PlayLayer) {
         m_attempts = globalAtt;
         PlayLayer::updateAttempts();
         m_level->m_normalPercent = 0;
+        log::info("j");
     }
 
     void showNewBest(bool newReward, int orbs, int diamonds, bool demonKey, bool noRetry, bool noTitle) {

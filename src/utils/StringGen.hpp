@@ -2,7 +2,6 @@
 #pragma once
 
 #include <fmt/core.h>
-#include <Geode/cocos/platform/CCFileUtils.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include <filesystem>
 #include <random>

@@ -31,6 +31,12 @@ enum class OMType: int {
     None = 3
 };
 
+enum class JFPTExtraTypes: int {
+    Special = 0,
+    Pattern = 1,
+    None = 2
+};
+
 struct ThemeMatch {
     OMType omType;
     std::vector<OMType> notTypes;
@@ -64,9 +70,11 @@ std::array<int, 3> hexToColor(const std::string& hex);
 bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
     const std::vector<int>& pattern, OMType omType = OMType::Corridor,
     bool typeA = false);
-std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None, bool special = false);
-std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
-    int maxHeight = 195, int minHeight = 45, int corridorHeight = 60, float rotation = 0.f, float scale = 1.f);
+std::string handleColor(ColorAction* color);
+std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None,
+    JFPTExtraTypes extra = JFPTExtraTypes::None);
+std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f, int maxHeight = 195,
+    int minHeight = 45, int corridorHeight = 60, bool isForPattern = false, float rotation = 0.f, float scale = 1.f);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 ThemeMetadata parseThemeMeta(const std::string& name);
 std::vector<std::string> tagConflicts(ThemeMetadata tmd);

@@ -114,15 +114,74 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
     return true;
 }
 
-std::string handleRawBlock(std::string addBlockLine, OMType omType, bool special) {
+std::string handleColor(ColorAction* color) {
+    auto rgbv = color->m_color;
+    std::string res = "";
+
+    res += fmt::format("Slot: {}\n", color->m_colorID);
+    uint16_t copyID = color->m_copyID;
+    if (copyID) {
+        res += fmt::format("Color: Copy {}\n", color->m_copyID);
+    } else {
+
+        char rgbBuf[8];
+        auto rgbv = color->m_fromColor;
+        snprintf(rgbBuf, sizeof(rgbBuf), "#%02X%02X%02X", rgbv.r, rgbv.g, rgbv.b);
+        res += fmt::format("Color: {}\n", std::string(rgbBuf));
+    }
+
+    if (color->m_blending) res += fmt::format("Blending: {}\n", color->m_blending);
+
+    const float ep = 0.00005;
+    if(std::abs(color->m_fromOpacity - 1) > ep) {
+        res += fmt::format("Opacity: {}\n", color->m_fromOpacity);
+    }
+
+    auto hsv = color->m_copyHSV;
+    bool usingSat = (std::abs(hsv.s - 1) > ep && !hsv.absoluteSaturation) || ((std::abs(hsv.s) > ep && hsv.absoluteSaturation));
+    bool usingVal = (std::abs(hsv.v - 1) > ep && !hsv.absoluteBrightness) || ((std::abs(hsv.v) > ep && hsv.absoluteBrightness));
+    if (std::abs(hsv.h) > ep || usingSat || usingVal) {
+        std::string hsvString = fmt::format("{}a{}a{}a{}a{}",
+            hsv.h, hsv.s, hsv.v, static_cast<int>(hsv.absoluteBrightness), static_cast<int>(hsv.absoluteSaturation));
+        res += fmt::format("Special: 10_{}\n", hsvString);
+    }
+
+    return res;
+}
+
+std::string handleRawBlock(std::string addBlockLine, OMType omType, JFPTExtraTypes extra) {
     std::string res;
     size_t start = 0;
-    bool addedX = false;
-    bool addedY = false;
-    bool addedR = false;
-    bool addedS = false;
 
     if (!addBlockLine.empty() && addBlockLine.back() == ';') addBlockLine.pop_back();
+
+    bool addedR = false;
+    bool addedS = false;
+    while (start < addBlockLine.size()) {
+        size_t comma = addBlockLine.find(',', start);
+        std::string k = addBlockLine.substr(start, comma - start);
+        start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+        comma = addBlockLine.find(',', start);
+        std::string v = addBlockLine.substr(start, comma - start);
+        start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+        int key = 0;
+        key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+        if (key == -1) {
+            continue;
+        }
+        log::info("startingkey: {}", key);
+
+        if (key == 6) {
+            addedR = true;
+        } else if (key == 32 || key == 129) {
+            addedS = true;
+        }
+
+    }
+
+    start = 0;
     while (start < addBlockLine.size()) {
         size_t comma = addBlockLine.find(',', start);
         std::string k = addBlockLine.substr(start, comma - start);
@@ -151,11 +210,7 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType, bool special
 
         if (key == 2) {
             float xv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
-            if (xv == 0.f) {
-                continue;
-            }
-            addedX = true;
-            if (std::abs(xv - std::round(xv)) < 0.1f && !special) {
+            if (std::abs(xv - std::round(xv)) < 0.1f && extra == JFPTExtraTypes::None) {
                 xv = std::round(xv);
                 v = geode::utils::numToString(static_cast<int>(xv));
             }
@@ -163,39 +218,31 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType, bool special
         } else if (key == 3) {
             float yv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
             // num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
-            if (yv == 0.f) {
-                continue;
-            }
-            addedY = true;
-            if (std::abs(yv - std::round(yv)) < 0.1f && !special) {
+            if (std::abs(yv - std::round(yv)) < 0.1f && extra == JFPTExtraTypes::None) {
                 yv = std::round(yv);
                 v = geode::utils::numToString(static_cast<int>(yv));
             }
             if (omType == OMType::Ceiling) v = "[Y+C+" + v + "]";
-            else if (omType != OMType::None) v = "[Y+" + v + "]";
-        } else if (key == 6 && special) {
-            addedR = true;
+            else if (omType != OMType::None && extra != JFPTExtraTypes::Pattern) v = "[Y+" + v + "]";
+        } else if (key == 6 && extra == JFPTExtraTypes::Special) {
             v = "[R+" + v + "]";
-        } else if ((key == 32 || key == 129) && special) {
-            if (addedS) continue;
-            addedS = true;
-
+        } else if ((key == 32 || key == 129) && extra == JFPTExtraTypes::Special) {
             v = "[S*" + v + "]";
         }
         if (!res.empty()) res += ",";
         res += k + "," + v;
-    }
 
-    if (!addedX) res += ",2,[X]";
-    if (!addedY) res += ",3,[Y]";
-    if (!addedR && special) res += ",6,[R]";
-    if (!addedS && special) res += ",32,[S]";
+        if (key == 1) {
+            if (!addedR && extra == JFPTExtraTypes::Special) res += ",6,[R]";
+            if (!addedS && extra == JFPTExtraTypes::Special) res += ",32,[S]";
+        }
+    }
 
     return res;
 }
 
 std::string parseAddBlock(std::string addBlockLine, float X, float Y,
-        int maxHeight, int minHeight, int corridorHeight, float rotation, float scale) {
+        int maxHeight, int minHeight, int corridorHeight, bool isForPattern, float rotation, float scale) {
     // remove legacy prefix
     if (addBlockLine.empty()) return "";
     const std::string prefix = "Add Block";
@@ -212,7 +259,6 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
     int repeatDist = 0;
     if (repeatPos != std::string::npos && repeatPos < addBlockLine.size()-8) {
         repeatDist = geode::utils::numFromString<int>(addBlockLine.substr(repeatPos + 8)).unwrapOr(0);
-        log::info("{} {}", repeatDist, addBlockLine.substr(repeatPos + 8));
         addBlockLine = addBlockLine.substr(0, repeatPos);
     }
 
@@ -310,7 +356,7 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
             }
         }
 
-        if (arithValues.contains(3) && (arithValues[3] > 375 || arithValues[3] < -15)) {
+        if (!isForPattern && arithValues.contains(3) && (arithValues[3] > 375 || arithValues[3] < -15)) {
             continue;
         }
     
@@ -411,26 +457,24 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
     auto biome = ldata.biomes[0];
 
-    auto localPath = CCFileUtils::sharedFileUtils();
     std::string themeName = name;
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string fp = std::string(localPath->getWritablePath()) +
-        "/jfp/themes/" + themeName;
-    std::ifstream file(fp);
-    if (!file.is_open()) {
-        return "";
-    }
+
+    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
     std::vector<std::string> lines;
     std::string line;
     uint32_t ctr = 0;
-    while (std::getline(file, line)) {
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
         lines.push_back(line);
         ctr++;
         if (ctr > 20000) break; 
     }
-    file.close();
 
     for (const auto& l : lines) {
         if (l.length() > 1000) {
@@ -745,7 +789,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
     const int trueLength = (biome.options.length * 30);
     for (const auto& pattern : repeatingPatterns) {
-        int loopCount = std::min((trueLength / pattern.repeat) + 1, 1000);
+        int patternRepeat = pattern.repeat >= 1 ? pattern.repeat : 1;
+        int loopCount = std::min(((trueLength + 345) / pattern.repeat) + 1, 10000);
         int n = pattern.start;
         for (int i = 0; i < loopCount; ++i) {
             for (const auto blockData : pattern.data) {
@@ -754,7 +799,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                     n, 0,
                     biome.options.maxHeight,
                     biome.options.minHeight,
-                    biome.options.corridorHeight);
+                    biome.options.corridorHeight,
+                    true);
             }
             n += pattern.repeat;
         }
@@ -945,7 +991,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             for (const auto& block : portalBlocks) {
                 std::string parsed = parseAddBlock(
                     block, xP, yP,
-                    biome.options.maxHeight, biome.options.minHeight, passedCH, rPdeg, scaleP);
+                    biome.options.maxHeight, biome.options.minHeight, passedCH, false, rPdeg, scaleP);
                 if (!parsed.empty()) {
                     themeGen += parsed;
                 }
@@ -989,7 +1035,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             for (const auto& block : spikeBlocks) {
                 std::string parsed = parseAddBlock(
                     block, xS, yS,
-                    biome.options.maxHeight, biome.options.minHeight, passedCH, rS, scaleS);
+                    biome.options.maxHeight, biome.options.minHeight, passedCH, false, rS, scaleS);
                 if (!parsed.empty()) {
                     themeGen += parsed;
                 }
@@ -1020,7 +1066,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             for (const auto& block : speedBlocks) {
                 std::string parsed = parseAddBlock(
                     block, seg.coords.first - 14, spY,
-                    biome.options.maxHeight, biome.options.minHeight, passedCH, spR, speedFactor);
+                    biome.options.maxHeight, biome.options.minHeight, passedCH, false, spR, speedFactor);
                 if (!parsed.empty()) {
                     themeGen += parsed;
                 }
@@ -1050,7 +1096,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 for (const auto& block : spikeBlocks) {
                     std::string parsed = parseAddBlock(
                         block, xSP, ySP,
-                        biome.options.maxHeight, biome.options.minHeight, passedCH, rSP, scaleSP);
+                        biome.options.maxHeight, biome.options.minHeight, passedCH, false, rSP, scaleSP);
                     if (!parsed.empty()) {
                         themeGen += parsed;
                     }
@@ -1082,7 +1128,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
                 for (const auto& block : spikeBlocks) {
                     std::string parsed = parseAddBlock(
                         block, xSP, ySP,
-                        biome.options.maxHeight, biome.options.minHeight, passedCH, rSP, scaleSP);
+                        biome.options.maxHeight, biome.options.minHeight, passedCH, false, rSP, scaleSP);
                     if (!parsed.empty()) {
                         themeGen += parsed;
                     }
@@ -1098,23 +1144,23 @@ ThemeMetadata parseThemeMeta(const std::string& name) {
     bool inMetadata = false;
     ThemeMetadata metadata;
 
-    auto localPath = CCFileUtils::sharedFileUtils();
     std::string themeName = name;
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string fp = std::string(localPath->getWritablePath()) +
-        "/jfp/themes/" + themeName;
-    std::ifstream file(fp);
-    if (!file.is_open()) {
-        return ThemeMetadata();
-    }
+    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
     std::vector<std::string> lines;
     std::string line;
-    while (std::getline(file, line)) {
+    uint32_t ctr = 0;
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
         lines.push_back(line);
+        ctr++;
+        if (ctr > 20000) break;
     }
-    file.close();
 
     for (const auto& l : lines) {
         // TODO(M): rework into a switch case or a neater conditional
@@ -1189,6 +1235,9 @@ std::vector<std::string> tagConflicts(ThemeMetadata tmd) {
     if (!isTypeA && std::find(tmd.tags.begin(), tmd.tags.end(), "type-a-only") !=
             tmd.tags.end()) {
         conflicts.push_back("type-a-only");
+    }
+    if (std::find(tmd.tags.begin(), tmd.tags.end(), "domu_game") != tmd.tags.end()) {
+        conflicts.push_back("domu_game");
     }
 
     return conflicts;

@@ -55,15 +55,13 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     std::string themeName =
         Mod::get()->getSavedValue<std::string>("active-theme");
 
-    auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
-    if (!std::filesystem::is_directory(jfpDir)) setupJFPDirectories(true);
+    auto modSavePath = Mod::get()->getSaveDir();
+    auto themesDir = modSavePath / "themes";
+    if (!std::filesystem::is_directory(themesDir)) setupJFPDirectories(true);
 
-    std::string fp = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
-
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(fp)) {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
         if (entry.is_regular_file()) {
-            auto filename = std::filesystem::relative(entry.path(), fp).string();
+            auto filename = std::filesystem::relative(entry.path(), themesDir).string();
             if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
                 continue;
             }
@@ -167,7 +165,7 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     scrl->m_contentLayer->updateLayout();
     scrl->moveToTop();
 
-    const int THEME_UPDATE_VER = 1;
+    const int THEME_UPDATE_VER = 2;
     if (Mod::get()->getSavedValue<int>("ack-theme-update", 0) != THEME_UPDATE_VER) {
         Mod::get()->setSavedValue<int>("ack-theme-update", THEME_UPDATE_VER);
 
@@ -248,8 +246,7 @@ void ThemeSelectPopup::onSelectTheme(CCObject* object) {
 }
 
 void ThemeSelectPopup::onClickFolder(CCObject*) {
-    auto localPath = CCFileUtils::sharedFileUtils();
-    file::openFolder(std::string(localPath->getWritablePath()) + "jfp\\themes\\");
+    file::openFolder(Mod::get()->getSaveDir() / "themes");
 }
 
 void ThemeSelectPopup::onClickReload(CCObject* object) {
