@@ -401,7 +401,7 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
 
             if (arithValues.contains(key)) {
                 if (key == 2 || key == 3) {
-                    valuePair = geode::utils::numToString<int>(static_cast<int>(arithValues[key]));
+                    valuePair = geode::utils::numToString<float>(arithValues[key]);
                 } else {
                     valuePair = geode::utils::numToString<float>(arithValues[key]);
                 }
