@@ -25,7 +25,8 @@ void onCopyBtns(EditorUI* ui,
 void onCopyColorBtn(EditorUI* ui) {
     auto gjem = ui->m_editorLayer->m_levelSettings->m_effectManager;
     std::string res = "";
-    for (auto color : CCArrayExt<ColorAction*>(gjem->getAllColorActions())) {
+    auto colorActions = gjem->getAllColorActions();
+    for (auto color : CCArrayExt<ColorAction*>(colorActions)) {
         if (color->m_colorID == 1005 || color->m_colorID == 1006) continue;
         if (!res.empty()) res += "\n\n";
         res += "# color #\n";

@@ -32,7 +32,6 @@ class $modify(PlayLayer) {
             state = JFPGen::AutoJFP::NotInAutoJFP;
         }
 
-        log::info("2");
         PlayLayer::onQuit();
 
         if (storedState != JFPGen::AutoJFP::NotInAutoJFP &&
@@ -47,7 +46,6 @@ class $modify(PlayLayer) {
     }
 
     void resetLevel() {
-        log::info("1");
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
             return PlayLayer::resetLevel();
         } else if (state == JFPGen::AutoJFP::InAutoTransition) {
@@ -113,7 +111,6 @@ class $modify(PlayLayer) {
     }
 
     void onEnterTransitionDidFinish() {
-        log::info("i");
         PlayLayer::onEnterTransitionDidFinish();
         if (state == JFPGen::AutoJFP::NotInAutoJFP || att1) {
             return;
@@ -123,7 +120,6 @@ class $modify(PlayLayer) {
         m_attempts = globalAtt;
         PlayLayer::updateAttempts();
         m_level->m_normalPercent = 0;
-        log::info("j");
     }
 
     void showNewBest(bool newReward, int orbs, int diamonds, bool demonKey, bool noRetry, bool noTitle) {

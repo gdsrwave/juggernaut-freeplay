@@ -44,7 +44,6 @@ bool JFPScreenshotLayer::init() {
 
     // backgroundSprite2->setZOrder(-2);
 
-    log::info("a");
     auto dir = CCDirector::sharedDirector();
     auto size = dir->getWinSize();
 
@@ -54,13 +53,11 @@ bool JFPScreenshotLayer::init() {
     rt->setPosition(size / 2);  // middle of screen
     rt->begin();
     
-    log::info("b");
     dir->getRunningScene()->visit();
     rt->end();
 
     addChild(rt);
 
-    log::info("c");
     return true;
 }
 
@@ -78,8 +75,7 @@ CCScene* JFPScreenshotLayer::scene() {
 }
 
 void JFPScreenshotLayer::onAutoGen() {
-    
-    log::info("f");
+
     jfpActive = true;
     Mod::get()->setSavedValue<uint32_t>(
         "total-played",
@@ -93,18 +89,14 @@ void JFPScreenshotLayer::onAutoGen() {
     }
     auto newScene = PlayLayer::scene(level, false, false);
     // seems to work better than pushScene?
-    log::info("g");
     CCDirector::sharedDirector()->replaceScene(newScene);
-    log::info("h");
 
 }
 
 void JFPScreenshotLayer::onEnterTransitionDidFinish() {
 
-    log::info("d");
     JFPGenericLayer::onEnterTransitionDidFinish();
     queueInMainThread([=]() {
-        log::info("e");
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
             CCDirector::sharedDirector()->replaceScene(JFPMenuLayer::scene());
         } else {

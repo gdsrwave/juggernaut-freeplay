@@ -171,7 +171,6 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType, JFPTExtraTyp
         if (key == -1) {
             continue;
         }
-        log::info("startingkey: {}", key);
 
         if (key == 6) {
             addedR = true;
