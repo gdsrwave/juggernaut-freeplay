@@ -258,13 +258,15 @@ std::string jfpNewStringGen(LevelData ldata) {
             else portalID = seg.options.gravity ? 11 : 10;
 
             xP = x - 15 - portalNormal + portalPos;
-            yP = y + (y_swing == 1
+            yP = y + (biome.segments[i - 1].y_swing == -1
                 ? portalNormal + portalPos - 15
                 : currentCH + 15 - portalNormal - portalPos);
-            if (mini && y_swing == 1) yP -= 30;
-            rPdeg = (mini ? 26.565 : 45) * y_swing;
+            if (mini && biome.segments[i - 1].y_swing == -1) yP -= 30;
+            rPdeg = (mini ? 26.565 : 45) * -biome.segments[i - 1].y_swing;
             scaleP = portalFactor / 2.5;
             if (currentCH > 60) scaleP *= 0.85;
+
+            if (biome.segments[i - 1].y_swing == y_swing) yP += y_swing * -30;
 
             std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},57,908,64,1,67,1;",
                 fmt::arg("portalID", portalID),
