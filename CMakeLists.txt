@@ -9,7 +9,7 @@ endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(SKIP_BUILDING_CODEGEN OFF)
 
-project(jfp VERSION 1.7.2)
+project(jfp VERSION 1.7.3)
 
 file(GLOB_RECURSE SOURCES
     src/*.cpp
