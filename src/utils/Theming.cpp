@@ -321,8 +321,9 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
                         float acc = 0.f;
                         char lastOp = 0;
                         size_t idx = 0;
+                        int lastIdxWasOp = -2;
                         while (idx < parsedExpr.size()) {
-                            size_t nextOp = parsedExpr.find_first_of("+-*/%", idx);
+                            size_t nextOp = parsedExpr.find_first_of("+-*/%", parsedExpr[idx] == '-' ? idx + 1 : idx);
                             std::string numStr = parsedExpr.substr(idx, nextOp - idx);
                             float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
                             if (lastOp == 0) {

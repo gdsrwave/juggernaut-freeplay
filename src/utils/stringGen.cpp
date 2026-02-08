@@ -266,7 +266,12 @@ std::string jfpNewStringGen(LevelData ldata) {
             scaleP = portalFactor / 2.5;
             if (currentCH > 60) scaleP *= 0.85;
 
-            if (biome.segments[i - 1].y_swing == y_swing) yP += y_swing * -30;
+            if (biome.segments[i - 1].y_swing == y_swing) {
+                yP += y_swing * -30;
+            }// } else {
+            //     if (biome.segments[i - 1].y_swing == -1) yP += 1;
+            //     else {yP -= 1;}
+            // }
 
             std::string portalBuild = fmt::format("1,{portalID},2,{xP},3,{yP},6,{rPdeg},32,{scale},57,908,64,1,67,1;",
                 fmt::arg("portalID", portalID),

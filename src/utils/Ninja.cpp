@@ -562,9 +562,9 @@ LevelData generateJFPLevel() {
             volatile auto _ = fakePortalRNG();
         }
 
-        // if we're past the start, if we're turning, if big wave, if on aggressive settings, if rng hit, if right length, if within a release
+        // if we're past the start, if we're turning, if big wave, if on aggressive settings, if rng hit, if right length (>3), if releasing in corridor, if no spikes on corridor
         if (i > 0 && segments[i - 1].y_swing != y_swing && !mini && optPortals == Difficulties::Aggressive &&
-                portalRNG() % 3 > 0) {
+                portalRNG() % 3 > 0 && !segments[i - 1].options.isSpikeM) {
             int j = i;
             while (j >= 0 && segments[j].y_swing != y_swing) {
                 j--;
@@ -635,32 +635,37 @@ LevelData generateJFPLevel() {
             }
         }
 
-        if (i > 0 && optSpikes && segments[i - 1].y_swing != y_swing &&
-                currentPortal == Portals::None) {
-            spikeSideHold = false;
-            spikeOdds = spikeRNG() % 6;
-            if (spikeOdds == 0) {
-                if (spikeActive) spikeSideHold = true;
-                spikeActive = true;
-                if (!spikeSideHold) spikeSide = spikeRNG() % 2;
-            } else {
-                spikeActive = false;
+        if (i > 0 && optSpikes && segments[i - 1].y_swing != y_swing) {
+            if (currentPortal != Portals::None) spikeActive = false;
+            else {
+                spikeSideHold = false;
+                spikeOdds = spikeRNG() % 6;
+                if (spikeOdds == 0) {
+                    if (spikeActive) spikeSideHold = true;
+                    spikeActive = true;
+                    if (!spikeSideHold) {
+                        spikeSide = spikeRNG() % 2;
+                    }
+                } else {
+                    spikeActive = false;
+                }
             }
         }
 
+        bool isSpikeM = false, isFuzzy = false;
         if (optSpikes && spikeActive) {
-            segments[i].options.isSpikeM = true;
+            isSpikeM = true;
         }
 
         if (
             (optSpikePlacement == PlacementBySize::Mini && !mini) ||
             (optSpikePlacement == PlacementBySize::Big && mini)
         ) {
-            segments[i].options.isSpikeM = false;
+            isSpikeM = false;
         }
 
         if (optFuzz) {
-            segments[i].options.isFuzzy = true;
+            isFuzzy = true;
         }
 
         segments[i] = Segment{
@@ -668,11 +673,11 @@ LevelData generateJFPLevel() {
             .y_swing = y_swing,
             .options = {
                 .gravity = gravity,
-                .isSpikeM = segments[i].options.isSpikeM,
+                .isSpikeM = isSpikeM,
                 .spikeSide = static_cast<bool>(spikeSide),
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? currentSpeed : SpeedChange::None,
-                .isFuzzy = segments[i].options.isFuzzy,
+                .isFuzzy = isFuzzy,
                 .mini = mini,
                 .isTransition = false
             }
