@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool VisualsOptPopup::setup(std::string const& value) {
+bool VisualsOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Visual Options");
@@ -465,9 +465,9 @@ void VisualsOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-VisualsOptPopup* VisualsOptPopup::create(std::string const& text) {
+VisualsOptPopup* VisualsOptPopup::create() {
     auto ret = new VisualsOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

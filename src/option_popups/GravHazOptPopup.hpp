@@ -4,9 +4,9 @@
 
 using namespace geode::prelude;
 
-class GravHazOptPopup : public geode::Popup<std::string const&> {
+class GravHazOptPopup : public geode::Popup {
 protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
@@ -39,5 +39,5 @@ protected:
     bool m_spikesToggled = mod->getSavedValue<bool>("opt-0-using-corridor-spikes");
     bool m_fuzzToggled = mod->getSavedValue<bool>("opt-0-corridor-fuzz");
 public:
-    static GravHazOptPopup* create(std::string const& text);
+    static GravHazOptPopup* create();
 };

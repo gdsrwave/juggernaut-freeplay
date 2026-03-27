@@ -86,11 +86,9 @@ class SettingsLaunchBtnNodeV3 : public SettingNodeV3 {
                 "JFP",
                 warningMsg,
                 "I Understand", nullptr,
-                [&](bool b1, auto) {
-                    if (b1) {
-                        loadDefaults();
-                        onJFPConfirm();
-                    }
+                [&](FLAlertLayer*, bool) {
+                    loadDefaults();
+                    onJFPConfirm();
                 });
         } else {
             onJFPConfirm();

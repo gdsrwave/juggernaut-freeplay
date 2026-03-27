@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool SoundtrackOptPopup::setup(std::string const& value) {
+bool SoundtrackOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Music Options");
@@ -143,9 +143,9 @@ void SoundtrackOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-SoundtrackOptPopup* SoundtrackOptPopup::create(std::string const& text) {
+SoundtrackOptPopup* SoundtrackOptPopup::create() {
     auto ret = new SoundtrackOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

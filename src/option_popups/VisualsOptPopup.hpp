@@ -4,9 +4,9 @@
 
 using namespace geode::prelude;
 
-class VisualsOptPopup : public geode::Popup<std::string const&> {
+class VisualsOptPopup : public geode::Popup {
 protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
@@ -38,5 +38,5 @@ protected:
     bool m_finishLine = mod->getSavedValue<bool>("opt-0-show-finish-line");
     bool m_hideIcon = mod->getSavedValue<bool>("opt-0-hide-icon");
 public:
-    static VisualsOptPopup* create(std::string const& text);
+    static VisualsOptPopup* create();
 };

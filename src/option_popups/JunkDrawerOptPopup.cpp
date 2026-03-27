@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool JunkDrawerOptPopup::setup(std::string const& value) {
+bool JunkDrawerOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Junk Drawer");
@@ -226,9 +226,9 @@ void JunkDrawerOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-JunkDrawerOptPopup* JunkDrawerOptPopup::create(std::string const& text) {
+JunkDrawerOptPopup* JunkDrawerOptPopup::create() {
     auto ret = new JunkDrawerOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

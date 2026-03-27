@@ -250,7 +250,7 @@ bool JFPMenuLayer::init() {
 }
 
 void JFPMenuLayer::onThemeButton(CCObject*) {
-    ThemeSelectPopup::create("")->show();
+    ThemeSelectPopup::create()->show();
 }
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
@@ -322,11 +322,8 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             "JFP",
             message.c_str(),
             "Continue", nullptr,
-            [=](bool b1, auto) {
-                if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
-                else {
-                    return true;
-                }
+            [=](FLAlertLayer*, bool) {
+                return dir->replaceScene(JFPScreenshotLayer::scene());
             });
     } else {
         dir->replaceScene(JFPScreenshotLayer::scene());
@@ -370,7 +367,7 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
 }
 
 void JFPMenuLayer::onImportButton(CCObject*) {
-    OptionStrPopup::create("")->show();
+    OptionStrPopup::create()->show();
 }
 
 void JFPMenuLayer::onTwitterButton(CCObject*) {

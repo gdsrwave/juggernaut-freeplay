@@ -97,7 +97,7 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
             "JFP",
             message.c_str(),
             "No", "Yes",
-            [&](bool b1, bool b2) {
+            [&](FLAlertLayer*, bool b2) {
                 if (b2) {
                     log::info("Reloading themes...");
                     setupJFPDirectories(true);

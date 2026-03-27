@@ -6,15 +6,15 @@
 
 using namespace geode::prelude;
 
-class OptionStrPopup : public geode::Popup<std::string const&> {
+class OptionStrPopup : public geode::Popup {
  protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject*) override;
 
     TextInput* m_inputOptTxt;
 
  public:
-    static OptionStrPopup* create(std::string const& text);
+    static OptionStrPopup* create();
 
     void clickImport(CCObject*);
 };

@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool SpeedSizeOptPopup::setup(std::string const& value) {
+bool SpeedSizeOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Speed Options");
@@ -404,9 +404,9 @@ void SpeedSizeOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-SpeedSizeOptPopup* SpeedSizeOptPopup::create(std::string const& text) {
+SpeedSizeOptPopup* SpeedSizeOptPopup::create() {
     auto ret = new SpeedSizeOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

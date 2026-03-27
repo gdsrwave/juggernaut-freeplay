@@ -33,6 +33,8 @@ void onThemeInfoButton() {
     infoLayer->show();
 }
 
+static EditorUI* s_editorUI = nullptr;
+
 #include <Geode/modify/EditorUI.hpp>
 class $modify(EditorUI) {
     bool init(LevelEditorLayer* editorLayer) {
@@ -41,88 +43,90 @@ class $modify(EditorUI) {
         bool ttb = Mod::get()->getSavedValue<bool>("opt-u-theme-creator-tools");
         if (!ttb) return true;
 
-        EditorTabs::addTab(this, TabType::EDIT, "themetools"_spr,
-                [](EditorUI* ui, CCMenuItemToggler* toggler) -> CCNode* {
-            auto arr = CCArray::create();
-            // make basic copy selected btn
-            auto basicBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            basicBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("copyIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+        s_editorUI = this;
 
-            auto basicBtn = CCMenuItemExt::createSpriteExtra(
-                basicBtnSpr,
-                [=](auto) { onCopyBtns(ui); });
-            basicBtn->setID("jfpt-copy-btn");
-            arr->addObject(basicBtn);
+        alpha::editor_tabs::addTab(
+            "themetools"_spr,
+            alpha::editor_tabs::EDIT,
+            // createTab
+            []() -> CCNode* {
+                auto ui = s_editorUI;
+                if (!ui) return CCNode::create();
 
-            // floor seg export btn
-            auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            floorBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("floorIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+                auto arr = CCArray::create();
 
-            auto floorBtn = CCMenuItemExt::createSpriteExtra(
-                floorBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor); });
-            floorBtn->setID("jfpt-floorcpy-btn");
-            arr->addObject(floorBtn);
+                // basic copy selected btn
+                auto basicBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+                basicBtnSpr->addChildAtPosition(
+                    CCSprite::createWithSpriteFrameName("copyIcon.png"_spr),
+                    Anchor::Center,
+                    CCPointZero);
 
-            // ceiling seg export btn
-            auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            ceilBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("ceilingIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+                auto basicBtn = CCMenuItemExt::createSpriteExtra(
+                    basicBtnSpr,
+                    [ui](auto) { onCopyBtns(ui); });
+                basicBtn->setID("jfpt-copy-btn");
+                arr->addObject(basicBtn);
 
-            auto ceilBtn = CCMenuItemExt::createSpriteExtra(
-                ceilBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); });
+                // floor seg export btn
+                auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+                floorBtnSpr->addChildAtPosition(
+                    CCSprite::createWithSpriteFrameName("floorIcon.png"_spr),
+                    Anchor::Center,
+                    CCPointZero);
 
-            ceilBtn->setID("jfpt-ceilcpy-btn");
-            arr->addObject(ceilBtn);
+                auto floorBtn = CCMenuItemExt::createSpriteExtra(
+                    floorBtnSpr,
+                    [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor); });
+                floorBtn->setID("jfpt-floorcpy-btn");
+                arr->addObject(floorBtn);
 
-            // // pattern export btn
-            // auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            // ceilBtnSpr->addChildAtPosition(
-            //     CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
-            //     Anchor::Center,
-            //     CCPointZero
-            // );
-            // auto ceilBtn = CCMenuItemExt::createSpriteExtra(
-            //     ceilBtnSpr,
-            //     [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); }
-            // );
-            // ceilBtn->setID("jfpt-ceilcpy-btn");
-            // arr->addObject(ceilBtn);
+                // ceiling seg export btn
+                auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+                ceilBtnSpr->addChildAtPosition(
+                    CCSprite::createWithSpriteFrameName("ceilingIcon.png"_spr),
+                    Anchor::Center,
+                    CCPointZero);
 
-            // ceiling seg export btn
-            auto infoBtnSpr = CCSprite::createWithSpriteFrameName(
-                "blueBg.png"_spr);
-            infoBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("eInfoIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+                auto ceilBtn = CCMenuItemExt::createSpriteExtra(
+                    ceilBtnSpr,
+                    [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); });
+                ceilBtn->setID("jfpt-ceilcpy-btn");
+                arr->addObject(ceilBtn);
 
-            auto infoBtn = CCMenuItemExt::createSpriteExtra(
-                infoBtnSpr,
-                [=](auto) { onThemeInfoButton(); });
+                // info btn
+                auto infoBtnSpr = CCSprite::createWithSpriteFrameName("blueBg.png"_spr);
+                infoBtnSpr->addChildAtPosition(
+                    CCSprite::createWithSpriteFrameName("eInfoIcon.png"_spr),
+                    Anchor::Center,
+                    CCPointZero);
 
-            infoBtn->setID("jfpt-theme-info-btn");
-            arr->addObject(infoBtn);
+                auto infoBtn = CCMenuItemExt::createSpriteExtra(
+                    infoBtnSpr,
+                    [](auto) { onThemeInfoButton(); });
+                infoBtn->setID("jfpt-theme-info-btn");
+                arr->addObject(infoBtn);
 
-            CCLabelBMFont* textLabel = CCLabelBMFont::create(
-                "JFP", "bigFont.fnt");
-            textLabel->setScale(0.4f);
-
-            EditorTabUtils::setTabIcon(toggler, textLabel);
-
-            return EditorTabUtils::createEditButtonBar(arr, ui);
-        }, [](EditorUI*, bool state, CCNode*) {
-            // nothing necessary here yet.. -M
-        });
+                // Create a simple container with buttons
+                auto container = CCMenu::create();
+                container->setLayout(RowLayout::create()->setGap(5.f));
+                for (int i = 0; i < arr->count(); i++) {
+                    container->addChild(static_cast<CCNode*>(arr->objectAtIndex(i)));
+                }
+                container->updateLayout();
+                return container;
+            },
+            // createTabIcon
+            []() -> CCNode* {
+                CCLabelBMFont* textLabel = CCLabelBMFont::create("JFP", "bigFont.fnt");
+                textLabel->setScale(0.4f);
+                return textLabel;
+            },
+            // toggleTab
+            [](bool state, CCNode*) {
+                // nothing necessary here yet.. -M
+            }
+        );
 
         return true;
     }
