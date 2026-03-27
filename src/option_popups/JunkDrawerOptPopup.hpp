@@ -4,9 +4,9 @@
 
 using namespace geode::prelude;
 
-class JunkDrawerOptPopup : public geode::Popup<std::string const&> {
+class JunkDrawerOptPopup : public geode::Popup {
 protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
@@ -23,5 +23,5 @@ protected:
     bool m_debug = mod->getSavedValue<bool>("opt-u-debug");
     bool m_autosave = mod->getSavedValue<bool>("opt-u-save-on-close");
 public:
-    static JunkDrawerOptPopup* create(std::string const& text);
+    static JunkDrawerOptPopup* create();
 };

@@ -4,10 +4,10 @@
 #include "../utils/Ninja.hpp"
 #include "../utils/OptionStr.hpp"
 
-bool OptionStrPopup::setup(std::string const& value) {
+bool OptionStrPopup::setup() {
         this->setTitle("Option Code:");
 
-        auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
+        auto label = CCLabelBMFont::create("", "bigFont.fnt");
 
         m_inputOptTxt = TextInput::create(
             150.f, "lByh_gWjwIcEQGAK+500", "chatFont.fnt");
@@ -49,9 +49,9 @@ void OptionStrPopup::onClose(CCObject* object) {
     this->removeFromParentAndCleanup(true);
 }
 
-OptionStrPopup *OptionStrPopup::create(std::string const& text) {
+OptionStrPopup *OptionStrPopup::create() {
     auto ret = new OptionStrPopup();
-    if (ret->initAnchored(240.f, 140.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(240.f, 140.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

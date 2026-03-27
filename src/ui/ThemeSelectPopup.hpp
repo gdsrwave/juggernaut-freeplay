@@ -6,9 +6,9 @@
 
 using namespace geode::prelude;
 
-class ThemeSelectPopup : public geode::Popup<std::string const&> {
+class ThemeSelectPopup : public geode::Popup {
  protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject*) override;
     void onSelectTheme(CCObject* object);
     void onDeselect(CCObject* object);
@@ -21,5 +21,5 @@ class ThemeSelectPopup : public geode::Popup<std::string const&> {
     int16_t m_activeThemeIndex = -1;
     std::vector<std::string> m_themeFiles;
  public:
-    static ThemeSelectPopup* create(std::string const& text);
+    static ThemeSelectPopup* create();
 };

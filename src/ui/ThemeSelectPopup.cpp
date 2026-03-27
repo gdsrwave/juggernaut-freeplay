@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool ThemeSelectPopup::setup(std::string const& value) {
+bool ThemeSelectPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("JFP Themes");
@@ -283,7 +283,7 @@ void ThemeSelectPopup::onReload(CCObject* object, bool update) {
         "JFP",
         message.c_str(),
         "No", "Yes",
-        [messageSuccess](bool b1, bool b2) {
+        [messageSuccess](FLAlertLayer*, bool b2) {
             if (b2) {
                 log::info("Reloading themes...");
                 setupJFPDirectories(true);
@@ -319,9 +319,9 @@ void ThemeSelectPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-ThemeSelectPopup* ThemeSelectPopup::create(std::string const& text) {
+ThemeSelectPopup* ThemeSelectPopup::create() {
     auto ret = new ThemeSelectPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

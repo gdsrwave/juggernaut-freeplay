@@ -158,7 +158,7 @@ void JFPOptionLayer::onReset(CCObject* object) {
         "Are you sure you want to <cr>reset</c> all options "
         "to <cy>default</c>?",
         "Cancel", "Reset",
-        [this](auto, bool btn2) {
+        [this](FLAlertLayer*, bool btn2) {
             if (btn2) {
                 loadDefaults(true);
             }
@@ -169,17 +169,17 @@ void JFPOptionLayer::onReset(CCObject* object) {
 void JFPOptionLayer::onOptionsLaunch(CCObject* object) {
     std::string selectorID = typeinfo_cast<CCNode*>(object)->getID();
     if (selectorID == "jfp-options-0-0") {
-        CorridorOptPopup::create("")->show();
+        CorridorOptPopup::create()->show();
     } else if (selectorID == "jfp-options-0-1") {
-        VisualsOptPopup::create("")->show();
+        VisualsOptPopup::create()->show();
     } else if (selectorID == "jfp-options-0-2") {
-        SpeedSizeOptPopup::create("")->show();
+        SpeedSizeOptPopup::create()->show();
     } else if (selectorID == "jfp-options-1-0") {
-        GravHazOptPopup::create("")->show();
+        GravHazOptPopup::create()->show();
     } else if (selectorID == "jfp-options-1-1") {
-        SoundtrackOptPopup::create("")->show();
+        SoundtrackOptPopup::create()->show();
     } else if (selectorID == "jfp-options-1-2") {
-        JunkDrawerOptPopup::create("")->show();
+        JunkDrawerOptPopup::create()->show();
     }
 }
 

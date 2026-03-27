@@ -4,9 +4,9 @@
 
 using namespace geode::prelude;
 
-class CorridorOptPopup : public geode::Popup<std::string const&> {
+class CorridorOptPopup : public geode::Popup {
 protected:
-    bool setup(std::string const& value) override;
+    bool setup();
     void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumDecrease(CCObject* object);
@@ -27,5 +27,5 @@ protected:
     bool m_seedToggled = mod->getSavedValue<bool>("opt-0-using-set-seed");
     bool m_wpb = mod->getSavedValue<bool>("opt-0-widen-playfield-bounds");
 public:
-    static CorridorOptPopup* create(std::string const& text);
+    static CorridorOptPopup* create();
 };

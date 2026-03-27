@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool CorridorOptPopup::setup(std::string const& value) {
+bool CorridorOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Corridor Options");
@@ -302,9 +302,9 @@ void CorridorOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-CorridorOptPopup* CorridorOptPopup::create(std::string const& text) {
+CorridorOptPopup* CorridorOptPopup::create() {
     auto ret = new CorridorOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }

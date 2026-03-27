@@ -6,7 +6,7 @@
 
 using namespace geode::prelude;
 
-bool GravHazOptPopup::setup(std::string const& value) {
+bool GravHazOptPopup::setup() {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
     this->setTitle("Gravity Portal Options");
@@ -421,9 +421,9 @@ void GravHazOptPopup::onInfo(CCObject*) {
     infoLayer->show();
 }
 
-GravHazOptPopup* GravHazOptPopup::create(std::string const& text) {
+GravHazOptPopup* GravHazOptPopup::create() {
     auto ret = new GravHazOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->Popup::init(400.f, 280.f, "GJ_square05.png") && ret->setup()) {
         ret->autorelease();
         return ret;
     }
