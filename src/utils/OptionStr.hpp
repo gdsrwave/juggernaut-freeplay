@@ -24,6 +24,31 @@ struct PackedEntry {
     uint32_t valueVal;
 };
 
+struct OptionString {
+    std::string name;
+    std::string optExported;
+    bool isPreset = false;
+};
+
+template<>
+struct matjson::Serialize<OptionString> {
+    static OptionString from_json(matjson::Value const& value) {
+        return OptionString{
+            .name = value["name"].asString().unwrapOr("Invalid Preset"),
+            .optExported = value["optExported"].asString().unwrapOr(""),
+        };
+    }
+
+    static matjson::Value to_json(OptionString const& value) {
+        return matjson::makeObject({
+            {"name", value.name},
+            {"optExported", value.optExported}
+        });
+    }
+};
+
+extern const std::vector<OptionString> defaultOptBank;
+
 std::string exportSettings(const std::vector<PackedEntry>& entries);
 void importSettingsOld(std::string packed);
 void importSettings(std::string packed);

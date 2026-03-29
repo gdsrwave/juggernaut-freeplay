@@ -7,6 +7,19 @@
 
 using namespace geode::prelude;
 
+const std::vector<OptionString> defaultOptBank = {
+    OptionString{
+        .name = "Standard",
+        .optExported = "mAHh_gWjwIcQACDQAA+400",
+        .isPreset = true,
+    },
+    OptionString{
+        .name = "Quick",
+        .optExported = "bbb+200",
+        .isPreset = true,
+    }
+};
+
 std::string exportSettings(const std::vector<PackedEntry>& entries) {
     int totalBits = 0;
     for (const auto& entry : entries) totalBits += entry.sizeSize;
@@ -329,6 +342,8 @@ void importSettings(std::string packed) {
         "opt-0-remove-portals-in-spams",
         static_cast<bool>(readStoredNum(bytes, 97, 2))
     );
+
+    Notification::create("Options imported successfully", NotificationIcon::Info, 1.f)->show();
 }
 
 int readStoredNum(std::vector<uint8_t>& bytes, int offset, int size) {

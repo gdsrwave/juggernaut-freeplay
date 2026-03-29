@@ -5,12 +5,12 @@
 #include "../utils/OptionStr.hpp"
 
 bool OptionStrPopup::setup(std::string const& value) {
-        this->setTitle("Option Code:");
+        this->setTitle("Quick Import");
 
         auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
 
         m_inputOptTxt = TextInput::create(
-            150.f, "lByh_gWjwIcEQGAK+500", "chatFont.fnt");
+            150.f, "mAHh_gWjwIcQACDQAA+400", "chatFont.fnt");
         m_inputOptTxt->setID("option-str-input");
         m_inputOptTxt->setScale(1.3f);
         m_inputOptTxt->setFilter(

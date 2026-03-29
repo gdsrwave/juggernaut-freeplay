@@ -41,7 +41,7 @@ void onCopyColorBtn(EditorUI* ui) {
 void onThemeInfoButton() {
     const char* message =
         "Utilities assisting in the creation of <cp>JFP Themes</c>.\n\n"
-        "The <cl>base exporter</c>, listed first, exports blocks from their absolute position. Useful for the base definition, but not much else.\n\n"
+        //"The <cl>base exporter</c>, listed first, exports blocks from their absolute position. Useful for the base definition, but not much else.\n\n"
         "The <co>floor</c> and <co>ceiling exporters</c>, listed second and third, export segments of the corridor.\n"
         "- These are used for both \"if\" and \"define\" sections in JFPT, so you'll have to manually specify which after pasting into your theme.\n"
         "- <cr>Move your reference point to (0,0) before using these buttons.</c> These blocks will have relative coordinates depending on your generation, "
@@ -78,17 +78,17 @@ class $modify(EditorUI) {
                 [](EditorUI* ui, CCMenuItemToggler* toggler) -> CCNode* {
             auto arr = CCArray::create();
             // make basic copy selected btn
-            auto basicBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            basicBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("copyIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+            // auto basicBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+            // basicBtnSpr->addChildAtPosition(
+            //     CCSprite::createWithSpriteFrameName("copyIcon.png"_spr),
+            //     Anchor::Center,
+            //     CCPointZero);
 
-            auto basicBtn = CCMenuItemExt::createSpriteExtra(
-                basicBtnSpr,
-                [=](auto) { onCopyBtns(ui); });
-            basicBtn->setID("jfpt-copy-btn");
-            arr->addObject(basicBtn);
+            // auto basicBtn = CCMenuItemExt::createSpriteExtra(
+            //     basicBtnSpr,
+            //     [=](auto) { onCopyBtns(ui); });
+            // basicBtn->setID("jfpt-copy-btn");
+            // arr->addObject(basicBtn);
 
             // floor seg export btn
             auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");

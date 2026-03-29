@@ -25,6 +25,7 @@ class JFPMenuLayer : public JFPGenericLayer {
     void onAutoGen();
     CCScene* onAutoGenScene();
     void onThemeButton(cocos2d::CCObject*);
+    void onPresetButton(cocos2d::CCObject*);
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);
     void onGarageButton(cocos2d::CCObject*);

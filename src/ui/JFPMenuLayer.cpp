@@ -17,6 +17,7 @@
 #include "../utils/Theming.hpp"
 #include "./OptionStrPopup.hpp"
 #include "./ThemeSelectPopup.hpp"
+#include "./OptionSelectPopup.hpp"
 
 std::mutex mtx;
 std::condition_variable cv;
@@ -145,6 +146,15 @@ bool JFPMenuLayer::init() {
         this, menu_selector(JFPMenuLayer::onThemeButton));
     themeButton->setID("jfp-theme-button"_spr);
 
+    auto presetSprite = CircleButtonSprite::createWithSpriteFrameName(
+        "options_s.png"_spr, 1.f,
+        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    presetSprite->setScale(1.0f);
+    auto presetButton = CCMenuItemSpriteExtra::create(
+        presetSprite,
+        this, menu_selector(JFPMenuLayer::onPresetButton));
+    presetButton->setID("jfp-preset-button"_spr);
+
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
         "options_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
@@ -215,6 +225,7 @@ bool JFPMenuLayer::init() {
     menu->addChild(themeButton);
     menu->addChild(autoGenButton);
     menu->addChild(optionButton);
+    menu->addChild(presetButton);
     addChild(menu);
 
     menu2->setID("inf-menu"_spr);
@@ -251,6 +262,10 @@ bool JFPMenuLayer::init() {
 
 void JFPMenuLayer::onThemeButton(CCObject*) {
     ThemeSelectPopup::create("")->show();
+}
+
+void JFPMenuLayer::onPresetButton(CCObject*) {
+    OptionSelectPopup::create("")->show();
 }
 
 void JFPMenuLayer::onCopySeed(CCObject*) {
@@ -379,7 +394,7 @@ void JFPMenuLayer::onImportButton(CCObject*) {
 }
 
 void JFPMenuLayer::onTwitterButton(CCObject*) {
-    CCApplication::sharedApplication()->openURL("https://twitter.com/shiestykahuna");
+    CCApplication::sharedApplication()->openURL("https://twitter.com/martykahuna");
 }
 
 void JFPMenuLayer::openOptions(CCObject*) {
@@ -396,6 +411,8 @@ CCScene* JFPMenuLayer::scene() {
     if (!GameManager::sharedState()->getGameVariable("0122")) {
         auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
+        float mlength = FMODAudioEngine::get()->getMusicLengthMS(1);
+        //log::info("Length: {} {}", mlength, lengthForSound);
     }
     // queueInMainThread([=]() {
     //     std::this_thread::sleep_for(std::chrono::seconds(2));

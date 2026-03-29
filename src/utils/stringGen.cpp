@@ -349,7 +349,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             int spY = y + currentCH/2 + 14 * (seg.y_swing == 1 ? -1 : 1);
             if (mini && seg.y_swing == 1) spY -= 30;
             int spR = (mini ? 63.435 : 45) * -seg.y_swing;
-            float speedFactor = (mini ? 0.3 : 0.5) * (currentCH / 60.0);
+            float speedFactor = (mini ? 0.32 : 0.5) * (currentCH / 60.0) * (speedID == 200 ? 1.27 : 1.0);
             level += fmt::format("1,{speedID},2,{x},3,{y},6,{r},32,{factor},57,909,64,1,67,1;",
                     fmt::arg("speedID", speedID),
                     fmt::arg("x", x - 14),
