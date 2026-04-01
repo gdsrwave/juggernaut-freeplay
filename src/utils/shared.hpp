@@ -12,6 +12,7 @@ void setupJFPMusic();
 
 extern GJGameLevel* commonLevel;
 
+
 #ifndef JFP_CONSTANTS_HPP
 #define JFP_CONSTANTS_HPP
 

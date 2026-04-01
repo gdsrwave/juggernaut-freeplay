@@ -1,6 +1,7 @@
 // Copyright 2025 GDSRWave
 #pragma once
 
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -44,13 +45,13 @@ struct ThemeMatch {
     std::vector<std::vector<int>> notPatterns;
     int offset;
     std::vector<int> notOffsets;
-    std::vector<std::string> commands;
+    std::vector<OddsBucket> buckets;
     bool _else = false;
 };
 
 struct RepeatingPattern {
     int id;
-    std::vector<std::string> data;
+    std::vector<OddsBucket> buckets;
     int start = 195;
     int repeat = 300;
 };
@@ -78,5 +79,6 @@ std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 1
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 ThemeMetadata parseThemeMeta(const std::string& name);
 std::vector<std::string> tagConflicts(ThemeMetadata tmd);
+const OddsBucket* selectBucket(const std::vector<OddsBucket>& buckets, std::mt19937& rng);
 
 }  // namespace ThemeGen

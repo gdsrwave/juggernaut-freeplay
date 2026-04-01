@@ -40,7 +40,7 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
     auto sspeedTxt = CCLabelBMFont::create("Starting Speed:", "bigFont.fnt");
     sspeedTxt->setID("jfpopt-starting-speed"_spr);
     sspeedMenu->setLayout(RowLayout::create()
-        ->setGap(45.f)
+        ->setGap(30.f)
         ->setAxisAlignment(AxisAlignment::Start)
     );
     sspeedMenu->addChild(sspeedTxt);
@@ -59,6 +59,17 @@ bool SpeedSizeOptPopup::setup(std::string const& value) {
         m_sspeedItems->addObject(sspeedItem);
         sspeedMenu->addChild(sspeedItem);
     }
+
+    auto randSpeedSpr = CCSprite::createWithSpriteFrameName("rando.png"_spr);
+    randSpeedSpr->setScale(1.4f);
+    auto randSpeedItem = CCMenuItemSpriteExtra::create(
+        randSpeedSpr, this, menu_selector(SpeedSizeOptPopup::onEnumSelect)
+    );
+    randSpeedItem->setUserObject(sspeedTxt);
+    randSpeedItem->setTag(5);
+    if (m_sspeedIndex != 5) randSpeedItem->setOpacity(127);
+    m_sspeedItems->addObject(randSpeedItem);
+    sspeedMenu->addChild(randSpeedItem);
 
     sspeedMenu->setPosition({20.f, 225.f});
     sspeedMenu->setAnchorPoint({0, 0.5});

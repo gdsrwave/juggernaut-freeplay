@@ -38,7 +38,7 @@ bool OptionStrPopup::setup(std::string const& value) {
 void OptionStrPopup::clickImport(CCObject* object) {
     std::string input = m_inputOptTxt->getString();
     log::info("Importing {}", input);
-    importSettings(input);
+    importSettings(input, true);
 
     OptionStrPopup::onClose(object);
 }

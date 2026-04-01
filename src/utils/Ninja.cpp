@@ -241,8 +241,10 @@ LevelData generateJFPLevel() {
         {SpeedChange::Speed3x,  static_cast<bool>(optSpeedsRaw & 8)},
         {SpeedChange::Speed4x,  static_cast<bool>(optSpeedsRaw & 16)}
     };
-    const SpeedChange optSpeed =
+    SpeedChange optSpeed =
         static_cast<SpeedChange>(mod->getSavedValue<uint8_t>("opt-0-starting-speed") + 1);
+
+    if (optSpeed == SpeedChange::Random) optSpeed = static_cast<SpeedChange>(roptRNG() % 5 + 1);
 
     const WaveSize optStartingSizeEnum =
         static_cast<WaveSize>(mod->getSavedValue<uint8_t>("opt-0-starting-size"));
@@ -259,6 +261,7 @@ LevelData generateJFPLevel() {
 
     uint32_t optLength = mod->getSavedValue<uint32_t>("opt-0-length");
     if (optLength < 1) optLength = 1;
+    if (optLength > 10000) optLength = 10000;
     int y_swing = 0, cX = 345, cY = 135;
     int maxHeight = 255, minHeight = 45;
 
@@ -281,7 +284,11 @@ LevelData generateJFPLevel() {
                 .y_initial = cY,
                 .type = JFPBiome::Juggernaut,
                 .theme = "Classic",
-                .song = 234565,
+                .song = {
+                    .id = 234565,
+                    .offset = 0,
+                    .loop = true
+                },
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
@@ -333,12 +340,42 @@ LevelData generateJFPLevel() {
 
     MusicSources musicSource =
         static_cast<MusicSources>(mod->getSavedValue<uint8_t>("opt-0-music-source"));
+
     if (musicSource == MusicSources::LocalFiles) {
         auto songsList = getUserSongs();
-        levelData.biomes[0].song = songsList[songRNG() % (songsList.size())];
+        levelData.biomes[0].song.id = songsList[songRNG() % (songsList.size())];
     } else {
-        levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
+        levelData.biomes[0].song.id = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
     }
+
+    // attempt to make a song offset (aka FMOD nonsense)
+    if (mod->getSavedValue<bool>("opt-0-music-offset", false)) {
+        uint32_t lengthMs = 0;
+        auto bgmPath = (geode::dirs::getSaveDir() / (std::to_string(levelData.biomes[0].song.id) + ".mp3")).string();
+        log::info("{}", bgmPath);
+        auto* audioEngine = FMODAudioEngine::get();
+        constexpr int kMenuMusicID = 1;
+
+        if (auto* stream = audioEngine->createStream(bgmPath)) {
+            for (int i = 0; i < 40 && !audioEngine->isSoundReady(stream); ++i) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            auto result = stream->getLength(&lengthMs, FMOD_TIMEUNIT_MS);
+            if (result != FMOD_OK) {
+                lengthMs = 0;
+            }
+            stream->release();
+        }
+        if (lengthMs <= 0) {
+            log::warn("Failed to get music length for an offset; song will play from start");
+        }
+        auto offsetBound = static_cast<uint32_t>((static_cast<uint32_t>(lengthMs) * 3) / 4);
+        auto songOffset = songRNG() % offsetBound;
+        levelData.biomes[0].song.offset = songOffset;
+    }
+
+    levelData.biomes[0].song.loop = mod->getSavedValue<bool>("opt-0-music-loop", true);
 
     std::array<int, 3> backgroundColor = {28, 28, 28};
     std::array<int, 3> lineColor = {255, 255, 255};
@@ -393,24 +430,40 @@ LevelData generateJFPLevel() {
 
     RawCR cr;
     if (optCorridorRules == CorridorRules::NoSpamNoZigzag) {
+        cr.PS = true;
         cr.NZ = true;
         cr.NS = true;
     } else if (optCorridorRules == CorridorRules::NoSpam) {
+        cr.PS = true;
         cr.NS = true;
     } else if (optCorridorRules == CorridorRules::Juggernaut) {
+        cr.PS = true;
         cr.NS = true;
         cr.SPECIAL = true;
         cr.FD = true;
     } else if (optCorridorRules == CorridorRules::LRD) {
+        cr.PS = true;
         cr.NS = true;
         cr.NZ = true;
         cr.LRD = true;
     } else if (optCorridorRules == CorridorRules::Limp) {
+        cr.PS = true;
         cr.NS = true;
         cr.NZ = true;
         cr.LRD = true;
         cr.ND = true;
+    } else if (optCorridorRules == CorridorRules::Burst) {
+        cr.PS = true;
+        cr.NS = true;
+        cr.NZ = true;
+        cr.LRD = true;
+        cr.ND = true;
+        cr.BURST = true;
+    } else if (optCorridorRules == CorridorRules::ABitOfSpam) {
+        cr.PS = true;
     }
+    const uint8_t minBurstDist = 30;
+    int lastBurstI = 0;
 
     // Future prior block to generate lengths of different biomes
 
@@ -440,13 +493,15 @@ LevelData generateJFPLevel() {
         } else if (
             cY >= relMaxHeight && (segments[i - 1].y_swing == 1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMax)) ||
-            (cr.NS &&orientationMatch(segments, i, {-1, 1, -1})))) {
+            (cr.NS && orientationMatch(segments, i, {-1, 1, -1})) ||
+            (cr.PS && orientationMatch(segments, i, {-1, 1, -1, 1, -1, 1, -1})))) {
             y_swing = -1;
         } else if (
             cY <= (mini ? minHeight + 30 : minHeight) &&
             (segments[i - 1].y_swing == -1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMin)) ||
-            (cr.NS && orientationMatch(segments, i, {1, -1, 1})))) {
+            (cr.NS && orientationMatch(segments, i, {1, -1, 1})) ||
+            (cr.PS && orientationMatch(segments, i, {1, -1, 1, -1, 1, -1, 1})))) {
             y_swing = 1;
         } else if (
             cr.NZ && orientationMatch(segments, i, antiZigzagStd1)) {
@@ -454,15 +509,17 @@ LevelData generateJFPLevel() {
         } else if (
             cr.NZ && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
-        } else if (cr.NS && (
+        } else if ((cr.NS && (
             orientationMatch(segments, i, antiSpam1) &&
             (!cr.FD ||
-                !(gravity && cY != relMaxHeight)))) {
+                !(gravity && cY != relMaxHeight)))) ||
+            cr.PS && (orientationMatch(segments, i, {1, -1, 1, -1, 1, -1, 1, -1}))) {
             y_swing = -1;
-        } else if (cr.NS && (
+        } else if ((cr.NS && (
             orientationMatch(segments, i, antiSpam2) &&
             (!cr.FD ||
-                !(!gravity && cY != minHeight)))) {
+                !(!gravity && cY != minHeight)))) ||
+            cr.PS && (orientationMatch(segments, i, {-1, 1, -1, 1, -1, 1, -1, 1}))) {
             y_swing = 1;
         } else {
             if (cr.LRD) {
@@ -711,6 +768,15 @@ LevelData generateJFPLevel() {
             segments[i - 1].options.gravity = !segments[i - 1].options.gravity;
             segments[i].options.gravity = !segments[i].options.gravity;
             segments[i - 1].options.isPortal = Portals::None;
+        }
+
+        if (cr.BURST && i - lastBurstI > minBurstDist && roptRNG() % 10 == 0) {
+            lastBurstI = i;
+            cr.PS = !cr.PS;
+            cr.NS = !cr.NS;
+            cr.NZ = !cr.NZ;
+            cr.ND = !cr.ND;
+            cr.LRD = !cr.LRD;
         }
 
         // Legacy teleportals generation code - optTeleportals is always false. -M

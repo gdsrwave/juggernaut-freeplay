@@ -9,6 +9,7 @@
 #include "../utils/shared.hpp"
 #include "../utils/StringGen.hpp"
 #include "../utils/Ninja.hpp"
+#include "../utils/OptionStr.hpp"
 
 
 JFPScreenshotLayer* JFPScreenshotLayer::create() {
@@ -80,6 +81,14 @@ void JFPScreenshotLayer::onAutoGen() {
     Mod::get()->setSavedValue<uint32_t>(
         "total-played",
         Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1);
+    
+    if (Mod::get()->getSavedValue<bool>("opt-0-shuffling")) {
+        auto shuffleList = Mod::get()->getSavedValue<std::vector<std::string>>("opt-0-options-playlist", {});
+        if (!shuffleList.empty()) {
+            int randomIndex = rand() % shuffleList.size();
+            importSettings(shuffleList[randomIndex]);
+        }
+    }
 
     auto level = createGameLevel();
     if (!level) {

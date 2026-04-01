@@ -70,10 +70,60 @@ bool SoundtrackOptPopup::setup(std::string const& value) {
     mSrcMenu->setScale(0.6f);
     mSrcMenu->updateLayout();
 
+    // SONG OFFSET OPT
+    auto musicOffsetMenu = CCMenu::create();
+
+    auto musicOffsetTxt = CCLabelBMFont::create("Random Song Offset", "bigFont.fnt");
+
+    auto musicOffsetChk = CCMenuItemToggler::createWithStandardSprites(
+        this,
+        menu_selector(SoundtrackOptPopup::onToggle),
+        1.f
+    );
+    musicOffsetChk->setID("jfpopt-music-offset-chk"_spr);
+    musicOffsetChk->toggle(m_musicOffset);
+    
+    musicOffsetMenu->setLayout(RowLayout::create()
+        ->setGap(15.f)
+        ->setAxisAlignment(AxisAlignment::Start)
+    );
+    musicOffsetMenu->addChild(musicOffsetTxt);
+    musicOffsetMenu->addChild(musicOffsetChk);
+    musicOffsetMenu->setPosition({20.f, 200.f});
+    musicOffsetMenu->setScale(0.41f);
+    musicOffsetMenu->setAnchorPoint({0, 0.5});
+    musicOffsetMenu->updateLayout();
+
+    // SONG LOOP OPT
+    auto musicLoopMenu = CCMenu::create();
+
+    auto musicLoopTxt = CCLabelBMFont::create("Loop Song", "bigFont.fnt");
+
+    auto musicLoopChk = CCMenuItemToggler::createWithStandardSprites(
+        this,
+        menu_selector(SoundtrackOptPopup::onToggle),
+        1.f
+    );
+    musicLoopChk->setID("jfpopt-music-loop-chk"_spr);
+    musicLoopChk->toggle(m_musicLoop);
+    
+    musicLoopMenu->setLayout(RowLayout::create()
+        ->setGap(15.f)
+        ->setAxisAlignment(AxisAlignment::Start)
+    );
+    musicLoopMenu->addChild(musicLoopTxt);
+    musicLoopMenu->addChild(musicLoopChk);
+    musicLoopMenu->setPosition({20.f, 175.f});
+    musicLoopMenu->setScale(0.41f);
+    musicLoopMenu->setAnchorPoint({0, 0.5});
+    musicLoopMenu->updateLayout();
+
     std::string mSrcLabelText = JFPGen::MusicSourceLabel.at(m_msrcIndex);
     m_musicSourceSelected->setCString(mSrcLabelText.c_str());
 
     m_mainLayer->addChild(mSrcMenu);
+    m_mainLayer->addChild(musicOffsetMenu);
+    m_mainLayer->addChild(musicLoopMenu);
 
     return true;
 }
@@ -95,7 +145,24 @@ void SoundtrackOptPopup::onSave(CCObject*) {
 
 void SoundtrackOptPopup::save() {
     mod->setSavedValue<uint8_t>("opt-0-music-source", m_msrcIndex);
+    mod->setSavedValue<bool>("opt-0-music-offset", m_musicOffset);
+    mod->setSavedValue<bool>("opt-0-music-loop", m_musicLoop);
 }
+
+void SoundtrackOptPopup::onToggle(CCObject* object) {
+    auto chk = typeinfo_cast<CCMenuItemToggler*>(object);
+    auto chkID = chk->getID();
+    bool toggled = !chk->isToggled();
+
+    if (chkID == "jfpopt-music-offset-chk"_spr) {
+        m_musicOffset = toggled;
+    } else if (chkID == "jfpopt-music-loop-chk"_spr) {
+        m_musicLoop = toggled;
+    } else {
+        log::warn("Unknown toggle: {}", chkID);
+    }
+}
+
 
 void SoundtrackOptPopup::onEnumDecrease(CCObject* object) {
     auto arrow = typeinfo_cast<CCMenuItemSpriteExtra*>(object);
@@ -129,10 +196,12 @@ void SoundtrackOptPopup::onInfo(CCObject*) {
     const char* info =
         "#### Options handling JFP's music and playlist system\n\n"
         "<cp>Music Selection</c>: Determines where the in-level songs are pulled from\n"
+        "- Local Music: Shuffle existing mp3 songs in your GD Data folder\n"
         "- JFP Soundtrack: Set of music submitted by the JFP developers and playerbase. "
         "Unfortunately, this list is difficult to download; you can view the full list of song IDs "
-        "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97).\n"
-        "- Local Music: Shuffle existing mp3 songs in your GD Data folder\n\n\n\n\n";
+        "[here](https://github.com/gdsrwave/juggernaut-freeplay/blob/b81949128845548b2e17adf084f0ad8c6d4dd228/src/utils/shared.cpp#L97).\n\n"
+        "<co>Random Song Offset</c>: Starts the level music between 0 and 75 percent through the song\n\n"
+        "<cb>Loop Song</c>: Loops the level music after song end (via song trigger)";
 
     auto infoLayer = MDPopup::create("Music Options Info",
         info,

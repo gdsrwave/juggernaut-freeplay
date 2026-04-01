@@ -72,11 +72,24 @@ bool OptionStrPopupDeluxe::setup(std::string const& value) {
     }
 
 void OptionStrPopupDeluxe::clickImport(CCObject* object) {
-    std::string input = m_inputOptTxt->getString();
-    log::info("Importing {}", input);
-    importSettings(input);
 
-    auto scrollLayer = m_optionPopup->m_scrl;
+    std::string input = m_inputOptTxt->getString();
+    log::info("Adding {}", input);
+
+    auto savedOpts = Mod::get()->getSavedValue<SavedOptionStrs>("user-option-codes", SavedOptionStrs{});
+    
+    auto it = std::find_if(savedOpts.juggernaut.begin(), savedOpts.juggernaut.end(),
+        [this](const OptionString& opt) { return opt.name == m_inputNameTxt->getString(); });
+    if (it != savedOpts.juggernaut.end()) {
+        FLAlertLayer::create("Error", "A preset with this name already exists.", "OK")->show();
+        return;
+    }
+
+    auto newOptExport = OptionString { .name = m_inputNameTxt->getString(), .optExported = input};
+    savedOpts.juggernaut.push_back(newOptExport);
+    Mod::get()->setSavedValue<SavedOptionStrs>("user-option-codes", savedOpts);
+
+    m_optionPopup->refreshLayout();
 
     OptionStrPopupDeluxe::onClose(object);
 }

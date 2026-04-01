@@ -16,7 +16,7 @@ using namespace geode::prelude;
 GJGameLevel* commonLevel = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
+    std::string appdataDir = geode::dirs::getSaveDir().string();
     std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
     std::string dstPath = appdataDir + "jfpLoop.mp3";
     if (!std::filesystem::exists(dstPath)) {
@@ -26,7 +26,7 @@ void setupJFPMusic() {
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
+    std::string appdataDir = geode::dirs::getSaveDir().string();
     std::vector<int> res;
     for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
         if (entry.is_regular_file()) {
@@ -237,6 +237,8 @@ const std::map<int, std::string> CorridorRulesLabel = {
     {4, "Unrestricted"},
     {5, "LRD"},
     {6, "Limp"},
+    {7, "Burst"},
+    {8, "ABitOfSpam"}
 };
 
 const std::map<int, std::string> DifficultiesLabel = {

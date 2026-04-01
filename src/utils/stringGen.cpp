@@ -30,7 +30,7 @@ void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
 }
 
 std::string jfpPackString(const std::string& level, uint32_t seed,
-        int song, bool compress) {
+        JFPSong song, bool compress) {
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);
     else b64 = level;
@@ -47,7 +47,7 @@ std::string jfpPackString(const std::string& level, uint32_t seed,
     fmt::arg("desc", desc),
     fmt::arg("b64", b64),
     fmt::arg("title", geode::utils::numToString(seed)),
-    fmt::arg("song", song));
+    fmt::arg("song", song.id));
 
     return levelString;
 }
@@ -561,6 +561,13 @@ std::string jfpNewStringGen(LevelData ldata) {
     if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
     // hide icon
     if (hideIcon) level += "1,1612,2,375,3,285,36,1;";
+
+    // Song options
+    level += fmt::format("1,1934,2,-15,3,255,13,1,36,1,392,{songID},406,1,{loop}408,{offset},421,1,422,0.5,10,0.5;",
+        fmt::arg("songID", biome.song.id),
+        fmt::arg("offset", biome.song.offset),
+        fmt::arg("loop", biome.song.loop ? "413,1," : "")
+    );
 
     // log::info("LevelData: name={}", ldata.name);
     // log::info("Biomes: {}", ldata.biomes.size());

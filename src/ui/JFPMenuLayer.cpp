@@ -156,7 +156,7 @@ bool JFPMenuLayer::init() {
     presetButton->setID("jfp-preset-button"_spr);
 
     auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
-        "options_s.png"_spr, 1.f,
+        "slider_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     optionSprite->setScale(1.0f);
     auto optionButton = CCMenuItemSpriteExtra::create(
@@ -181,17 +181,9 @@ bool JFPMenuLayer::init() {
     infoBtn->setID("info-button"_spr);
     infoBtn->setSizeMult(1.1f);
 
-    auto importBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("importIcon_001.png"_spr),
-        this,
-        menu_selector(JFPMenuLayer::onImportButton));
-    importBtn->setID("import-opt-button"_spr);
-    importBtn->setSizeMult(1.1f);
-
     auto urBtnMenu = CCMenu::create();
     urBtnMenu->setLayout(ColumnLayout::create()
         ->setGap(5.f));
-    urBtnMenu->addChild(importBtn);
     urBtnMenu->addChild(infoBtn);
     urBtnMenu->updateLayout();
 
@@ -230,13 +222,13 @@ bool JFPMenuLayer::init() {
 
     menu2->setID("inf-menu"_spr);
     menu2->setAnchorPoint({0.5, 0.5});
-    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 35.f});
+    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 20.f});
     menu2->addChild(garageBtn);
     menu2->addChild(urBtnMenu);
     menu2->setLayout(RowLayout::create()
         ->setGap(7.f));
     menu2->updateLayout();
-    garageBtn->setPositionY(garageBtn->getPositionY() + 8);
+    garageBtn->setPositionY(garageBtn->getPositionY() - 7);
     addChild(menu2);
 
     menu3->setLayout(ColumnLayout::create()
@@ -389,12 +381,8 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
     infoLayer->show();
 }
 
-void JFPMenuLayer::onImportButton(CCObject*) {
-    OptionStrPopup::create("")->show();
-}
-
 void JFPMenuLayer::onTwitterButton(CCObject*) {
-    CCApplication::sharedApplication()->openURL("https://twitter.com/martykahuna");
+    CCApplication::sharedApplication()->openURL("https://twitter.com/kahunamarty");
 }
 
 void JFPMenuLayer::openOptions(CCObject*) {
@@ -411,7 +399,7 @@ CCScene* JFPMenuLayer::scene() {
     if (!GameManager::sharedState()->getGameVariable("0122")) {
         auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
-        float mlength = FMODAudioEngine::get()->getMusicLengthMS(1);
+        
         //log::info("Length: {} {}", mlength, lengthForSound);
     }
     // queueInMainThread([=]() {

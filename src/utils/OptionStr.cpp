@@ -9,13 +9,28 @@ using namespace geode::prelude;
 
 const std::vector<OptionString> defaultOptBank = {
     OptionString{
-        .name = "Standard",
-        .optExported = "mAHh_gWjwIcQACDQAA+400",
+        .name = "Basic",
+        .optExported = "mBEh_gWi0IcgAEACAA+500",
         .isPreset = true,
     },
     OptionString{
-        .name = "Quick",
-        .optExported = "bbb+200",
+        .name = "Jcak",
+        .optExported = "mBvh_gWjwIcWAIAAAA+500",
+        .isPreset = true,
+    },
+    OptionString{
+        .name = "Juggernaut",
+        .optExported = "mCPh_gWjwIcwAGAAAA+1100",
+        .isPreset = true,
+    },
+    OptionString{
+        .name = "Africa Chamber",
+        .optExported = "mAvh_gWh4IdHBCAAAA+100",
+        .isPreset = true,
+    },
+    OptionString{
+        .name = "Soory I WIN",
+        .optExported = "mBkh_gWjwIcCACgigA+1000",
         .isPreset = true,
     }
 };
@@ -68,7 +83,7 @@ void importSettingsOld(std::string packed) {
         return FLAlertLayer::create("Error", "Length suffix not found", "OK")->show();
     }
     int length = geode::utils::numFromString<int>(packed.substr(ls + 1, std::string::npos)).unwrapOr(-1);
-    mod->setSettingValue("length", length);
+    mod->setSettingValue("opt-0-length", length);
 
     std::string dataPack = packed.substr(0, ls);
 
@@ -249,19 +264,20 @@ void v37tov38(std::vector<uint8_t>& bytes) {
     }
     writeStoredNum(bytes, 13, 6, selectedSpeeds);
 
-    FLAlertLayer::create("Alert", "This code was copied from an older version of JFP.\n"
-        "Please import, refresh, and copy the latest version of this code.", "OK")->show();
+    Notification::create("This code was copied from an older version of JFP.\n"
+        "Please import, refresh, and copy the latest version of this code.", NotificationIcon::Warning, 5.f)->show();
 }
 
-void importSettings(std::string packed) {
+void importSettings(std::string packed, bool toast) {
     auto* mod = Mod::get();
 
     size_t ls = packed.find('+');
     if (ls == std::string::npos) {
-        return FLAlertLayer::create("Error", "Length suffix not found", "OK")->show();
+        Notification::create("Error: Length suffix not found", NotificationIcon::Error, 1.f)->show();
+        return;
     }
     int length = geode::utils::numFromString<int>(packed.substr(ls + 1, std::string::npos)).unwrapOr(-1);
-    mod->setSettingValue("length", length);
+    mod->setSavedValue<uint32_t>("opt-0-length", length);
 
     std::string dataPack = packed.substr(0, ls);
 
@@ -288,7 +304,10 @@ void importSettings(std::string packed) {
     if (ver < 38) v37tov38(bytes);
 
     uint8_t biome = readStoredNum(bytes, 6, 4);
-    if (biome != static_cast<uint8_t>(JFPGen::JFPBiome::Juggernaut)) return;
+    if (biome != static_cast<uint8_t>(JFPGen::JFPBiome::Juggernaut)) {
+        Notification::create("Error: Invalid option code", NotificationIcon::Error, 1.f)->show();
+        return;
+    }
 
     mod->setSavedValue<uint8_t>("opt-0-starting-speed", readStoredNum(bytes, 10, 3));
     mod->setSavedValue<uint8_t>("opt-0-speed-changes", readStoredNum(bytes, 13, 6));
@@ -343,7 +362,7 @@ void importSettings(std::string packed) {
         static_cast<bool>(readStoredNum(bytes, 97, 2))
     );
 
-    Notification::create("Options imported successfully", NotificationIcon::Info, 1.f)->show();
+    if (toast) Notification::create("Options imported successfully", NotificationIcon::Info, 1.f)->show();
 }
 
 int readStoredNum(std::vector<uint8_t>& bytes, int offset, int size) {
@@ -417,7 +436,7 @@ std::vector<PackedEntry> getSettings(JFPGen::JFPBiome biome) {
         3, usingGP ? mod->getSavedValue<uint32_t>("opt-0-grav-portals-diff") + 1 : 0
     });
     resSettings.push_back(PackedEntry{
-        1, mod->getSavedValue<uint32_t>("opt-0-fake-grav-portals")
+        1, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-fake-grav-portals"))
     });
     resSettings.push_back(PackedEntry{
         2, static_cast<uint32_t>(mod->getSavedValue<bool>("opt-0-grav-portal-start"))
@@ -648,6 +667,8 @@ void loadDefaults(bool fullReset) {
         mod->setSavedValue<bool>("opt-0-using-corridor-spikes", false);
         mod->setSavedValue<bool>("opt-0-corridor-fuzz", false);
         mod->setSavedValue<uint8_t>("opt-0-spike-placement-types", 0);
+        mod->setSavedValue<bool>("opt-0-spike-music-offset", false);
+        mod->setSavedValue<bool>("opt-0-spike-music-loop", true);
     }
 
     mod->setSavedValue<bool>("ack-disclaimer", "true");

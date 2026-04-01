@@ -1,3 +1,13 @@
+# JFP 1.8.0 (March 31, 2026)
+- Presets Menu: easily add, use, and shuffle your JFP option codes!
+- Added ODDS notation to theme language
+- Added random Starting Speed option
+- Added random Song Offset option
+- Added Loop Song option
+- Added Burst + ABitOfSpam corridor rules
+- Removed Base button from theme tools
+- Bugfixes and touch-ups
+
 # JFP 1.7.3 (February 8, 2026)
 - Bugfixes and touch-ups
 
