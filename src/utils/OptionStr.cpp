@@ -362,7 +362,7 @@ void importSettings(std::string packed, bool toast) {
         static_cast<bool>(readStoredNum(bytes, 97, 2))
     );
 
-    if (toast) Notification::create("Options imported successfully", NotificationIcon::Info, 1.f)->show();
+    if (toast) Notification::create("Options imported", NotificationIcon::Info, 1.f)->show();
 }
 
 int readStoredNum(std::vector<uint8_t>& bytes, int offset, int size) {
