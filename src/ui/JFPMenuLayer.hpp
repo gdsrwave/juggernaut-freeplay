@@ -14,8 +14,6 @@ class JFPMenuLayer : public JFPGenericLayer {
     virtual bool init();
     void keyBackClicked();
     void onEnterTransitionDidFinish();
-
-    CCLabelBMFont* m_optText;
  public:
     static JFPMenuLayer* create();
     static cocos2d::CCScene* scene();
@@ -25,6 +23,7 @@ class JFPMenuLayer : public JFPGenericLayer {
     void onAutoGen();
     CCScene* onAutoGenScene();
     void onThemeButton(cocos2d::CCObject*);
+    void onPresetButton(cocos2d::CCObject*);
     void onInfoButton(cocos2d::CCObject*);
     void onImportButton(cocos2d::CCObject*);
     void onGarageButton(cocos2d::CCObject*);

@@ -5,12 +5,12 @@
 #include "../utils/OptionStr.hpp"
 
 bool OptionStrPopup::setup(std::string const& value) {
-        this->setTitle("Option Code:");
+        this->setTitle("Quick Import");
 
         auto label = CCLabelBMFont::create(value.c_str(), "bigFont.fnt");
 
         m_inputOptTxt = TextInput::create(
-            150.f, "lByh_gWjwIcEQGAK+500", "chatFont.fnt");
+            150.f, "mAHh_gWjwIcQACDQAA+400", "chatFont.fnt");
         m_inputOptTxt->setID("option-str-input");
         m_inputOptTxt->setScale(1.3f);
         m_inputOptTxt->setFilter(
@@ -38,7 +38,13 @@ bool OptionStrPopup::setup(std::string const& value) {
 void OptionStrPopup::clickImport(CCObject* object) {
     std::string input = m_inputOptTxt->getString();
     log::info("Importing {}", input);
-    importSettings(input);
+    importSettings(input, true);
+
+    if (menuOptText != nullptr) {
+        auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+        std::string displayOptStr = "Options: " + exportSettings(settings);
+        menuOptText->setCString(displayOptStr.c_str());
+    }
 
     OptionStrPopup::onClose(object);
 }

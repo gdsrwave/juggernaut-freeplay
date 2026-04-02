@@ -15,6 +15,7 @@ JFPGen::AutoJFP state = JFPGen::AutoJFP::NotInAutoJFP;
 
 bool att1 = false;
 int globalAtt = 1;
+int globalBestM = 0;
 
 std::vector<JFPGen::Color> colorBank = {};
 const std::vector<JFPGen::Color> defaultColorBank = {
@@ -84,14 +85,13 @@ std::map<std::string, std::string> kBank = {
     {"kA11", "0"}
 };
 
-std::map<std::string, bool> overrideBank = {
-    {"override-base", false},
-    {"override-enddown", false},
-    {"override-endup", false},
-    {"override-start", false},
-    {"override-slope", false},
-    {"override-slope-mini", false}
+std::vector<std::string> allowedDef = {
+    "slope", "spike", "blue-portal", "yellow-portal", "mini-portal", "big-portal",
+    "speed-05x", "speed-1x", "speed-2x", "speed-3x", "speed-4x",
+    "base", "endup", "enddown", "start", "corridorblock", "corridorblock-fill"
 };
+std::map<std::string, OverrideGroups> overrideBankS = {};
+
 
 namespace JFPGen {
 
@@ -128,6 +128,16 @@ float convertSpeedToFloat(SpeedChange speed) {
         case SpeedChange::Speed3x:  return 3.0f;
         case SpeedChange::Speed4x:  return 4.0f;
         default: return 3.0f;
+    }
+}
+
+int convertSpeed(SpeedChange speed) {
+    switch (speed) {
+        case SpeedChange::Speed05x: return 200;
+        case SpeedChange::Speed1x:  return 201;
+        case SpeedChange::Speed2x:  return 202;
+        case SpeedChange::Speed4x:  return 1334;
+        default: return 203;
     }
 }
 
@@ -231,8 +241,10 @@ LevelData generateJFPLevel() {
         {SpeedChange::Speed3x,  static_cast<bool>(optSpeedsRaw & 8)},
         {SpeedChange::Speed4x,  static_cast<bool>(optSpeedsRaw & 16)}
     };
-    const SpeedChange optSpeed =
+    SpeedChange optSpeed =
         static_cast<SpeedChange>(mod->getSavedValue<uint8_t>("opt-0-starting-speed") + 1);
+
+    if (optSpeed == SpeedChange::Random) optSpeed = static_cast<SpeedChange>(roptRNG() % 5 + 1);
 
     const WaveSize optStartingSizeEnum =
         static_cast<WaveSize>(mod->getSavedValue<uint8_t>("opt-0-starting-size"));
@@ -249,7 +261,10 @@ LevelData generateJFPLevel() {
 
     uint32_t optLength = mod->getSavedValue<uint32_t>("opt-0-length");
     if (optLength < 1) optLength = 1;
-    int y_swing = 0, cX = 345, cY = 135;
+    if (optLength > 10000) optLength = 10000;
+    int y_swing = 0;
+    int cX = mod->getSavedValue<uint32_t>("opt-0-starting-dist", 345);
+    int cY = mod->getSavedValue<int32_t>("opt-0-starting-height", 135);
     int maxHeight = 255, minHeight = 45;
 
     if (mini) {
@@ -271,7 +286,11 @@ LevelData generateJFPLevel() {
                 .y_initial = cY,
                 .type = JFPBiome::Juggernaut,
                 .theme = "Classic",
-                .song = 234565,
+                .song = {
+                    .id = 234565,
+                    .offset = 0,
+                    .loop = true
+                },
                 .options = {
                     .length = static_cast<int>(optLength),
                     .corridorHeight = static_cast<int>(optCorridorHeight),
@@ -311,7 +330,6 @@ LevelData generateJFPLevel() {
     int lastSize = 0;
 
     bool spikeActive = false;
-    bool midCorridorPortal = true;
     bool spikeSideHold = false;
     int spikeSide = 0;
     int relMaxHeight = maxHeight - (optCorridorHeight);
@@ -324,12 +342,43 @@ LevelData generateJFPLevel() {
 
     MusicSources musicSource =
         static_cast<MusicSources>(mod->getSavedValue<uint8_t>("opt-0-music-source"));
+
     if (musicSource == MusicSources::LocalFiles) {
         auto songsList = getUserSongs();
-        levelData.biomes[0].song = songsList[songRNG() % (songsList.size())];
+        levelData.biomes[0].song.id = songsList[songRNG() % (songsList.size())];
     } else {
-        levelData.biomes[0].song = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
+        levelData.biomes[0].song.id = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
     }
+
+    // attempt to make a song offset (aka FMOD nonsense)
+    if (mod->getSavedValue<bool>("opt-0-music-offset", false)) {
+        uint32_t lengthMs = 0;
+        auto bgmPath = (geode::dirs::getSaveDir() / (std::to_string(levelData.biomes[0].song.id) + ".mp3")).string();
+        //log::info("{}", bgmPath);
+        auto* audioEngine = FMODAudioEngine::get();
+        constexpr int kMenuMusicID = 1;
+
+        if (auto* stream = audioEngine->createStream(bgmPath)) {
+            for (int i = 0; i < 40 && !audioEngine->isSoundReady(stream); ++i) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            auto result = stream->getLength(&lengthMs, FMOD_TIMEUNIT_MS);
+            if (result != FMOD_OK) {
+                lengthMs = 0;
+            }
+            stream->release();
+        }
+        if (lengthMs <= 0) {
+            log::warn("Failed to get music length for an offset; song will play from start");
+        } else {
+            auto offsetBound = static_cast<uint32_t>((static_cast<uint32_t>(lengthMs) * 3) / 4);
+            auto songOffset = songRNG() % offsetBound;
+            levelData.biomes[0].song.offset = songOffset;
+        }
+    }
+
+    levelData.biomes[0].song.loop = mod->getSavedValue<bool>("opt-0-music-loop", true);
 
     std::array<int, 3> backgroundColor = {28, 28, 28};
     std::array<int, 3> lineColor = {255, 255, 255};
@@ -384,26 +433,42 @@ LevelData generateJFPLevel() {
 
     RawCR cr;
     if (optCorridorRules == CorridorRules::NoSpamNoZigzag) {
+        cr.PS = true;
         cr.NZ = true;
         cr.NS = true;
     } else if (optCorridorRules == CorridorRules::NoSpam) {
+        cr.PS = true;
         cr.NS = true;
     } else if (optCorridorRules == CorridorRules::Juggernaut) {
+        cr.PS = true;
         cr.NS = true;
         cr.SPECIAL = true;
         cr.FD = true;
     } else if (optCorridorRules == CorridorRules::LRD) {
+        cr.PS = true;
         cr.NS = true;
         cr.NZ = true;
         cr.LRD = true;
     } else if (optCorridorRules == CorridorRules::Limp) {
+        cr.PS = true;
         cr.NS = true;
         cr.NZ = true;
         cr.LRD = true;
         cr.ND = true;
+    } else if (optCorridorRules == CorridorRules::Burst) {
+        cr.PS = true;
+        cr.NS = true;
+        cr.NZ = true;
+        cr.LRD = true;
+        cr.ND = true;
+        cr.BURST = true;
+    } else if (optCorridorRules == CorridorRules::ABitOfSpam) {
+        cr.PS = true;
     }
+    const uint8_t minBurstDist = 30;
+    int lastBurstI = 0;
 
-    // Future prior block to generate lengths of different biomes
+    // Future prior block to generate lengths of different biomes -M
 
     for (int i = 0; i < optLength; i++) {
         cX += 30;
@@ -424,36 +489,40 @@ LevelData generateJFPLevel() {
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
         } else if (
-            cr.ND && segments[i - 2].y_swing != segments[i - 1].y_swing
-        ) {
-            if (segments[i - 1].y_swing == 1) y_swing = 1;
-            else y_swing = -1;
-        } else if (
             cY >= relMaxHeight && (segments[i - 1].y_swing == 1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMax)) ||
-            (cr.NS &&orientationMatch(segments, i, {-1, 1, -1})))) {
+            (cr.NS && orientationMatch(segments, i, {-1, 1, -1})) ||
+            (cr.PS && orientationMatch(segments, i, {-1, 1, -1, 1, -1, 1, -1})))) {
             y_swing = -1;
         } else if (
             cY <= (mini ? minHeight + 30 : minHeight) &&
             (segments[i - 1].y_swing == -1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMin)) ||
-            (cr.NS && orientationMatch(segments, i, {1, -1, 1})))) {
+            (cr.NS && orientationMatch(segments, i, {1, -1, 1})) ||
+            (cr.PS && orientationMatch(segments, i, {1, -1, 1, -1, 1, -1, 1})))) {
             y_swing = 1;
+        } else if (
+            cr.ND && segments[i - 2].y_swing != segments[i - 1].y_swing
+        ) {
+            if (segments[i - 1].y_swing == 1) y_swing = 1;
+            else y_swing = -1;
         } else if (
             cr.NZ && orientationMatch(segments, i, antiZigzagStd1)) {
             y_swing = -1;
         } else if (
             cr.NZ && orientationMatch(segments, i, antiZigzagStd2)) {
             y_swing = 1;
-        } else if (cr.NS && (
+        } else if ((cr.NS && (
             orientationMatch(segments, i, antiSpam1) &&
             (!cr.FD ||
-                !(gravity && cY != relMaxHeight)))) {
+                !(gravity && cY != relMaxHeight)))) ||
+            cr.PS && (orientationMatch(segments, i, {1, -1, 1, -1, 1, -1, 1, -1}))) {
             y_swing = -1;
-        } else if (cr.NS && (
+        } else if ((cr.NS && (
             orientationMatch(segments, i, antiSpam2) &&
             (!cr.FD ||
-                !(!gravity && cY != minHeight)))) {
+                !(!gravity && cY != minHeight)))) ||
+            cr.PS && (orientationMatch(segments, i, {-1, 1, -1, 1, -1, 1, -1, 1}))) {
             y_swing = 1;
         } else {
             if (cr.LRD) {
@@ -552,32 +621,26 @@ LevelData generateJFPLevel() {
         for (int fakeRngCount = 0; fakeRngCount < 10; ++fakeRngCount) {
             volatile auto _ = fakePortalRNG();
         }
-        if (i > 0 && !mini && optPortals == Difficulties::Aggressive &&
-                portalRNG() % 4 == 0) {
-            if (y_swing == 1 &&
-                orientationMatch(segments, i, {1, 1, 1, 1}) &&
-                gravity && midCorridorPortal
-            ) {
-                segments[i-2].options.isPortal = Portals::Gravity;
-                segments[i-2].options.gravity = !segments[i-2].options.gravity;
-                segments[i-1].options.gravity = !segments[i-1].options.gravity;
+
+        // if we're past the start, if we're turning, if big wave, if on aggressive settings, if rng hit, if right length (>3), if releasing in corridor, if no spikes on corridor
+        if (i > 0 && segments[i - 1].y_swing != y_swing && !mini && optPortals == Difficulties::Aggressive &&
+                portalRNG() % 3 > 0 && !segments[i - 1].options.isSpikeM) {
+            int j = i;
+            while (j >= 0 && segments[j].y_swing != y_swing) {
+                j--;
+            }
+            j++;
+            bool gravityCond = (segments[j].options.gravity && segments[j].y_swing == 1) ||
+                    (!segments[j].options.gravity && segments[j].y_swing == -1);
+            if (i - j >= 4 && gravityCond) {
+                int midpoint = i - (i-j+1)/2;
+                segments[midpoint].options.isPortal = Portals::Gravity;
+                for (int k = midpoint; k < i; k++) segments[k].options.gravity = !segments[k].options.gravity;
                 gravity = !gravity;
-                midCorridorPortal = false;
-            } else if (y_swing == -1 &&
-                orientationMatch(segments, i, {-1, -1, -1, -1}) &&
-                !gravity && midCorridorPortal
-            ) {
-                segments[i-2].options.isPortal = Portals::Gravity;
-                segments[i-2].options.gravity = !segments[i-2].options.gravity;
-                segments[i-1].options.gravity = !segments[i-1].options.gravity;
-                gravity = !gravity;
-                midCorridorPortal = false;
             }
         }
-        if (i > 0 && !midCorridorPortal && segments[i - 1].y_swing != y_swing)
-            midCorridorPortal = true;
         if (i > 0 && optPortals != Difficulties::None &&
-                segments[i - 1].y_swing != y_swing) {
+                segments[i - 1].y_swing != y_swing && !(segments[i - 1].options.mini && !mini)) {
             portalOdds = portalRNG() % portalOddsMap.at(optPortals);
 
             if (
@@ -632,32 +695,37 @@ LevelData generateJFPLevel() {
             }
         }
 
-        if (i > 0 && optSpikes && segments[i - 1].y_swing != y_swing &&
-                currentPortal == Portals::None) {
-            spikeSideHold = false;
-            spikeOdds = spikeRNG() % 6;
-            if (spikeOdds == 0) {
-                if (spikeActive) spikeSideHold = true;
-                spikeActive = true;
-                if (!spikeSideHold) spikeSide = spikeRNG() % 2;
-            } else {
-                spikeActive = false;
+        if (i > 0 && optSpikes && segments[i - 1].y_swing != y_swing) {
+            if (currentPortal != Portals::None) spikeActive = false;
+            else {
+                spikeSideHold = false;
+                spikeOdds = spikeRNG() % 6;
+                if (spikeOdds == 0) {
+                    if (spikeActive) spikeSideHold = true;
+                    spikeActive = true;
+                    if (!spikeSideHold) {
+                        spikeSide = spikeRNG() % 2;
+                    }
+                } else {
+                    spikeActive = false;
+                }
             }
         }
 
+        bool isSpikeM = false, isFuzzy = false;
         if (optSpikes && spikeActive) {
-            segments[i].options.isSpikeM = true;
+            isSpikeM = true;
         }
 
         if (
             (optSpikePlacement == PlacementBySize::Mini && !mini) ||
             (optSpikePlacement == PlacementBySize::Big && mini)
         ) {
-            segments[i].options.isSpikeM = false;
+            isSpikeM = false;
         }
 
         if (optFuzz) {
-            segments[i].options.isFuzzy = true;
+            isFuzzy = true;
         }
 
         segments[i] = Segment{
@@ -665,11 +733,11 @@ LevelData generateJFPLevel() {
             .y_swing = y_swing,
             .options = {
                 .gravity = gravity,
-                .isSpikeM = segments[i].options.isSpikeM,
+                .isSpikeM = isSpikeM,
                 .spikeSide = static_cast<bool>(spikeSide),
                 .isPortal = currentPortal,
                 .speedChange = speedOdds == 0 ? currentSpeed : SpeedChange::None,
-                .isFuzzy = segments[i].options.isFuzzy,
+                .isFuzzy = isFuzzy,
                 .mini = mini,
                 .isTransition = false
             }
@@ -703,6 +771,15 @@ LevelData generateJFPLevel() {
             segments[i - 1].options.gravity = !segments[i - 1].options.gravity;
             segments[i].options.gravity = !segments[i].options.gravity;
             segments[i - 1].options.isPortal = Portals::None;
+        }
+
+        if (cr.BURST && i - lastBurstI > minBurstDist && roptRNG() % 10 == 0) {
+            lastBurstI = i;
+            cr.PS = !cr.PS;
+            cr.NS = !cr.NS;
+            cr.NZ = !cr.NZ;
+            cr.ND = !cr.ND;
+            cr.LRD = !cr.LRD;
         }
 
         // Legacy teleportals generation code - optTeleportals is always false. -M

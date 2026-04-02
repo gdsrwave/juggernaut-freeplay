@@ -1,5 +1,4 @@
 // Copyright 2025 GDSRWave
-#include <Geode/cocos/platform/CCFileUtils.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include <fmt/core.h>
 #include <cmath>

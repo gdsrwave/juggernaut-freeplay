@@ -17,6 +17,7 @@
 #include "../utils/Theming.hpp"
 #include "./OptionStrPopup.hpp"
 #include "./ThemeSelectPopup.hpp"
+#include "./OptionSelectPopup.hpp"
 
 std::mutex mtx;
 std::condition_variable cv;
@@ -110,10 +111,11 @@ bool JFPMenuLayer::init() {
 
     auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
     std::string displayOptStr = "Options: " + exportSettings(settings);
-    m_optText = CCLabelBMFont::create(displayOptStr.c_str(), "goldFont.fnt");
-    m_optText->setScale(0.9f);
+
+    menuOptText = CCLabelBMFont::create(displayOptStr.c_str(), "goldFont.fnt");
+    menuOptText->setScale(0.9f);
     auto optCopyBtn = CCMenuItemSpriteExtra::create(
-        m_optText,
+        menuOptText,
         this,
         menu_selector(JFPMenuLayer::onCopyOpt));
 
@@ -121,17 +123,17 @@ bool JFPMenuLayer::init() {
     optCopyBtn->setSizeMult(0.9f);
 
     auto optMenu = CCMenu::create();
-    auto optRefreshBtnSpr = CCSprite::createWithSpriteFrameName(
-        "GJ_updateBtn_001.png");
-    optRefreshBtnSpr->setScale(0.5f);
-    auto optRefreshBtn = CCMenuItemSpriteExtra::create(
-        optRefreshBtnSpr,
-        this, menu_selector(JFPMenuLayer::onOptRefresh));
+    // auto optRefreshBtnSpr = CCSprite::createWithSpriteFrameName(
+    //     "GJ_updateBtn_001.png");
+    // optRefreshBtnSpr->setScale(0.5f);
+    // auto optRefreshBtn = CCMenuItemSpriteExtra::create(
+    //     optRefreshBtnSpr,
+    //     this, menu_selector(JFPMenuLayer::onOptRefresh));
     optMenu->setLayout(RowLayout::create()
         ->setGap(2.f));
 
     optMenu->addChild(optCopyBtn);
-    optMenu->addChild(optRefreshBtn);
+    // optMenu->addChild(optRefreshBtn);
     optMenu->updateLayout();
 
     // auto optTxt = CCLabelBMFont::create("", "goldFont.fnt");
@@ -145,8 +147,17 @@ bool JFPMenuLayer::init() {
         this, menu_selector(JFPMenuLayer::onThemeButton));
     themeButton->setID("jfp-theme-button"_spr);
 
-    auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
+    auto presetSprite = CircleButtonSprite::createWithSpriteFrameName(
         "options_s.png"_spr, 1.f,
+        CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
+    presetSprite->setScale(1.0f);
+    auto presetButton = CCMenuItemSpriteExtra::create(
+        presetSprite,
+        this, menu_selector(JFPMenuLayer::onPresetButton));
+    presetButton->setID("jfp-preset-button"_spr);
+
+    auto optionSprite = CircleButtonSprite::createWithSpriteFrameName(
+        "slider_s.png"_spr, 1.f,
         CircleBaseColor::DarkAqua, CircleBaseSize::Medium);
     optionSprite->setScale(1.0f);
     auto optionButton = CCMenuItemSpriteExtra::create(
@@ -171,17 +182,9 @@ bool JFPMenuLayer::init() {
     infoBtn->setID("info-button"_spr);
     infoBtn->setSizeMult(1.1f);
 
-    auto importBtn = CCMenuItemSpriteExtra::create(
-        CCSprite::createWithSpriteFrameName("importIcon_001.png"_spr),
-        this,
-        menu_selector(JFPMenuLayer::onImportButton));
-    importBtn->setID("import-opt-button"_spr);
-    importBtn->setSizeMult(1.1f);
-
     auto urBtnMenu = CCMenu::create();
     urBtnMenu->setLayout(ColumnLayout::create()
         ->setGap(5.f));
-    urBtnMenu->addChild(importBtn);
     urBtnMenu->addChild(infoBtn);
     urBtnMenu->updateLayout();
 
@@ -215,17 +218,18 @@ bool JFPMenuLayer::init() {
     menu->addChild(themeButton);
     menu->addChild(autoGenButton);
     menu->addChild(optionButton);
+    menu->addChild(presetButton);
     addChild(menu);
 
     menu2->setID("inf-menu"_spr);
     menu2->setAnchorPoint({0.5, 0.5});
-    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 35.f});
+    menu2->setPosition({windowDim.width - 42.f, windowDim.height - 20.f});
     menu2->addChild(garageBtn);
     menu2->addChild(urBtnMenu);
     menu2->setLayout(RowLayout::create()
         ->setGap(7.f));
     menu2->updateLayout();
-    garageBtn->setPositionY(garageBtn->getPositionY() + 8);
+    garageBtn->setPositionY(garageBtn->getPositionY() - 7);
     addChild(menu2);
 
     menu3->setLayout(ColumnLayout::create()
@@ -253,6 +257,10 @@ void JFPMenuLayer::onThemeButton(CCObject*) {
     ThemeSelectPopup::create("")->show();
 }
 
+void JFPMenuLayer::onPresetButton(CCObject*) {
+    OptionSelectPopup::create("")->show();
+}
+
 void JFPMenuLayer::onCopySeed(CCObject*) {
     uint32_t globalSeed = Mod::get()->getSavedValue<uint32_t>("global-seed", 0);
     if (globalSeed) {
@@ -275,7 +283,7 @@ void JFPMenuLayer::onCopyOpt(CCObject*) {
 void JFPMenuLayer::onOptRefresh(CCObject*) {
     auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
     std::string displayOptStr = "Options: " + exportSettings(settings);
-    m_optText->setCString(displayOptStr.c_str());
+    menuOptText->setCString(displayOptStr.c_str());
 }
 
 void JFPMenuLayer::keyBackClicked() {
@@ -308,8 +316,7 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
 
     auto dir = CCDirector::sharedDirector();
 
-    std::string themeName =
-        Mod::get()->getSavedValue<std::string>("active-theme");
+    std::string themeName = Mod::get()->getSavedValue<std::string>("active-theme");
     auto tmd = ThemeGen::parseThemeMeta(themeName);
     auto conflicts = ThemeGen::tagConflicts(tmd);
 
@@ -323,14 +330,20 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             message.c_str(),
             "Continue", nullptr,
             [=](bool b1, auto) {
-                if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
-                else {
+                if (b1) {
+                    return dir->replaceScene(JFPScreenshotLayer::scene());
+                } else {
                     return true;
                 }
             });
     } else {
         dir->replaceScene(JFPScreenshotLayer::scene());
     }
+
+    globalBestM = 0;
+    auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+    Mod::get()->setSavedValue<std::string>("global-option-str", exportSettings(settings));
+
     return;
 }
 
@@ -369,12 +382,8 @@ void JFPMenuLayer::onInfoButton(CCObject*) {
     infoLayer->show();
 }
 
-void JFPMenuLayer::onImportButton(CCObject*) {
-    OptionStrPopup::create("")->show();
-}
-
 void JFPMenuLayer::onTwitterButton(CCObject*) {
-    CCApplication::sharedApplication()->openURL("https://twitter.com/shiestykahuna");
+    CCApplication::sharedApplication()->openURL("https://twitter.com/kahunamarty");
 }
 
 void JFPMenuLayer::openOptions(CCObject*) {
@@ -389,9 +398,10 @@ CCScene* JFPMenuLayer::scene() {
     scene->addChild(layer);
 
     if (!GameManager::sharedState()->getGameVariable("0122")) {
-        auto bgmPath =
-            std::string(CCFileUtils::sharedFileUtils()->getWritablePath()) + "jfpLoop.mp3";
+        auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
+        
+        //log::info("Length: {} {}", mlength, lengthForSound);
     }
     // queueInMainThread([=]() {
     //     std::this_thread::sleep_for(std::chrono::seconds(2));

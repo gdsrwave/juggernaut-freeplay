@@ -9,7 +9,7 @@ using namespace geode::prelude;
 bool ThemeSelectPopup::setup(std::string const& value) {
     // convenience function provided by Popup
     // for adding/setting a title to the popup
-    this->setTitle("JFP Themes");
+    this->setTitle("Juggernaut Themes");
     auto windowDim = CCDirector::sharedDirector()->getWinSize();
 
     // INFO BUTTON
@@ -55,15 +55,13 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     std::string themeName =
         Mod::get()->getSavedValue<std::string>("active-theme");
 
-    auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
-    if (!std::filesystem::is_directory(jfpDir)) setupJFPDirectories(true);
+    auto modSavePath = Mod::get()->getSaveDir();
+    auto themesDir = modSavePath / "themes";
+    if (!std::filesystem::is_directory(themesDir)) setupJFPDirectories(true);
 
-    std::string fp = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
-
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(fp)) {
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
         if (entry.is_regular_file()) {
-            auto filename = std::filesystem::relative(entry.path(), fp).string();
+            auto filename = std::filesystem::relative(entry.path(), themesDir).string();
             if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
                 continue;
             }
@@ -164,10 +162,14 @@ bool ThemeSelectPopup::setup(std::string const& value) {
         m_themeUseBtns->addObject(testUsebtn);
     }
 
+    if (Mod::get()->getSavedValue<bool>("opt-0-theme-shuffling", false)) {
+        ThemeSelectPopup::useButtonShuffleFormat();
+    }
+
     scrl->m_contentLayer->updateLayout();
     scrl->moveToTop();
 
-    const int THEME_UPDATE_VER = 1;
+    const int THEME_UPDATE_VER = 2;
     if (Mod::get()->getSavedValue<int>("ack-theme-update", 0) != THEME_UPDATE_VER) {
         Mod::get()->setSavedValue<int>("ack-theme-update", THEME_UPDATE_VER);
 
@@ -207,18 +209,47 @@ bool ThemeSelectPopup::setup(std::string const& value) {
         "Deselect All", "bigFont.fnt", "GJ_button_01.png", 1.f);
     saveBtnS->setScale(0.6f);
     auto saveBtn = CCMenuItemSpriteExtra::create(
-        saveBtnS, this, menu_selector(ThemeSelectPopup::onDeselect));
+        saveBtnS, this, menu_selector(ThemeSelectPopup::onDeselectBtn));
 
     saveBtnMenu->addChild(saveBtn);
-    saveBtnMenu->setPosition({200.f, 22.f});
+    saveBtnMenu->setPosition({125.f, 22.f});
     m_mainLayer->addChild(saveBtnMenu);
+
+    // SHUFFLE CHECKBOX
+    auto tShufflingMenu = CCMenu::create();
+
+    auto tShufflingTxt = CCLabelBMFont::create("Shuffling", "bigFont.fnt");
+
+    m_tShufflingChk = CCMenuItemToggler::createWithStandardSprites(
+        this,
+        menu_selector(ThemeSelectPopup::onToggleShuffle),
+        1.f
+    );
+    m_tShufflingChk->toggle(Mod::get()->getSavedValue<bool>("opt-0-theme-shuffling", false));
+    
+    tShufflingMenu->setLayout(RowLayout::create()
+        ->setGap(15.f)
+        ->setAxisAlignment(AxisAlignment::Start)
+    );
+    tShufflingMenu->addChild(tShufflingTxt);
+    tShufflingMenu->addChild(m_tShufflingChk);
+    tShufflingMenu->setPosition({225.f, 22.f});
+    tShufflingMenu->setScale(0.41f);
+    tShufflingMenu->setAnchorPoint({0, 0.5});
+    tShufflingMenu->updateLayout();
+    m_mainLayer->addChild(tShufflingMenu);
 
     return true;
 }
 
-void ThemeSelectPopup::onDeselect(CCObject* object) {
-    if (m_activeThemeIndex >= 0) {
-        auto activeBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(m_themeUseBtns->objectAtIndex(m_activeThemeIndex));
+void ThemeSelectPopup::onDeselectBtn(CCObject* object) {
+    ThemeSelectPopup::onDeselect();
+    m_tShufflingChk->toggle(false);
+}
+
+void ThemeSelectPopup::onDeselect() {
+    Mod::get()->setSavedValue<bool>("opt-0-theme-shuffling", false);
+    for (auto activeBtn : CCArrayExt<CCMenuItemSpriteExtra*>(m_themeUseBtns)) {
         if (activeBtn != nullptr) {
             activeBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
             activeBtn->setEnabled(true);
@@ -228,7 +259,46 @@ void ThemeSelectPopup::onDeselect(CCObject* object) {
     Mod::get()->setSavedValue<std::string>("active-theme", "");
 }
 
+void ThemeSelectPopup::onToggleShuffle(CCObject* object) {
+    auto chk = typeinfo_cast<CCMenuItemToggler*>(object);
+    bool toggled = !chk->isToggled();
+
+
+    if (toggled) {
+        Mod::get()->setSavedValue<bool>("opt-0-theme-shuffling", true);
+        ThemeSelectPopup::useButtonShuffleFormat();
+    } else {
+        if (Mod::get()->getSavedValue<bool>("opt-0-theme-shuffling")) {
+            ThemeSelectPopup::onDeselect();
+        }
+    }
+}
+
+void ThemeSelectPopup::useButtonShuffleFormat() {
+    for (auto activeBtn : CCArrayExt<CCMenuItemSpriteExtra*>(m_themeUseBtns)) {
+        if (activeBtn != nullptr) {
+            activeBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongBtn_001.png"));
+            activeBtn->setEnabled(true);
+        }
+    }
+    for (int i = 0; i < m_themeUseBtns->count(); i++) {
+        auto themePath = std::filesystem::path(m_themeFiles[i]);
+        if (!themePath.empty() && *themePath.begin() == "shuffle") {
+            auto newActiveBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(m_themeUseBtns->objectAtIndex(i));
+            if (newActiveBtn != nullptr) {
+                newActiveBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
+                newActiveBtn->setEnabled(false);
+            }
+        }
+    }
+}
+
 void ThemeSelectPopup::onSelectTheme(CCObject* object) {
+    if (Mod::get()->getSavedValue<bool>("opt-0-theme-shuffling")) {
+        FLAlertLayer::create("Error", "Themes cannot be selected while shuffling.", "OK")->show();
+        return;
+    }
+
     if (m_activeThemeIndex >= 0) {
         auto activeBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(m_themeUseBtns->objectAtIndex(m_activeThemeIndex));
         if (activeBtn != nullptr) {
@@ -243,13 +313,12 @@ void ThemeSelectPopup::onSelectTheme(CCObject* object) {
         newActiveBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
         newActiveBtn->setEnabled(false);
 
-        Mod::get()->setSavedValue<std::string>("active-theme", m_themeFiles.at(newIndex));
+        Mod::get()->setSavedValue<std::string>("active-theme", m_themeFiles[newIndex]);
     }
 }
 
 void ThemeSelectPopup::onClickFolder(CCObject*) {
-    auto localPath = CCFileUtils::sharedFileUtils();
-    file::openFolder(std::string(localPath->getWritablePath()) + "jfp\\themes\\");
+    file::openFolder(Mod::get()->getSaveDir() / "themes");
 }
 
 void ThemeSelectPopup::onClickReload(CCObject* object) {
@@ -302,13 +371,14 @@ void ThemeSelectPopup::onClose(CCObject* object) {
 
 void ThemeSelectPopup::onInfo(CCObject*) {
     const char* info =
-        "<cp>JFP Themes</c> add decoration to your corridor!\n\n"
+        "<cp>Juggernaut Themes</c> add decoration to your corridor!\n\n"
         "Each theme works by scanning the corridor's pattern, then placing blocks dependent on what it finds.\n\n"
         "In addition, themes can set color channels, add repeating block patterns, and change k-Values (background image, ground texture, etc.)\n\n"
         "The default themes are <co>heinous</c>, <cg>gandhi</c>, <cy>ninecircles</c> and <cl>moonmen</c>.\n\n"
         "Each theme is defined in a <cp>.JFPT</c> file and kept in the themes folder. You can easily swap JFPT files with other players.\n\n"
-        "Some themes only work properly on certain options (for example, <cy>ninecircles</c>) is bigwave-only and doesn't support miniwave). "
-        "When you try to use these themes, you might get a warning if your options aren't compatible.\n";
+        "To shuffle several themes while playing instead of using just one, use the <co>Shuffle</c> checkbox. To add themes to your shuffle, place their .JFPT file in the shuffle folder.\n\n"
+        "Some themes only work properly on certain generation options (for example, <cy>ninecircles</c> is bigwave-only and doesn't support miniwave). "
+        "When you try to use these themes, you might get a warning if they aren't compatible with your options.\n";
 
     auto infoLayer = MDPopup::create("JFP Theming System",
         info,

@@ -1,5 +1,6 @@
 // Copyright 2025 GDSRWave
 #pragma once
+#include <Geode/Geode.hpp>
 #include <map>
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@ void setupJFPDirectories(bool bypass = false);
 std::vector<int> getUserSongs();
 void setupJFPMusic();
 
+extern cocos2d::CCLabelBMFont* menuOptText;
 extern GJGameLevel* commonLevel;
 
 #ifndef JFP_CONSTANTS_HPP
