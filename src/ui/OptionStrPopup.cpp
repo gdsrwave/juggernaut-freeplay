@@ -40,6 +40,12 @@ void OptionStrPopup::clickImport(CCObject* object) {
     log::info("Importing {}", input);
     importSettings(input, true);
 
+    if (menuOptText != nullptr) {
+        auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+        std::string displayOptStr = "Options: " + exportSettings(settings);
+        menuOptText->setCString(displayOptStr.c_str());
+    }
+
     OptionStrPopup::onClose(object);
 }
 

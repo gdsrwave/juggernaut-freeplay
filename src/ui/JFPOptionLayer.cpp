@@ -127,6 +127,12 @@ bool JFPOptionLayer::init() {
 void JFPOptionLayer::keyBackClicked() {
     JFPGenericLayer::keyBackClicked();
 
+    if (menuOptText != nullptr) {
+        auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
+        std::string displayOptStr = "Options: " + exportSettings(settings);
+        menuOptText->setCString(displayOptStr.c_str());
+    }
+
     if (!GameManager::sharedState()->getGameVariable("0122") &&
         CCDirector::sharedDirector()->getRunningScene() != nullptr) {
         auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();

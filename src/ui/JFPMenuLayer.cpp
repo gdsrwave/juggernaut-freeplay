@@ -111,10 +111,11 @@ bool JFPMenuLayer::init() {
 
     auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
     std::string displayOptStr = "Options: " + exportSettings(settings);
-    m_optText = CCLabelBMFont::create(displayOptStr.c_str(), "goldFont.fnt");
-    m_optText->setScale(0.9f);
+
+    menuOptText = CCLabelBMFont::create(displayOptStr.c_str(), "goldFont.fnt");
+    menuOptText->setScale(0.9f);
     auto optCopyBtn = CCMenuItemSpriteExtra::create(
-        m_optText,
+        menuOptText,
         this,
         menu_selector(JFPMenuLayer::onCopyOpt));
 
@@ -122,17 +123,17 @@ bool JFPMenuLayer::init() {
     optCopyBtn->setSizeMult(0.9f);
 
     auto optMenu = CCMenu::create();
-    auto optRefreshBtnSpr = CCSprite::createWithSpriteFrameName(
-        "GJ_updateBtn_001.png");
-    optRefreshBtnSpr->setScale(0.5f);
-    auto optRefreshBtn = CCMenuItemSpriteExtra::create(
-        optRefreshBtnSpr,
-        this, menu_selector(JFPMenuLayer::onOptRefresh));
+    // auto optRefreshBtnSpr = CCSprite::createWithSpriteFrameName(
+    //     "GJ_updateBtn_001.png");
+    // optRefreshBtnSpr->setScale(0.5f);
+    // auto optRefreshBtn = CCMenuItemSpriteExtra::create(
+    //     optRefreshBtnSpr,
+    //     this, menu_selector(JFPMenuLayer::onOptRefresh));
     optMenu->setLayout(RowLayout::create()
         ->setGap(2.f));
 
     optMenu->addChild(optCopyBtn);
-    optMenu->addChild(optRefreshBtn);
+    // optMenu->addChild(optRefreshBtn);
     optMenu->updateLayout();
 
     // auto optTxt = CCLabelBMFont::create("", "goldFont.fnt");
@@ -282,7 +283,7 @@ void JFPMenuLayer::onCopyOpt(CCObject*) {
 void JFPMenuLayer::onOptRefresh(CCObject*) {
     auto settings = getSettings(JFPGen::JFPBiome::Juggernaut);
     std::string displayOptStr = "Options: " + exportSettings(settings);
-    m_optText->setCString(displayOptStr.c_str());
+    menuOptText->setCString(displayOptStr.c_str());
 }
 
 void JFPMenuLayer::keyBackClicked() {

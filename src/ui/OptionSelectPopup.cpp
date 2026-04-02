@@ -249,6 +249,12 @@ void OptionSelectPopup::onSelectOption(CCObject* object) {
     uint16_t newIndex = object->getTag();
     auto selectedOption = m_optionStrs[newIndex];
     importSettings(selectedOption.optExported, true);
+
+    // we calculate the option code again incase the option functions made a mistake
+    if (menuOptText != nullptr) {
+        std::string displayOptStr = "Options: " + exportSettings(getSettings(JFPGen::JFPBiome::Juggernaut));
+        menuOptText->setCString(displayOptStr.c_str());
+    }
 }
 
 void OptionSelectPopup::onClickFolder(CCObject*) {

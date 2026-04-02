@@ -9,6 +9,7 @@
 #include "./shared.hpp"
 #include "./Theming.hpp"
 #include "./Ninja.hpp"
+#include "./OptionStr.hpp"
 
 using namespace geode::prelude;
 
@@ -34,7 +35,7 @@ std::string jfpPackString(const std::string& level, uint32_t seed,
     std::string b64;
     if (compress) b64 = ZipUtils::compressString(level, true, 0);
     else b64 = level;
-    std::string desc = fmt::format("ninja v1");
+    std::string desc = fmt::format("ninja v1 {}", exportSettings(getSettings(JFPGen::JFPBiome::Juggernaut)));
 
     // double encoding might be unnecessary according to gmd-api source?
     desc = ZipUtils::base64URLEncode(ZipUtils::base64URLEncode(desc));
@@ -78,7 +79,6 @@ std::string jfpStringGen(bool compress) {
 
         std::string newTheme = "";
         if (!themeFiles.empty()) newTheme = themeFiles[themeRNG() % themeFiles.size()];
-        log::info("{}", newTheme);
         Mod::get()->setSavedValue<std::string>("active-theme", newTheme);
     }
 
@@ -364,7 +364,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                         ySP += 15;
                     }
                     scaleSP = (currentCH / 90.f) * 0.8;
-                    xSP = x - 14 + 13 * scaleSP;
+                    xSP = x - 14 + 13 * scaleSP + (currentCH / 30.f);
                 } else {
                     xSP = xP;
                     ySP = yP;

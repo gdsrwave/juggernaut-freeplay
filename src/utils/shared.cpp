@@ -14,6 +14,7 @@
 using namespace geode::prelude;
 
 GJGameLevel* commonLevel = nullptr;
+cocos2d::CCLabelBMFont* menuOptText = nullptr;
 
 void setupJFPMusic() {
     std::string appdataDir = geode::dirs::getSaveDir().string();

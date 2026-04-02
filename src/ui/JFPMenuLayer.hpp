@@ -14,8 +14,6 @@ class JFPMenuLayer : public JFPGenericLayer {
     virtual bool init();
     void keyBackClicked();
     void onEnterTransitionDidFinish();
-
-    CCLabelBMFont* m_optText;
  public:
     static JFPMenuLayer* create();
     static cocos2d::CCScene* scene();
