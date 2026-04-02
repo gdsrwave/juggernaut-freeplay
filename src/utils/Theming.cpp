@@ -493,7 +493,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     std::vector<std::string> corridorBlocks;
     std::vector<std::string> corridorBlocksFill;
     std::string cmd;
-    std::mt19937 themeRNG(Mod::get()->getSavedValue<uint32_t>("global-seed", 1));
+    auto* mod = Mod::get();
+    std::mt19937 themeRNG(mod->getSavedValue<uint32_t>("global-seed", 1));
 
     for (const auto& cmd : allowedDef) {
         overrideBankS[cmd] = OverrideGroups{
@@ -517,7 +518,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         themeName += ".jfpt";
     }
 
-    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::string themeRaw = file::readString(mod->getSaveDir() / "themes" / themeName).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
     std::vector<std::string> lines;
@@ -851,7 +852,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             std::istringstream iss(l.substr(9, l.size() - 10));
             if (iss >> pStart >> pRepeat) {
                 patternGen.start = pStart;
-                patternGen.repeat = pRepeat;
+                patternGen.repeat = pRepeat > 0 ? pRepeat : 1;
                 inPattern = true;
             }
             continue;
@@ -878,7 +879,8 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     const int trueLength = (biome.options.length * 30);
     for (const auto& pattern : repeatingPatterns) {
         int patternRepeat = pattern.repeat >= 1 ? pattern.repeat : 1;
-        int loopCount = std::min(((trueLength + 345) / pattern.repeat) + 1, 10000);
+        uint32_t startingDist = mod->getSavedValue<uint32_t>("opt-0-starting-dist", 345);
+        int loopCount = std::min(static_cast<int>(((trueLength + startingDist) / patternRepeat) + 1), 10000);
         int n = pattern.start;
         const OddsBucket* bucket = selectBucket(pattern.buckets, themeRNG);
         if (bucket != nullptr) {
@@ -1246,6 +1248,74 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     }
 
     return themeGen;
+}
+
+void parseThemeMetaopts(const std::string& name) {
+    bool inOptValues = false;
+    auto* mod = Mod::get();
+
+    std::string themeName = name;
+    if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
+        themeName += ".jfpt";
+    }
+    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
+    std::vector<std::string> lines;
+    std::string line;
+    uint32_t ctr = 0;
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
+        lines.push_back(line);
+        ctr++;
+        if (ctr > 20000) break;
+    }
+
+    mod->setSavedValue<uint32_t>("opt-0-starting-dist", 345);
+    mod->setSavedValue<int32_t>("opt-0-starting-height", 135);
+    mod->setSavedValue<int>("opt-0-starting-sc-x", -90);
+    for (const auto& l : lines) {
+
+        // special stuff
+        if (l == "# opts #") {
+            inOptValues = true;
+            continue;
+        } else if (l == "# end opts #") {
+            inOptValues = false;
+            continue;
+        }
+        if (inOptValues) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                if (key == "StartX") {
+                    int startX = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (startX >= 0 && startX <= 20000) {
+                        mod->setSavedValue<uint32_t>("opt-0-starting-dist", startX);
+                    }
+                } else if (key == "StartY") {
+                    int startY = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (startY >= -15 && startY <= 285) { // important would need to be removed for cam triggwrs -M
+                        mod->setSavedValue<int32_t>("opt-0-starting-height", startY);
+                    }
+                } else if (key == "SpeedChangeXOff") {
+                    int portalXOff = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (portalXOff >= -10000 && portalXOff <= 10000) {
+                        mod->setSavedValue<int>("opt-0-starting-sc-x", portalXOff);
+                    }
+                }
+            }
+            continue;
+        }
+    }
 }
 
 ThemeMetadata parseThemeMeta(const std::string& name) {

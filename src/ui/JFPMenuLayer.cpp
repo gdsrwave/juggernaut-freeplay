@@ -315,8 +315,7 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
 
     auto dir = CCDirector::sharedDirector();
 
-    std::string themeName =
-        Mod::get()->getSavedValue<std::string>("active-theme");
+    std::string themeName = Mod::get()->getSavedValue<std::string>("active-theme");
     auto tmd = ThemeGen::parseThemeMeta(themeName);
     auto conflicts = ThemeGen::tagConflicts(tmd);
 
@@ -330,8 +329,9 @@ void JFPMenuLayer::onAutoGenButton(CCObject*) {
             message.c_str(),
             "Continue", nullptr,
             [=](bool b1, auto) {
-                if (b1) return dir->replaceScene(JFPScreenshotLayer::scene());
-                else {
+                if (b1) {
+                    return dir->replaceScene(JFPScreenshotLayer::scene());
+                } else {
                     return true;
                 }
             });

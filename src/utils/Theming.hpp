@@ -78,6 +78,7 @@ std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 1
     int minHeight = 45, int corridorHeight = 60, bool isForPattern = false, float rotation = 0.f, float scale = 1.f);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 ThemeMetadata parseThemeMeta(const std::string& name);
+void parseThemeMetaopts(const std::string& name);
 std::vector<std::string> tagConflicts(ThemeMetadata tmd);
 const OddsBucket* selectBucket(const std::vector<OddsBucket>& buckets, std::mt19937& rng);
 

@@ -56,13 +56,38 @@ std::string jfpStringGen(bool compress) {
     kBank = defaultKbank;
     colorBank.clear();
     colorBank.insert(colorBank.end(), defaultColorBank.begin(), defaultColorBank.end());
+
+    if (Mod::get()->getSavedValue<bool>("opt-0-theme-shuffling", false)) {
+        std::mt19937 themeRNG(Mod::get()->getSavedValue<uint32_t>("global-seed", 1));
+
+        auto modSavePath = Mod::get()->getSaveDir();
+        auto themesDir = modSavePath / "themes" / "shuffle";
+        if (!std::filesystem::is_directory(themesDir)) setupJFPDirectories();
+
+        std::vector<std::string> themeFiles;
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
+            if (entry.is_regular_file()) {
+                auto filename = std::filesystem::relative(entry.path(), modSavePath / "themes").string();
+                if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
+                    continue;
+                }
+                std::string numPart = filename.substr(0, filename.size() - 5);
+                themeFiles.push_back(filename);
+            }
+        }
+
+        std::string newTheme = "";
+        if (!themeFiles.empty()) newTheme = themeFiles[themeRNG() % themeFiles.size()];
+        log::info("{}", newTheme);
+        Mod::get()->setSavedValue<std::string>("active-theme", newTheme);
+    }
+
+    std::string themeName = Mod::get()->getSavedValue<std::string>("active-theme");
+    ThemeGen::parseThemeMetaopts(themeName);
+
     LevelData ldata = generateJFPLevel();
     if (ldata.biomes.empty()) return "";
-
-    // this could self-evidently be optimized by splitting the theme function
-    // and storing the matching/overriding structure for reuse every in tiling
-    // every att. however, I'm holding off on this because of possibilities
-    // during biome system buildout and the introduction of presets. -M
+ 
     std::string themeString = ThemeGen::parseTheme(
         Mod::get()->getSavedValue<std::string>("active-theme"), ldata);
 
@@ -112,9 +137,14 @@ std::string colorStringGen() {
 std::string jfpNewStringGen(LevelData ldata) {
     if (ldata.biomes.empty()) return "";
 
+    uint32_t startingDist = Mod::get()->getSavedValue<uint32_t>("opt-0-starting-dist");
+    int scXoff = Mod::get()->getSavedValue<int>("opt-0-starting-sc-x", -90);
+
     std::string levelBuildSeg2 = fmt::format(
-        "1,{speedID},2,255,3,165,13,1,64,1,67,1;",
-        fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed)));
+        "1,{speedID},2,{sd_1},3,165,13,1,57,912,64,1,67,1;",
+        fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed)),
+        fmt::arg("sd_1", static_cast<int>(startingDist) + scXoff)
+    );
     const bool cornerPieces = Mod::get()->getSavedValue<bool>("opt-0-add-corner-pieces");
     const bool hideIcon = Mod::get()->getSavedValue<bool>("opt-0-hide-icon");
 
@@ -143,6 +173,11 @@ std::string jfpNewStringGen(LevelData ldata) {
             args.push_back(fmt::arg("ch_2", 150 + currentCH));
             args.push_back(fmt::arg("ch_3", 210 + currentCH));
             args.push_back(fmt::arg("ch_4", 270 + currentCH));
+            args.push_back(fmt::arg("sd_1", startingDist - 120));
+            args.push_back(fmt::arg("sd_2", startingDist - 90));
+            args.push_back(fmt::arg("sd_3", startingDist - 60));
+            args.push_back(fmt::arg("sd_4", startingDist - 30));
+            args.push_back(fmt::arg("sd_5", startingDist));
 
             std::string startingConnectors = fmt::vformat(levelStartingBase2, args);
             level += startingConnectors;
@@ -156,6 +191,12 @@ std::string jfpNewStringGen(LevelData ldata) {
             args.push_back(fmt::arg("ch_3", 195 + currentCH));
             args.push_back(fmt::arg("ch_4", 255 + currentCH));
             args.push_back(fmt::arg("ch_5", 285 + currentCH));
+            args.push_back(fmt::arg("sd_1", startingDist - 120));
+            args.push_back(fmt::arg("sd_2", startingDist - 90));
+            args.push_back(fmt::arg("sd_3", startingDist - 60));
+            args.push_back(fmt::arg("sd_4", startingDist - 30));
+            args.push_back(fmt::arg("sd_5", startingDist));
+
             std::string startingConnectors = fmt::vformat(levelStartingBase, args);
             level += startingConnectors;
         }
@@ -425,7 +466,7 @@ std::string jfpNewStringGen(LevelData ldata) {
                 if (!fMini && cMini) yC += 30;
             }
 
-            level += fmt::format("1,{ffuzzID},2,{xF},3,{yF},{colorMod}{fFlip}{rF}64,1,67,1;1,{cfuzzID},2,{xF},3,{yC},{colorMod}{rC}{cFlip}57,906,64,1,67,1;",
+            level += fmt::format("1,{ffuzzID},2,{xF},3,{yF},{colorMod}{fFlip}{rF}57,906,64,1,67,1;1,{cfuzzID},2,{xF},3,{yC},{colorMod}{rC}{cFlip}57,906,64,1,67,1;",
                 fmt::arg("ffuzzID", fMini ? 1718 : 1717),
                 fmt::arg("cfuzzID", cMini ? 1718 : 1717),
                 fmt::arg("xF", x),
@@ -493,13 +534,14 @@ std::string jfpNewStringGen(LevelData ldata) {
     if (Mod::get()->getSavedValue<bool>("opt-0-show-meter-marks") && markInterval > 0) {
         int meters = markInterval;
         double markHeight;
+        uint32_t startingDist = Mod::get()->getSavedValue<uint32_t>("opt-0-starting-dist", 345);
         for (int j = 0; j < (biome.options.length / markInterval); j++) {
             currentMark = "";
             markHeight = 15.5;
 
             for (int i = 0; i < 10; i++) {
                 currentMark += fmt::format("1,508,2,{dist},3,{markHeight},20,1,57,902,6,-90,64,1,67,1,21,1011,25,1,24,11;",
-                    fmt::arg("dist", 345+meters*30), fmt::arg("markHeight", markHeight));
+                    fmt::arg("dist", startingDist + meters * 30), fmt::arg("markHeight", markHeight));
                 markHeight += 30.0;
             }
 
@@ -508,7 +550,7 @@ std::string jfpNewStringGen(LevelData ldata) {
             meterLabel.erase(
                 std::find(meterLabel.begin(), meterLabel.end(), '\0'), meterLabel.end());
             currentMark += fmt::format("1,914,2,{dist},3,21,20,1,57,902,32,0.62,21,1011,31,{meterLabel},25,1,64,1,67,1,24,11;",
-                fmt::arg("dist", 375+meters*30), fmt::arg("meterLabel", meterLabel));
+                fmt::arg("dist", startingDist + (meters + 1) * 30), fmt::arg("meterLabel", meterLabel));
             meters += markInterval;
             metermarksStr += currentMark;
         }
@@ -550,7 +592,7 @@ std::string jfpNewStringGen(LevelData ldata) {
         scaleP = portalFactor / 2.5;
         if (currentCH > 60) scaleP *= 0.85;
 
-        std::string portalBuild = fmt::format("1,11,2,{xP},3,{yP},6,{rPdeg},32,{scale},57,908,64,1,67,1;",
+        std::string portalBuild = fmt::format("1,11,2,{xP},3,{yP},6,{rPdeg},32,{scale},57,913,64,1,67,1;",
             fmt::arg("xP", xP),
             fmt::arg("yP", yP),
             fmt::arg("rPdeg", rPdeg),
@@ -558,9 +600,11 @@ std::string jfpNewStringGen(LevelData ldata) {
         level += portalBuild;
     }
     // Mini start
-    if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,64,1,67,1;";
+    if (biome.options.startingMini) level += "1,101,2,255,3,163,6,17,13,0,57,912,64,1,67,1;";
     // hide icon
-    if (hideIcon) level += "1,1612,2,375,3,285,36,1;";
+    if (hideIcon) level += fmt::format("1,1612,2,{startingdist},3,285,36,1;",
+        fmt::arg("startingdist", Mod::get()->getSavedValue<uint32_t>("opt-0-starting-dist", 345))
+    );
 
     // Song options
     level += fmt::format("1,1934,2,-15,3,255,13,1,36,1,392,{songID},406,1,{loop}408,{offset},421,1,422,0.5,10,0.5;",

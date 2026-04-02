@@ -10,6 +10,7 @@
 #include "../utils/StringGen.hpp"
 #include "../utils/Ninja.hpp"
 #include "../utils/OptionStr.hpp"
+#include "../utils/Theming.hpp"
 
 
 JFPScreenshotLayer* JFPScreenshotLayer::create() {

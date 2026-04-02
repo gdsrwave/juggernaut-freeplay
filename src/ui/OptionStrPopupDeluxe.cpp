@@ -30,6 +30,7 @@ bool OptionStrPopupDeluxe::setup(std::string const& value) {
         inputNameMenu->setAnchorPoint({0, 0.5});
         inputNameMenu->updateLayout();
         m_inputNameTxt->setScale(1.5f);
+        m_inputNameTxt->setMaxCharCount(21);
 
         auto inputOptMenu = CCMenu::create();
         auto inputOptLabel = CCLabelBMFont::create("Option Code:    ", "bigFont.fnt");
@@ -38,6 +39,7 @@ bool OptionStrPopupDeluxe::setup(std::string const& value) {
         m_inputOptTxt->setID("option-str-input");
         m_inputOptTxt->setFilter(
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_+");
+        m_inputOptTxt->setMaxCharCount(49);
     
         inputOptMenu->setLayout(RowLayout::create()
             ->setGap(15.f)

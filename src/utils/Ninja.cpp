@@ -262,7 +262,9 @@ LevelData generateJFPLevel() {
     uint32_t optLength = mod->getSavedValue<uint32_t>("opt-0-length");
     if (optLength < 1) optLength = 1;
     if (optLength > 10000) optLength = 10000;
-    int y_swing = 0, cX = 345, cY = 135;
+    int y_swing = 0;
+    int cX = mod->getSavedValue<uint32_t>("opt-0-starting-dist", 345);
+    int cY = mod->getSavedValue<int32_t>("opt-0-starting-height", 135);
     int maxHeight = 255, minHeight = 45;
 
     if (mini) {
@@ -369,10 +371,11 @@ LevelData generateJFPLevel() {
         }
         if (lengthMs <= 0) {
             log::warn("Failed to get music length for an offset; song will play from start");
+        } else {
+            auto offsetBound = static_cast<uint32_t>((static_cast<uint32_t>(lengthMs) * 3) / 4);
+            auto songOffset = songRNG() % offsetBound;
+            levelData.biomes[0].song.offset = songOffset;
         }
-        auto offsetBound = static_cast<uint32_t>((static_cast<uint32_t>(lengthMs) * 3) / 4);
-        auto songOffset = songRNG() % offsetBound;
-        levelData.biomes[0].song.offset = songOffset;
     }
 
     levelData.biomes[0].song.loop = mod->getSavedValue<bool>("opt-0-music-loop", true);
@@ -465,7 +468,7 @@ LevelData generateJFPLevel() {
     const uint8_t minBurstDist = 30;
     int lastBurstI = 0;
 
-    // Future prior block to generate lengths of different biomes
+    // Future prior block to generate lengths of different biomes -M
 
     for (int i = 0; i < optLength; i++) {
         cX += 30;
@@ -486,11 +489,6 @@ LevelData generateJFPLevel() {
         } else if (last_tp <= 1 && i > 1) {
             y_swing = segments[i - 1].y_swing;
         } else if (
-            cr.ND && segments[i - 2].y_swing != segments[i - 1].y_swing
-        ) {
-            if (segments[i - 1].y_swing == 1) y_swing = 1;
-            else y_swing = -1;
-        } else if (
             cY >= relMaxHeight && (segments[i - 1].y_swing == 1 ||
             (cr.NZ && orientationMatch(segments, i, antiZigzagMax)) ||
             (cr.NS && orientationMatch(segments, i, {-1, 1, -1})) ||
@@ -503,6 +501,11 @@ LevelData generateJFPLevel() {
             (cr.NS && orientationMatch(segments, i, {1, -1, 1})) ||
             (cr.PS && orientationMatch(segments, i, {1, -1, 1, -1, 1, -1, 1})))) {
             y_swing = 1;
+        } else if (
+            cr.ND && segments[i - 2].y_swing != segments[i - 1].y_swing
+        ) {
+            if (segments[i - 1].y_swing == 1) y_swing = 1;
+            else y_swing = -1;
         } else if (
             cr.NZ && orientationMatch(segments, i, antiZigzagStd1)) {
             y_swing = -1;

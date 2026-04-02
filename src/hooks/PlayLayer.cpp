@@ -78,7 +78,7 @@ class $modify(PlayLayer) {
         }
 
         const std::string& progressText = m_percentageLabel->getString();
-        int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345);
+        int playerMeters = (static_cast<int>(m_player1->m_position.x) - Mod::get()->getSavedValue<uint32_t>("opt-0-starting-dist", 345));
         int length = Mod::get()->getSavedValue<int>("opt-0-length");
 
         std::string meterLabel;
@@ -102,7 +102,7 @@ class $modify(PlayLayer) {
             0.0f,
             std::min(m_progressWidth, std::max(
                 0.001f,
-                static_cast<float>(playerMeters) / static_cast<float>(length))
+                length > 0 ? static_cast<float>(playerMeters) / static_cast<float>(length) : 0.0f)
             * m_progressWidth),
             m_progressHeight
         });
@@ -128,7 +128,7 @@ class $modify(PlayLayer) {
             return;
         }
 
-        int playerMeters = (static_cast<int>(m_player1->m_position.x) - 345) / 30;
+        int playerMeters = (static_cast<int>(m_player1->m_position.x) - static_cast<int>(Mod::get()->getSavedValue<uint32_t>("opt-0-starting-dist", 345))) / 30;
         int length = Mod::get()->getSavedValue<int>("opt-0-length");
 
         if (playerMeters < 0) playerMeters = 0;

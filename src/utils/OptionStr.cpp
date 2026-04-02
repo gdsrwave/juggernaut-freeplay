@@ -667,8 +667,9 @@ void loadDefaults(bool fullReset) {
         mod->setSavedValue<bool>("opt-0-using-corridor-spikes", false);
         mod->setSavedValue<bool>("opt-0-corridor-fuzz", false);
         mod->setSavedValue<uint8_t>("opt-0-spike-placement-types", 0);
-        mod->setSavedValue<bool>("opt-0-spike-music-offset", false);
-        mod->setSavedValue<bool>("opt-0-spike-music-loop", true);
+        mod->setSavedValue<bool>("opt-0-music-offset", false);
+        mod->setSavedValue<bool>("opt-0-music-loop", true);
+        mod->setSavedValue<bool>("opt-0-shuffling", false);
     }
 
     mod->setSavedValue<bool>("ack-disclaimer", "true");

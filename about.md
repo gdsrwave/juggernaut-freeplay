@@ -4,7 +4,7 @@
 
 *Disclaimer: JFP is still in active development and can be memory-intensive. By actively using this mod, you acknowledge that this mod could lead to crashes/instability in your current session and continue at your own risk. Remember to back up your data!*
 
-If you have any questions, feel free to tag or message @shiestykahuna on Twitter. Thank you!
+If you have any questions, feel free to tag or message @kahunamarty on Twitter. Thank you!
 
 # Features
 
