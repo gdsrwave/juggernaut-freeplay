@@ -1,7 +1,10 @@
 // Copyright 2025 GDSRWave
 #include "Theming.hpp"
 #include <algorithm>
+#include <cctype>
+#include <cmath>
 #include <fstream>
+#include <random>
 #include <string>
 #include <vector>
 #include <Geode/Geode.hpp>
@@ -27,17 +30,73 @@ std::array<int, 3> hexToColor(const std::string& hex) {
 }
 
 // orientationMatch, but modified to account for miniwave and transitions
-bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
+// this function has been heavily souped up to account for extra connector segments, will be cleaned up sometime soon -M
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
         const std::vector<int>& pattern, OMType omType, bool typeA) {
-    if (idx < static_cast<int>(pattern.size())) return false;
+    bool extraSegments = false;
+    int idxOff = idx + offset + 1;
+    int pSize = static_cast<int>(pattern.size());
+    int sSize = static_cast<int>(segments.size());
+    if (idxOff < pSize) {
+         auto startORSize = segments[0].options.mini ? overrideBankS["start"].mini : overrideBankS["start"].standard;
+         if (!startORSize.active) {
+            extraSegments = true;
+            //log::info("------");
+            //log::info("matchin {} {}", startORSize.active, startORSize.blocks.size());
+         }
+    } else if (idxOff > sSize) {
+        OverrideStatic endORSize;
+        if (segments.back().y_swing == 1) {
+            endORSize = segments.back().options.mini ? overrideBankS["endup"].mini : overrideBankS["endup"].standard;
+        } else {
+            endORSize = segments.back().options.mini ? overrideBankS["enddown"].mini : overrideBankS["enddown"].standard;
+        }
+        if (!endORSize.active) extraSegments = true;
+    }
+    
+    if (extraSegments && omType != OMType::Corridor) {
+        if (idxOff <= -10 || idxOff < pSize - 10 || idxOff > sSize + 10 || idxOff > sSize + pSize + 10) {
+            return false;
+        }
+    } else {
+        if (idxOff <= 0 || idxOff < pSize || idxOff > sSize || idxOff > sSize + pSize) {
+            return false;
+        }
+    }
     int y_swing = 0;
     bool mini = false;
+    bool isTransition = false;
     for (int i = 0; i < pattern.size(); i++) {
-        auto seg = segments[idx - pattern.size() + i];
-        y_swing = seg.y_swing;
-        mini = seg.options.mini;
+        int j = idxOff - static_cast<int>(pattern.size()) + i;
+        // if (idx == segments.size() - 1) {
+        //     log::info("{} {} {} {} {} {}", idx, offset, j, j > static_cast<int>(segments.size())-1, extraSegments, omType != OMType::Corridor);
+        // }
+        if (extraSegments && omType != OMType::Corridor && j < 0) {
+            if (omType == OMType::Floor) {
+                y_swing = 1;
+            } else {
+                y_swing = -1;
+            }
+            mini = segments[0].options.mini;
+            isTransition = false;
+            
+        } else if (extraSegments && omType != OMType::Corridor && j > static_cast<int>(segments.size())-1) {
+            if (omType == OMType::Floor) {
+                y_swing = -1;
+            } else {
+                y_swing = 1;
+            }
+            mini = segments.back().options.mini;
+            isTransition = false;
+        } else {
+            auto seg = segments[j];
+            y_swing = seg.y_swing;
+            mini = seg.options.mini;
+            isTransition = seg.options.isTransition;
+        }
+        //if (extraSegments) log::info("j: {}, yswing: {}", j, y_swing);
 
-        if (typeA && seg.options.isTransition) {
+        if (typeA && isTransition) {
             if (omType == OMType::Floor &&
                     ((mini && y_swing == 1) || (!mini && y_swing == -1))) {
                 y_swing *= 2;
@@ -50,16 +109,132 @@ bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
         } else if (mini) {
             y_swing *= 2;
         }
-        if (y_swing != pattern[i]) return false;
+        if (y_swing != pattern[i]) {
+            return false;
+        }
     }
     return true;
 }
 
-std::string handleRawBlock(std::string addBlockLine, OMType omType) {
+const OddsBucket* selectBucket(const std::vector<OddsBucket>& buckets, std::mt19937& rng) {
+    uint32_t totalWeight = 0;
+    for (const auto& bucket : buckets) {
+        if (bucket.odds > 0) {
+            totalWeight += bucket.odds;
+        }
+    }
+
+    if (totalWeight == 0) {
+        return nullptr;
+    }
+
+    std::uniform_int_distribution<uint32_t> dist(1, totalWeight);
+    uint32_t roll = dist(rng);
+    uint32_t cumulative = 0;
+    for (const auto& bucket : buckets) {
+        if (bucket.odds == 0) {
+            continue;
+        }
+        cumulative += bucket.odds;
+        if (roll <= cumulative) {
+            return static_cast<const OddsBucket*>(&bucket);
+        }
+    }
+
+    return nullptr;
+}
+
+uint16_t oddsHeader(std::string line) {
+    
+    constexpr const char* oddsPrefix = "< odds ";
+    constexpr const char* oddsSuffix = " >";
+    const size_t oddsPrefixLen = std::char_traits<char>::length(oddsPrefix);
+    const size_t oddsSuffixLen = std::char_traits<char>::length(oddsSuffix);
+    if (line.size() > oddsPrefixLen + oddsSuffixLen &&
+            line.compare(0, oddsPrefixLen, oddsPrefix) == 0 &&
+            line.compare(line.size() - oddsSuffixLen, oddsSuffixLen, oddsSuffix) == 0) {
+        std::string oddsStr = line.substr(oddsPrefixLen, line.size() - oddsPrefixLen - oddsSuffixLen);
+        bool isDigitsOnly = !oddsStr.empty() && std::all_of(
+            oddsStr.begin(),
+            oddsStr.end(),
+            [](unsigned char ch) { return std::isdigit(ch) != 0; });
+        if (isDigitsOnly) {
+            uint16_t oddsValue = geode::utils::numFromString<uint16_t>(oddsStr).unwrapOr(0);
+            if (oddsValue > 0 && oddsValue <= 65535) {
+                return oddsValue;
+            }
+        }
+    }
+    return 0;
+}
+
+std::string handleColor(ColorAction* color) {
+    auto rgbv = color->m_color;
+    std::string res = "";
+
+    res += fmt::format("Slot: {}\n", color->m_colorID);
+    uint16_t copyID = color->m_copyID;
+    if (copyID) {
+        res += fmt::format("Color: Copy {}\n", color->m_copyID);
+    } else {
+
+        char rgbBuf[8];
+        auto rgbv = color->m_fromColor;
+        snprintf(rgbBuf, sizeof(rgbBuf), "#%02X%02X%02X", rgbv.r, rgbv.g, rgbv.b);
+        res += fmt::format("Color: {}\n", std::string(rgbBuf));
+    }
+
+    if (color->m_blending) res += fmt::format("Blending: {}\n", color->m_blending);
+
+    const float ep = 0.00005;
+    if(std::abs(color->m_fromOpacity - 1) > ep) {
+        res += fmt::format("Opacity: {}\n", color->m_fromOpacity);
+    }
+
+    auto hsv = color->m_copyHSV;
+    bool usingSat = (std::abs(hsv.s - 1) > ep && !hsv.absoluteSaturation) || ((std::abs(hsv.s) > ep && hsv.absoluteSaturation));
+    bool usingVal = (std::abs(hsv.v - 1) > ep && !hsv.absoluteBrightness) || ((std::abs(hsv.v) > ep && hsv.absoluteBrightness));
+    if (std::abs(hsv.h) > ep || usingSat || usingVal) {
+        std::string hsvString = fmt::format("{}a{}a{}a{}a{}",
+            hsv.h, hsv.s, hsv.v, static_cast<int>(hsv.absoluteBrightness), static_cast<int>(hsv.absoluteSaturation));
+        res += fmt::format("Special: 10_{}\n", hsvString);
+    }
+
+    return res;
+}
+
+std::string handleRawBlock(std::string addBlockLine, OMType omType, JFPTExtraTypes extra) {
     std::string res;
     size_t start = 0;
 
     if (!addBlockLine.empty() && addBlockLine.back() == ';') addBlockLine.pop_back();
+
+    bool addedR = false;
+    bool addedS = false;
+    while (start < addBlockLine.size()) {
+        size_t comma = addBlockLine.find(',', start);
+        std::string k = addBlockLine.substr(start, comma - start);
+        start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+        comma = addBlockLine.find(',', start);
+        std::string v = addBlockLine.substr(start, comma - start);
+        start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+        int key = 0;
+        key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+        if (key == -1) {
+            continue;
+        }
+
+        if (key == 6) {
+            addedR = true;
+        } else if (key == 32 || key == 129) {
+            addedS = true;
+        }
+
+    }
+
+    start = 0;
     while (start < addBlockLine.size()) {
         size_t comma = addBlockLine.find(',', start);
         std::string k = addBlockLine.substr(start, comma - start);
@@ -88,10 +263,7 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
 
         if (key == 2) {
             float xv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
-            if (xv == 0.f) {
-                continue;
-            }
-            if (std::abs(xv - std::round(xv)) < 0.1f) {
+            if (std::abs(xv - std::round(xv)) < 0.1f && extra == JFPTExtraTypes::None) {
                 xv = std::round(xv);
                 v = geode::utils::numToString(static_cast<int>(xv));
             }
@@ -99,25 +271,31 @@ std::string handleRawBlock(std::string addBlockLine, OMType omType) {
         } else if (key == 3) {
             float yv = geode::utils::numFromString<float>(v).unwrapOr(0.f);
             // num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
-            if (yv == 0.f) {
-                continue;
-            }
-            if (std::abs(yv - std::round(yv)) < 0.1f) {
+            if (std::abs(yv - std::round(yv)) < 0.1f && extra == JFPTExtraTypes::None) {
                 yv = std::round(yv);
                 v = geode::utils::numToString(static_cast<int>(yv));
             }
             if (omType == OMType::Ceiling) v = "[Y+C+" + v + "]";
-            else if (omType != OMType::None) v = "[Y+" + v + "]";
+            else if (omType != OMType::None && extra != JFPTExtraTypes::Pattern) v = "[Y+" + v + "]";
+        } else if (key == 6 && extra == JFPTExtraTypes::Special) {
+            v = "[R+" + v + "]";
+        } else if ((key == 32 || key == 129) && extra == JFPTExtraTypes::Special) {
+            v = "[S*" + v + "]";
         }
-
         if (!res.empty()) res += ",";
         res += k + "," + v;
+
+        if (key == 1) {
+            if (!addedR && extra == JFPTExtraTypes::Special) res += ",6,[R]";
+            if (!addedS && extra == JFPTExtraTypes::Special) res += ",32,[S]";
+        }
     }
+
     return res;
 }
 
 std::string parseAddBlock(std::string addBlockLine, float X, float Y,
-        int maxHeight, int minHeight, int corridorHeight) {
+        int maxHeight, int minHeight, int corridorHeight, bool isForPattern, float rotation, float scale) {
     // remove legacy prefix
     if (addBlockLine.empty()) return "";
     const std::string prefix = "Add Block";
@@ -125,84 +303,175 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
     if (pos != std::string::npos) {
         addBlockLine = addBlockLine.substr(pos + prefix.length());
     }
+    char validVars[] = {'X', 'Y', 'C', 'R', 'S'};
 
     addBlockLine.erase(0, addBlockLine.find_first_not_of(" \t\r\n"));
     addBlockLine.erase(addBlockLine.find_last_not_of(" \t\r\n") + 1);
 
-    // eval bracketed arithmetic
-    std::string result;
-    size_t i = 0;
-    while (i < addBlockLine.size()) {
-        if (addBlockLine[i] == '[') {
-            size_t end = addBlockLine.find(']', i);
-            if (end != std::string::npos) {
-                std::string expr = addBlockLine.substr(i + 1, end - i - 1);
+    size_t repeatPos = addBlockLine.rfind(" repeat ");
+    int repeatDist = 0;
+    if (repeatPos != std::string::npos && repeatPos < addBlockLine.size()-8) {
+        repeatDist = geode::utils::numFromString<int>(addBlockLine.substr(repeatPos + 8)).unwrapOr(0);
+        addBlockLine = addBlockLine.substr(0, repeatPos);
+    }
 
-                expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
-                float value = 0.f;
+    // evaluate bracketed arithmetic
+    const size_t repetitions = repeatDist != 0 ? 25 : 1;
+    std::string res;
+    for (size_t j = 0; j < repetitions; j++) {
+        std::map<int, float> arithValues;
+        size_t start = 0;
+        while (start < addBlockLine.size()) {
+            size_t comma = addBlockLine.find(',', start);
+            std::string k = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
 
-                // throw in xpos, ypos, corridorheight values
-                std::string parsedExpr;
-                for (size_t j = 0; j < expr.size(); ++j) {
-                    if (expr[j] == 'X') {
-                        parsedExpr += geode::utils::numToString(X);
-                    } else if (expr[j] == 'Y') {
-                        parsedExpr += geode::utils::numToString(Y);
-                    } else if (expr[j] == 'C') {
-                        parsedExpr += geode::utils::numToString(corridorHeight);
-                    } else {
-                        parsedExpr += expr[j];
-                    }
-                }
+            comma = addBlockLine.find(',', start);
+            std::string valuePair = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
 
-                // evaluate the parsedExpr as a left-to-right sum/diff/prod/quot
-                float acc = 0.f;
-                char lastOp = 0;
-                size_t idx = 0;
-                while (idx < parsedExpr.size()) {
-                    size_t nextOp = parsedExpr.find_first_of("+-*/", idx);
-                    std::string numStr = parsedExpr.substr(idx, nextOp - idx);
-                    float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
-                    if (lastOp == 0) {
-                        acc = num;
-                    } else if (lastOp == '+') {
-                        acc += num;
-                    } else if (lastOp == '-') {
-                        acc -= num;
-                    } else if (lastOp == '*') {
-                        acc *= num;
-                    } else if (lastOp == '/') {
-                        acc /= num;
-                    }
-                    if (nextOp == std::string::npos) break;
-                    lastOp = parsedExpr[nextOp];
-                    idx = nextOp + 1;
-                }
-                value = acc;
-
-                // TODO(M): rework this - it's intended to cut around
-                // the field of view to prevent obj hell. should probably
-                // rework the simple arithmetic logic as well, at some point
-                if (expr.find("Y") != std::string::npos) {
-                    if (value > 375 || value < -15) {
-                        return "";
-                    }
-                }
-
-                result += geode::utils::numToString(static_cast<int>(value));
-                i = end + 1;
-            } else {
-                result += addBlockLine[i++];
+            int key = 0;
+            key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+            if (key == -1) {
+                continue;
             }
-        } else {
-            result += addBlockLine[i++];
-        }
-    }
 
-    if (!result.empty() && result.back() != ';') {
-        result += ';';
+            size_t i = 0;
+            while (i < valuePair.size()) {
+                if (valuePair[i] == '[') {
+                    size_t end = valuePair.find(']', i);
+                    if (end != std::string::npos) {
+                        std::string expr = valuePair.substr(i + 1, end - i - 1);
+
+                        expr.erase(remove_if(expr.begin(), expr.end(), ::isspace), expr.end());
+                        float value = 0.f;
+
+                        // throw in xpos, ypos, corridorheight values
+                        std::string parsedExpr;
+                        bool preserveFloat = false;
+                        char primary = 0;
+                        for (size_t j = 0; j < expr.size(); ++j) {
+                            if (expr[j] == 'X') {
+                                parsedExpr += geode::utils::numToString(X);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'Y') {
+                                parsedExpr += geode::utils::numToString(Y);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'C') {
+                                parsedExpr += geode::utils::numToString(corridorHeight);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'R') {
+                                parsedExpr += geode::utils::numToString(rotation);
+                                if (primary == 0) primary = expr[j];
+                            } else if (expr[j] == 'S') {
+                                parsedExpr += geode::utils::numToString(scale);
+                                if (primary == 0) primary = expr[j];
+                            } else {
+                                parsedExpr += expr[j];
+                            }
+                        }
+
+                        // evaluate the parsedExpr as a left-to-right sum/diff/prod/quot/mod
+                        float acc = 0.f;
+                        char lastOp = 0;
+                        size_t idx = 0;
+                        int lastIdxWasOp = -2;
+                        while (idx < parsedExpr.size()) {
+                            size_t nextOp = parsedExpr.find_first_of("+-*/%", parsedExpr[idx] == '-' ? idx + 1 : idx);
+                            std::string numStr = parsedExpr.substr(idx, nextOp - idx);
+                            float num = geode::utils::numFromString<float>(numStr).unwrapOr(0.f);
+                            if (lastOp == 0) {
+                                acc = num;
+                            } else if (lastOp == '+') {
+                                acc += num;
+                            } else if (lastOp == '-') {
+                                acc -= num;
+                            } else if (lastOp == '*') {
+                                acc *= num;
+                            } else if (lastOp == '/') {
+                                acc /= num;
+                            } else if (lastOp == '%') {
+                                acc = std::fmod(acc, num);
+                            }
+                            if (nextOp == std::string::npos) break;
+                            lastOp = parsedExpr[nextOp];
+                            idx = nextOp + 1;
+                        }
+                        value = acc;
+                        arithValues[key] = value;
+                        
+                        i = end + 1;
+                    } else {
+                        i++;
+                    }
+                } else {
+                    i++;
+                }
+            }
+        }
+
+        if (!isForPattern && arithValues.contains(3) && (arithValues[3] > 375 || arithValues[3] < -15)) {
+            continue;
+        }
+    
+        // morph positions which are relative to scale and rotation
+        if (scale < 0.9995 || scale > 1.0005) {
+            float xdiff = arithValues[2] - X;
+            float ydiff = arithValues[3] - Y;
+            if (arithValues[2] != X) {
+                arithValues[3] = X + (xdiff) * scale;
+            } else if (arithValues[3] != Y) {
+                arithValues[3] = Y + (ydiff) * scale;
+            }
+        }
+        if (rotation > 0.0005 || rotation < -0.0005) {
+            float xdiff = arithValues[2] - X;
+            float ydiff = arithValues[3] - Y;
+            if (arithValues[2] != X || arithValues[3] != Y) {
+                float rotationRad = rotation * M_PI/180;
+                arithValues[2] = (xdiff * std::cos(rotationRad) + ydiff * std::sin(rotationRad)) + X;
+                arithValues[3] = (ydiff * std::cos(rotationRad) - xdiff * std::sin(rotationRad)) + Y;
+                
+            }
+        }
+
+        // replace bracketed values
+        std::string localRes;
+        start = 0;
+        while (start < addBlockLine.size()) {
+            size_t comma = addBlockLine.find(',', start);
+            std::string k = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+            comma = addBlockLine.find(',', start);
+            std::string valuePair = addBlockLine.substr(start, comma - start);
+            start = (comma == std::string::npos) ? addBlockLine.size() : comma + 1;
+
+            int key = 0;
+            key = geode::utils::numFromString<int>(k).unwrapOr(-1);
+            if (key == -1) {
+                continue;
+            }
+
+            if (arithValues.contains(key)) {
+                if (key == 2 || key == 3) {
+                    valuePair = geode::utils::numToString<float>(arithValues[key]);
+                } else {
+                    valuePair = geode::utils::numToString<float>(arithValues[key]);
+                }
+            }
+
+            if (!localRes.empty()) localRes += ",";
+            localRes += k + "," + valuePair;
+        }
+
+        if (!localRes.empty() && localRes.back() != ';') {
+            localRes += ';';
+        }
+        res += localRes;
+        Y += repeatDist;
     }
-    return result;
+    return res;
 }
 
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) {
@@ -211,7 +480,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     bool inKValues = false;
     bool inMatches = false;
     bool inPattern = false;
-    InOverride inOverride = InOverride::None;
+    bool inOverride = false;
     bool inOverrideMini = false;
 
     RepeatingPattern patternGen = RepeatingPattern();
@@ -221,44 +490,123 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     std::vector<ThemeMatch> cMPList;
     std::vector<RepeatingPattern> repeatingPatterns;
     std::string themeGen = "";
-    std::string corridorBlock = "";
+    std::vector<std::string> corridorBlocks;
+    std::vector<std::string> corridorBlocksFill;
+    std::string cmd;
+    auto* mod = Mod::get();
+    std::mt19937 themeRNG(mod->getSavedValue<uint32_t>("global-seed", 1));
 
-    for (const auto& key : {
-        "override-base", "override-start", "override-enddown",
-        "override-endup", "override-slope", "override-slope-mini"
-    }) {
-        overrideBank[key] = false;
+    for (const auto& cmd : allowedDef) {
+        overrideBankS[cmd] = OverrideGroups{
+            .standard = {
+                .active = false,
+                .keep = false
+            },
+            .mini = {
+                .active = false,
+                .keep = false
+            }
+        };
     }
 
     JFPGen::Color sColor = JFPGen::Color();
 
-    auto biome = ldata.biomes[0];
+    const auto& biome = ldata.biomes[0];
 
-    auto localPath = CCFileUtils::sharedFileUtils();
     std::string themeName = name;
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string fp = std::string(localPath->getWritablePath()) +
-        "/jfp/themes/" + themeName;
-    std::ifstream file(fp);
-    if (!file.is_open()) {
-        return "";
-    }
+
+    std::string themeRaw = file::readString(mod->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
     std::vector<std::string> lines;
     std::string line;
     uint32_t ctr = 0;
-    while (std::getline(file, line)) {
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
         lines.push_back(line);
         ctr++;
         if (ctr > 20000) break; 
     }
-    file.close();
 
     for (const auto& l : lines) {
         if (l.length() > 1000) {
             continue;
         }
+
+        if (l.find("# define") == 0 && l.back() == '#') {
+            bool keepOrig = false;
+            std::string cmdLine = l.substr(9, l.size() - 11);
+            cmdLine.erase(0, cmdLine.find_first_not_of(" \t\r\n"));
+            cmdLine.erase(cmdLine.find_last_not_of(" \t\r\n") + 1);
+
+            size_t keepPos = cmdLine.rfind(" keep");
+            if (keepPos != std::string::npos && keepPos == cmdLine.size() - 5) {
+                keepOrig = true;
+                cmdLine = cmdLine.substr(0, keepPos);
+                cmdLine.erase(cmdLine.find_last_not_of(" \t\r\n") + 1);
+            }
+            cmd = cmdLine;
+
+            if (cmd.size() > 5 && cmd.substr(cmd.size() - 5) == "-mini") {
+                cmd = cmd.substr(0, cmd.size() - 5);
+                inOverrideMini = true;
+            } else {
+                inOverrideMini = false;
+            }
+            if (std::find(allowedDef.begin(), allowedDef.end(), cmd) != allowedDef.end()) {
+                inOverride = true;
+                auto& group = inOverrideMini
+                    ? overrideBankS[cmd].mini : overrideBankS[cmd].standard;
+                group.active = true;
+                group.keep = keepOrig;
+            }
+            continue;
+        } else if (l == "# end define #") {
+            inOverride = false;
+            continue;
+        }
+
+        if (inOverride) {
+            auto& orSize = inOverrideMini ? overrideBankS[cmd].mini : overrideBankS[cmd].standard;
+            uint16_t oddsV = oddsHeader(l);
+            if (oddsV > 0) {
+                orSize.buckets.push_back(OddsBucket{.odds = oddsV, .blocks = {}});
+            }
+            else {
+                if (orSize.buckets.empty()) {
+                    orSize.buckets.push_back(OddsBucket{.odds = 1, .blocks = {}});
+                }
+                orSize.buckets.back().blocks.push_back(l);
+            }
+        }
+
+        if (l == "# k #") {
+            inKValues = true;
+            continue;
+        } else if (l == "# end k #") {
+            inKValues = false;
+            continue;
+        }
+        if (inKValues) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                kBank[key] = value;
+            }
+            continue;
+        }
+
         if (l == "# color #") {
             inAddcolor = true;
             continue;
@@ -297,122 +645,67 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             }
             continue;
         }
+    }
 
-        if (l.find("# define") == 0 && l.back() == '#') {
-            std::string cmd = l.substr(9, l.size() - 11);
-            cmd.erase(0, cmd.find_first_not_of(" \t\r\n"));
-            cmd.erase(cmd.find_last_not_of(" \t\r\n") + 1);
-
-            if (cmd == "base") {
-                inOverride = InOverride::Base;
-                overrideBank["override-base"] = true;
-                continue;
-            } else if (cmd == "corridorblock") {
-                inOverride = InOverride::CorridorBlock;
-                continue;
+    if (overrideBankS["base"].standard.active) {
+        const OddsBucket* bucket = selectBucket(overrideBankS["base"].standard.buckets, themeRNG);
+        if (bucket != nullptr) {
+            for (const auto& baseBlock : bucket->blocks) {
+                themeGen += parseAddBlock(
+                    baseBlock,
+                    0,
+                    0,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    biome.options.corridorHeight);
             }
-
-            if (cmd.size() > 5 && cmd.substr(cmd.size() - 5) == "-mini") {
-                cmd = cmd.substr(0, cmd.size() - 5);
-                inOverrideMini = true;
-            } else {
-                inOverrideMini = false;
-            }
-            if (cmd == "enddown") {
-                inOverride = InOverride::EndDown;
-                overrideBank["override-enddown"] = true;
-            } else if (cmd == "endup") {
-                inOverride = InOverride::EndUp;
-                overrideBank["override-endup"] = true;
-            } else if (cmd == "start") {
-                inOverride = InOverride::Start;
-                overrideBank["override-start"] = true;
-            } else if (cmd == "slope") {
-                inOverride = InOverride::Slope;
-                overrideBank[inOverrideMini
-                    ? "override-slope-mini"
-                    : "override-slope"] = true;
-            }
-            continue;
-        } else if (l == "# end define #") {
-            inOverride = InOverride::None;
-            continue;
         }
+    }
 
-        if (inOverride == InOverride::Base) {
+    auto& startSize = biome.options.startingMini ? overrideBankS["start"].mini : overrideBankS["start"].standard;
+    if (startSize.active && !startSize.buckets.empty()) {
+        const OddsBucket* bucket = selectBucket(startSize.buckets, themeRNG);
+        if (bucket != nullptr) {
+            for (const auto& startBlock : bucket->blocks) {
+            int passedCH = biome.options.corridorHeight;
+            if (biome.options.startingMini && biome.options.typeA) passedCH += 30;
             themeGen += parseAddBlock(
-                l,
+                startBlock,
                 0,
                 0,
                 biome.options.maxHeight,
                 biome.options.minHeight,
-                biome.options.corridorHeight);
-            continue;
-        } else if (inOverride == InOverride::Start) {
-            if (biome.options.startingMini == inOverrideMini) {
-                int passedCH = biome.options.corridorHeight;
-                if (inOverrideMini && biome.options.typeA) passedCH += 30;
-                themeGen += parseAddBlock(
-                    l,
-                    0,
-                    0,
-                    biome.options.maxHeight,
-                    biome.options.minHeight,
-                    passedCH);
+                passedCH);
             }
-            continue;
-        } else if (inOverride == InOverride::EndUp &&
-                biome.segments.back().y_swing == 1) {
-            if (biome.segments.back().options.mini == inOverrideMini) {
-                int passedCH = biome.options.corridorHeight;
-                if (inOverrideMini && biome.options.typeA) passedCH += 30;
-                themeGen += parseAddBlock(
-                    l,
-                    biome.segments.back().coords.first,
-                    biome.segments.back().coords.second,
-                    biome.options.maxHeight,
-                    biome.options.minHeight,
-                    passedCH);
-            }
-            continue;
-        } else if (inOverride == InOverride::EndDown &&
-                biome.segments.back().y_swing == -1) {
-            if (biome.segments.back().options.mini == inOverrideMini) {
-                int passedCH = biome.options.corridorHeight;
-                if (inOverrideMini && biome.options.typeA) passedCH += 30;
-                themeGen += parseAddBlock(
-                    l,
-                    biome.segments.back().coords.first,
-                    biome.segments.back().coords.second,
-                    biome.options.maxHeight,
-                    biome.options.minHeight,
-                    passedCH);
-            }
-            continue;
-        } else if (inOverride == InOverride::CorridorBlock) {
-            corridorBlock = l;
         }
+    }
 
-        if (l == "# k #") {
-            inKValues = true;
-            continue;
-        } else if (l == "# end k #") {
-            inKValues = false;
-            continue;
-        }
-        if (inKValues) {
-            auto pos = l.find(':');
-            if (pos != std::string::npos) {
-                std::string key = l.substr(0, pos);
-                std::string value = l.substr(pos + 1);
+    if (biome.segments.empty()) {
+        return themeGen;
+    }
 
-                key.erase(0, key.find_first_not_of(" \t\r\n"));
-                key.erase(key.find_last_not_of(" \t\r\n") + 1);
-                value.erase(0, value.find_first_not_of(" \t\r\n"));
-                value.erase(value.find_last_not_of(" \t\r\n") + 1);
-
-                kBank[key] = value;
+    auto lastSegment = biome.segments.back();
+    auto& endORgroup = lastSegment.y_swing == 1 ? overrideBankS["endup"] : overrideBankS["enddown"];
+    auto& endORSize = lastSegment.options.mini ? endORgroup.mini : endORgroup.standard;
+    if (endORSize.active && !endORSize.buckets.empty()) {
+        const OddsBucket* bucket = selectBucket(endORSize.buckets, themeRNG);
+        if (bucket != nullptr) {
+            for (const auto& endBlock : bucket->blocks) {
+                int passedCH = biome.options.corridorHeight;
+                if (lastSegment.options.mini && biome.options.typeA) passedCH += 30;
+                themeGen += parseAddBlock(
+                    endBlock,
+                    lastSegment.coords.first,
+                    lastSegment.coords.second,
+                    biome.options.maxHeight,
+                    biome.options.minHeight,
+                    passedCH);
             }
+        }
+    }
+
+    for (const auto& l : lines) {
+        if (l.length() > 1000) {
             continue;
         }
 
@@ -541,7 +834,16 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             continue;
         }
         if (inMatches) {
-            cMP.commands.push_back(l);
+
+            // yes this is from a prompt and not one of my ridiculous linechecks -M
+            uint16_t oddsV = oddsHeader(l);
+            if (oddsV > 0) cMP.buckets.push_back(OddsBucket{.odds = oddsV, .blocks = {}});
+            else {
+                if (cMP.buckets.empty()) {
+                    cMP.buckets.push_back(OddsBucket{.odds = 1, .blocks = {}});
+                }
+                cMP.buckets.back().blocks.push_back(l);
+            }
             continue;
         }
 
@@ -550,20 +852,25 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
             std::istringstream iss(l.substr(9, l.size() - 10));
             if (iss >> pStart >> pRepeat) {
                 patternGen.start = pStart;
-                patternGen.repeat = pRepeat;
+                patternGen.repeat = pRepeat > 0 ? pRepeat : 1;
                 inPattern = true;
             }
             continue;
         } else if (l == "# end pattern #") {
             inPattern = false;
-            if (!patternGen.data.empty()) {
-                repeatingPatterns.push_back(patternGen);
-                patternGen = RepeatingPattern();
-            }
+            repeatingPatterns.push_back(patternGen);
+            patternGen = RepeatingPattern();
             continue;
         }
         if (inPattern) {
-            patternGen.data.push_back(l);
+            uint16_t oddsV = oddsHeader(l);
+            if (oddsV > 0) patternGen.buckets.push_back(OddsBucket{.odds = oddsV, .blocks = {}});
+            else {
+                if (patternGen.buckets.empty()) {
+                    patternGen.buckets.push_back(OddsBucket{.odds = 1, .blocks = {}});
+                }
+                patternGen.buckets.back().blocks.push_back(l);
+            }
             continue;
         }
     }
@@ -571,39 +878,61 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
     const int trueLength = (biome.options.length * 30);
     for (const auto& pattern : repeatingPatterns) {
-        int loopCount = std::min((trueLength / pattern.repeat) + 1, 1000);
+        int patternRepeat = pattern.repeat >= 1 ? pattern.repeat : 1;
+        uint32_t startingDist = mod->getSavedValue<uint32_t>("opt-0-starting-dist", 345);
+        int loopCount = std::min(static_cast<int>(((trueLength + startingDist) / patternRepeat) + 1), 10000);
         int n = pattern.start;
-        for (int i = 0; i < loopCount; ++i) {
-            for (const auto blockData : pattern.data) {
-                themeGen += parseAddBlock(
-                    blockData,
-                    n, 0,
-                    biome.options.maxHeight,
-                    biome.options.minHeight,
-                    biome.options.corridorHeight);
+        const OddsBucket* bucket = selectBucket(pattern.buckets, themeRNG);
+        if (bucket != nullptr) {
+            for (int i = 0; i < loopCount; ++i) {
+                for (const auto blockData : bucket->blocks) {
+                    themeGen += parseAddBlock(
+                        blockData,
+                        n, 0,
+                        biome.options.maxHeight,
+                        biome.options.minHeight,
+                        biome.options.corridorHeight,
+                        true);
+                }
+                n += pattern.repeat;
             }
-            n += pattern.repeat;
         }
     }
 
-    for (int i = 0; i < biome.segments.size(); i++) {
-        const auto& seg = biome.segments[i];
-
+    // conditional pattern matching runs -10 outside bounds; if no floor override is given,
+    // jfp will attempt to theme the starting and ending connectors automatically.
+    for (int i = -10; i < static_cast<int>(biome.segments.size()) + 10; i++) {
+        bool mini;
         int passedCH = biome.options.corridorHeight;
-        if (seg.options.mini && biome.options.typeA) passedCH += 30;
+        int y_swing;
+        bool isTransition;
+        int x, y;
 
-        if (corridorBlock != "") {
-            int numCB = (passedCH / 30) - (seg.options.mini ? 2 : 1);
-            for (int j = 1; j <= numCB; j++) {
-                themeGen += parseAddBlock(
-                    corridorBlock, seg.coords.first, seg.coords.second + j*30,
-                    biome.options.maxHeight, biome.options.minHeight, passedCH);
-            }
+        if (i < 0) {
+            mini = biome.segments[0].options.mini;
+            y_swing = 0;
+            isTransition = false;
+        } else if (i >= static_cast<int>(biome.segments.size())) {
+            mini = biome.segments.back().options.mini;
+            y_swing = 0;
+            isTransition = false;
+        } else {
+            const auto& seg = biome.segments[i];
+            
+            y_swing = seg.y_swing;
+            mini = seg.options.mini;
+            isTransition = seg.options.isTransition;
         }
 
-        if (seg.options.isTransition) {
-            if (seg.y_swing == 1 && !seg.options.mini) passedCH += 30;
-            else if (seg.y_swing == 1 && seg.options.mini) passedCH -= 30;
+        if (mini && biome.options.typeA) passedCH += 30;
+        
+        if (isTransition) {
+            if (y_swing == 1 && !mini) {
+                passedCH += 30;
+            } else if (y_swing == 1 && mini) {
+                passedCH -= 30;
+            }
+            const auto& seg = biome.segments[i];
         }
 
         for (const auto& condition : matchConditions) {
@@ -612,31 +941,72 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
 
                 bool notPatternsOk = true;
                 for (int np = 0; np < match.notPatterns.size(); ++np) {
-                    if (strictOM(
+                    bool notsom = strictOM(
                             biome.segments,
-                            i + match.notOffsets[np] + 1,
+                            i,
+                            match.notOffsets[np],
                             match.notPatterns[np],
                             match.notTypes[np],
-                            biome.options.typeA)) {
+                            biome.options.typeA);
+                    if (notsom) {
                         notPatternsOk = false;
                         break;
                     }
                 }
 
-                if (notPatternsOk &&
-                    (strictOM(
+
+                bool som = strictOM(
                         biome.segments,
-                        i + match.offset + 1,
+                        i,
+                        match.offset,
                         match.pattern,
                         match.omType,
                         biome.options.typeA) ||
-                      (match._else && match.pattern.empty()))) {
-                    for (const auto& cmd : match.commands) {
-                        std::string parsed = parseAddBlock(
-                            cmd, seg.coords.first, seg.coords.second,
-                            biome.options.maxHeight, biome.options.minHeight, passedCH);
-                        if (!parsed.empty()) {
-                            themeGen += parsed;
+                      (match._else && match.pattern.empty());
+                // if (i == biome.segments.size() - 1 && notPatternsOk && som) log::info("this just passed");
+                if (notPatternsOk &&
+                    (som)) {
+                    
+                    const OddsBucket* bucket = selectBucket(match.buckets, themeRNG);
+                    if (bucket != nullptr) {
+                        for (const auto& block : bucket->blocks) {
+                            // calculate extra segment coords
+                            if (i < 0) {
+                                const auto& seg = biome.segments[0];
+                                x = seg.coords.first + 30 * i;
+                                if (match.omType == OMType::Ceiling) {
+                                    y = seg.coords.second - 30 * (seg.options.mini ? 2 : 1) * (i + 1);
+                                } else {
+                                    y = seg.coords.second + 30 * (seg.options.mini ? 2 : 1) * i;
+                                }
+                            } else if (i > static_cast<int>(biome.segments.size()) - 1) {
+                                const auto& seg = biome.segments.back();
+                                int distFromEnd = i - (static_cast<int>(biome.segments.size()) - 1);
+                                x = seg.coords.first + 30 * distFromEnd;
+                                int direction = 1;
+                                if (match.omType == OMType::Floor) {
+                                    direction = -1;
+                                }
+
+                                if ((match.omType == OMType::Ceiling && seg.y_swing == -1) ||
+                                        (match.omType == OMType::Floor && seg.y_swing == 1)) {
+                                    y = seg.coords.second + 30 * (seg.options.mini ? 2 : 1) * (distFromEnd - 1) * direction;
+                                } else {
+                                    y = seg.coords.second + 30 * (seg.options.mini ? 2 : 1) * distFromEnd * direction;
+                                }
+                            } else {
+                                const auto& seg = biome.segments[i];
+                                x = seg.coords.first;
+                                y = seg.coords.second;
+                                
+                            }
+
+                            std::string parsed = parseAddBlock(
+                                block, x, y,
+                                biome.options.maxHeight, biome.options.minHeight, passedCH);
+                            if (!parsed.empty()) {
+                                themeGen += parsed;
+                            }
                         }
                     }
                     successfulMatch = true;
@@ -649,30 +1019,326 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         }
     }
 
+    auto& corridorBlocksSize = overrideBankS["corridorblock"].standard;
+    auto& corridorBlocksFillSize = overrideBankS["corridorblock-fill"].standard;
+    for (int i = 0; i < biome.segments.size(); i++) {
+        const auto& seg = biome.segments[i];
+
+        int passedCH = biome.options.corridorHeight;
+        if (seg.options.mini && biome.options.typeA) passedCH += 30;
+        bool mini = seg.options.mini;
+
+        const OddsBucket* bucketCB = selectBucket(corridorBlocksSize.buckets, themeRNG);
+        if (bucketCB != nullptr && !bucketCB->blocks.empty()) {
+            for (const auto& corridorBlock : bucketCB->blocks) {
+                if (corridorBlock == "") continue;
+                int numCB = (passedCH / 30) - (mini ? 2 : 1);
+                for (int j = 1; j <= numCB; j++) {
+                    themeGen += parseAddBlock(
+                        corridorBlock, seg.coords.first, seg.coords.second + j*30,
+                        biome.options.maxHeight, biome.options.minHeight, passedCH);
+                }
+            }
+        }
+        const OddsBucket* bucketFill = selectBucket(corridorBlocksFillSize.buckets, themeRNG);
+        if (bucketFill != nullptr && !bucketFill->blocks.empty()) {
+            for (const auto& corridorBlock : bucketFill->blocks) {
+                if (corridorBlock == "") continue;
+                int numCB = (passedCH / 30) - (mini ? 2 : 1);
+                for (int j = 1; j <= numCB; j++) {
+                    themeGen += parseAddBlock(
+                        corridorBlock, seg.coords.first, seg.coords.second + j*30,
+                        biome.options.maxHeight, biome.options.minHeight, passedCH);
+                }
+                if (passedCH % 30 != 0) themeGen += parseAddBlock(
+                    corridorBlock, seg.coords.first, seg.coords.second + passedCH - (mini ? 60 : 30),
+                    biome.options.maxHeight, biome.options.minHeight, passedCH);
+            }
+        }
+
+        // no such thing as a "transition" segment on typeB
+        if (seg.options.isTransition) {
+            if (seg.y_swing == 1 && !mini) passedCH += 30;
+            else if (seg.y_swing == 1 && mini) passedCH -= 30;
+        }
+
+        // The section below is for theming the special overrides (speed changes, portals, spikes etc.)
+        // Much of the code is ripped directly from StringGen, as the components here are positioned relative
+        // to their target object. This seems excessive and might be trimmed down/compartmentalized later. -M
+        int xP, yP;
+        float rPdeg, scaleP;
+        if (seg.options.isPortal == JFPGen::Portals::Gravity || seg.options.isPortal == JFPGen::Portals::Fake) {
+            double portalFactor = (static_cast<double>(passedCH) / 60.0) * 1.414;
+            int portalNormal = passedCH / 10;
+            int portalPos = passedCH / 4;
+            bool portalYellow;
+            if (seg.options.isPortal == JFPGen::Portals::Fake)
+                portalYellow = seg.options.gravity ? false : true;
+            else portalYellow = seg.options.gravity ? true : false;
+
+            xP = seg.coords.first - 15 - portalNormal + portalPos;
+            yP = seg.coords.second + (seg.y_swing == 1
+                ? portalNormal + portalPos - 15
+                : passedCH + 15 - portalNormal - portalPos);
+            if (mini && seg.y_swing == 1) yP -= 30;
+            rPdeg = (mini ? 26.565 : 45) * seg.y_swing;
+            scaleP = portalFactor / 2.5;
+            if (passedCH > 60) scaleP *= 0.85;
+
+            auto portalBank = portalYellow ? overrideBankS["yellow-portal"] : overrideBankS["blue-portal"];
+            auto portalSize = mini ? portalBank.mini : portalBank.standard;
+            const OddsBucket* bucket = selectBucket(portalSize.buckets, themeRNG);
+            if (bucket != nullptr) {
+                for (const auto& block : bucket->blocks) {
+                    std::string parsed = parseAddBlock(
+                        block, xP, yP,
+                        biome.options.maxHeight, biome.options.minHeight, passedCH, false, rPdeg, scaleP);
+                    if (!parsed.empty()) {
+                        themeGen += parsed;
+                    }
+                }
+            }
+        }
+
+        // Corridor-Spikes
+        if (seg.options.isSpikeM) {
+            bool spikeSide = seg.options.spikeSide;
+            int xS = seg.coords.first - 6;
+            if (!spikeSide) {
+                xS = seg.coords.first + 6;
+            }
+            int yS = seg.coords.second + 6;
+            if (mini) yS -= 4;
+            if ((seg.y_swing == 1 && !spikeSide) || (seg.y_swing == -1 && spikeSide)) {
+                yS = seg.coords.second + passedCH - 6;
+                if (mini) yS += 4;
+            }
+
+            // this has to use rotations, spikes don't support being flipped
+            float scaleS = 1.f;
+            float rOffset = 45.f;
+            if (mini) {
+                yS -= 15;
+                rOffset = 63.435f;
+                if (!spikeSide) xS -= 1;
+                else xS += 1;
+            }
+            int rS = rOffset;
+            if (seg.y_swing == 1 && !spikeSide) {
+                rS = 180 - rOffset;
+            } else if (seg.y_swing == 1 && spikeSide) {
+                rS = -rOffset;
+            } else if (seg.y_swing == -1 && spikeSide) {
+                rS = -180 + rOffset;
+            }
+
+            auto spikeSize = mini ? overrideBankS["spike"].mini : overrideBankS["spike"].standard;
+            const OddsBucket* bucket = selectBucket(spikeSize.buckets, themeRNG);
+            if (bucket != nullptr) {
+                for (const auto& block : bucket->blocks) {
+                    std::string parsed = parseAddBlock(
+                        block, xS, yS,
+                        biome.options.maxHeight, biome.options.minHeight, passedCH, false, rS, scaleS);
+                    if (!parsed.empty()) {
+                        themeGen += parsed;
+                    }
+                }
+            }
+        }
+
+        // Speed-Changes
+        if (seg.options.speedChange != JFPGen::SpeedChange::None) {
+            int speedID = JFPGen::convertSpeed(seg.options.speedChange);
+
+            int spY = seg.coords.second + passedCH/2 + 14 * (seg.y_swing == 1 ? -1 : 1);
+            if (mini && seg.y_swing == 1) spY -= 30;
+            int spR = (mini ? 63.435 : 45) * -seg.y_swing;
+            float speedFactor = (mini ? 0.3 : 0.5) * (passedCH / 60.0);
+
+            auto speedBank = overrideBankS["speed-05x"];
+            if (seg.options.speedChange == JFPGen::SpeedChange::Speed1x) {
+                speedBank = overrideBankS["speed-1x"];
+            } else if (seg.options.speedChange == JFPGen::SpeedChange::Speed2x) {
+                speedBank = overrideBankS["speed-2x"];
+            } else if (seg.options.speedChange == JFPGen::SpeedChange::Speed3x) {
+                speedBank = overrideBankS["speed-3x"];
+            } else if (seg.options.speedChange == JFPGen::SpeedChange::Speed4x) {
+                speedBank = overrideBankS["speed-4x"];
+            }
+            auto speedSize = mini ? speedBank.mini : speedBank.standard;
+            const OddsBucket* bucket = selectBucket(speedSize.buckets, themeRNG);
+            if (bucket != nullptr) {
+                for (const auto& block : bucket->blocks) {
+                    std::string parsed = parseAddBlock(
+                        block, seg.coords.first - 14, spY,
+                        biome.options.maxHeight, biome.options.minHeight, passedCH, false, spR, speedFactor);
+                    if (!parsed.empty()) {
+                        themeGen += parsed;
+                    }
+                }
+            }
+        }
+
+        if (i > 0 && mini != biome.segments[i - 1].options.mini) {
+            if (biome.options.typeA) {
+                float ySP, xSP, rSP, scaleSP;
+                if (seg.options.isPortal == JFPGen::Portals::None) {
+                    xSP = seg.coords.first - 26;
+                    ySP = biome.segments[i - 1].coords.second + 15 +
+                        (biome.options.corridorHeight - 30) / 2;
+                    ySP += biome.segments[i - 1].y_swing * 4;
+                    rSP = (std::atan((biome.options.corridorHeight - 30.f) / 30.f) * 180/M_PI - 90) *
+                        biome.segments[i - 1].y_swing;
+                    scaleSP = std::sqrt(std::pow((biome.options.corridorHeight - 30), 2) + 900) / 110.f;
+                } else {
+                    xSP = xP;
+                    ySP = yP;
+                    rSP = rPdeg;
+                    scaleSP = scaleP;
+                }
+
+                auto sizeSize = mini ? overrideBankS["mini-portal"].mini : overrideBankS["big-portal"].standard;
+                const OddsBucket* bucket = selectBucket(sizeSize.buckets, themeRNG);
+                if (bucket != nullptr) {
+                    for (const auto& block : bucket->blocks) {
+                        std::string parsed = parseAddBlock(
+                            block, xSP, ySP,
+                            biome.options.maxHeight, biome.options.minHeight, passedCH, false, rSP, scaleSP);
+                        if (!parsed.empty()) {
+                            themeGen += parsed;
+                        }
+                    }
+                }
+            } else {
+                float ySP, xSP, rSP = 0, scaleSP;
+                if (seg.options.isPortal == JFPGen::Portals::None) {
+                    ySP = seg.coords.second + passedCH / 2.0f;
+                    if (seg.y_swing == 1) {
+                        if (mini) {
+                            ySP -= 45;
+                        } else {
+                            ySP -= 15;
+                        }
+                    } else {
+                        ySP += 15;
+                    }
+                    scaleSP = (passedCH / 90.f) * 0.8;
+                    xSP = seg.coords.first - 14 + 13 * scaleSP;
+                } else {
+                    xSP = xP;
+                    ySP = yP;
+                    rSP = rPdeg;
+                    scaleSP = scaleP;
+                }
+
+                auto sizeSize = mini ? overrideBankS["mini-portal"].mini : overrideBankS["big-portal"].standard;
+                const OddsBucket* bucket = selectBucket(sizeSize.buckets, themeRNG);
+                if (bucket != nullptr) {
+                    for (const auto& block : bucket->blocks) {
+                        std::string parsed = parseAddBlock(
+                            block, xSP, ySP,
+                            biome.options.maxHeight, biome.options.minHeight, passedCH, false, rSP, scaleSP);
+                        if (!parsed.empty()) {
+                            themeGen += parsed;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return themeGen;
+}
+
+void parseThemeMetaopts(const std::string& name) {
+    bool inOptValues = false;
+    auto* mod = Mod::get();
+
+    std::string themeName = name;
+    if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
+        themeName += ".jfpt";
+    }
+    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
+    std::vector<std::string> lines;
+    std::string line;
+    uint32_t ctr = 0;
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
+        lines.push_back(line);
+        ctr++;
+        if (ctr > 20000) break;
+    }
+
+    mod->setSavedValue<uint32_t>("opt-0-starting-dist", 345);
+    mod->setSavedValue<int32_t>("opt-0-starting-height", 135);
+    mod->setSavedValue<int>("opt-0-starting-sc-x", -90);
+    for (const auto& l : lines) {
+
+        // special stuff
+        if (l == "# opts #") {
+            inOptValues = true;
+            continue;
+        } else if (l == "# end opts #") {
+            inOptValues = false;
+            continue;
+        }
+        if (inOptValues) {
+            auto pos = l.find(':');
+            if (pos != std::string::npos) {
+                std::string key = l.substr(0, pos);
+                std::string value = l.substr(pos + 1);
+
+                key.erase(0, key.find_first_not_of(" \t\r\n"));
+                key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                value.erase(0, value.find_first_not_of(" \t\r\n"));
+                value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                if (key == "StartX") {
+                    int startX = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (startX >= 0 && startX <= 20000) {
+                        mod->setSavedValue<uint32_t>("opt-0-starting-dist", startX);
+                    }
+                } else if (key == "StartY") {
+                    int startY = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (startY >= -15 && startY <= 285) { // important would need to be removed for cam triggwrs -M
+                        mod->setSavedValue<int32_t>("opt-0-starting-height", startY);
+                    }
+                } else if (key == "SpeedChangeXOff") {
+                    int portalXOff = geode::utils::numFromString<int>(value).unwrapOr(-1);
+                    if (portalXOff >= -10000 && portalXOff <= 10000) {
+                        mod->setSavedValue<int>("opt-0-starting-sc-x", portalXOff);
+                    }
+                }
+            }
+            continue;
+        }
+    }
 }
 
 ThemeMetadata parseThemeMeta(const std::string& name) {
     bool inMetadata = false;
     ThemeMetadata metadata;
 
-    auto localPath = CCFileUtils::sharedFileUtils();
     std::string themeName = name;
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string fp = std::string(localPath->getWritablePath()) +
-        "/jfp/themes/" + themeName;
-    std::ifstream file(fp);
-    if (!file.is_open()) {
-        return ThemeMetadata();
-    }
+    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    std::istringstream iss(themeRaw);
+    
     std::vector<std::string> lines;
     std::string line;
-    while (std::getline(file, line)) {
+    uint32_t ctr = 0;
+    while (std::getline(iss, line)) {
+        line.erase(0, line.find_first_not_of("\t\r\n"));
+        line.erase(line.find_last_not_of("\t\r\n") + 1);
         lines.push_back(line);
+        ctr++;
+        if (ctr > 20000) break;
     }
-    file.close();
 
     for (const auto& l : lines) {
         // TODO(M): rework into a switch case or a neater conditional
@@ -747,6 +1413,9 @@ std::vector<std::string> tagConflicts(ThemeMetadata tmd) {
     if (!isTypeA && std::find(tmd.tags.begin(), tmd.tags.end(), "type-a-only") !=
             tmd.tags.end()) {
         conflicts.push_back("type-a-only");
+    }
+    if (std::find(tmd.tags.begin(), tmd.tags.end(), "domu_game") != tmd.tags.end()) {
+        conflicts.push_back("domu_game");
     }
 
     return conflicts;

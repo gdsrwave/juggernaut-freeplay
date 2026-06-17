@@ -11,17 +11,18 @@ extern JFPGen::AutoJFP state;
 extern bool att1;
 
 extern int globalAtt;
+extern int globalBestM;
 
 namespace JFPGen {
 
 enum class SpeedChange : int {
     None = -1,
-    Random = 0,
     Speed05x = 1,
     Speed1x = 2,
     Speed2x = 3,
     Speed3x = 4,
-    Speed4x = 5
+    Speed4x = 5,
+    Random = 6
 };
 
 enum class Visibility : int {
@@ -46,7 +47,9 @@ enum class CorridorRules : int {
     Juggernaut = 3,
     Unrestricted = 4,
     LRD = 5,
-    Limp = 6
+    Limp = 6,
+    Burst = 7,
+    ABitOfSpam = 8
 };
 
 struct RawCR {
@@ -57,6 +60,7 @@ struct RawCR {
     bool SPECIAL = false;
     bool BURST = false;
     bool ND = false;
+    bool PS = false;
 };
 
 enum class Difficulties : int {
@@ -139,12 +143,18 @@ struct BiomeOptions {
     bool typeA = true;
 };
 
+struct JFPSong {
+    int id = 234565;
+    int offset = 0;
+    bool loop = true;
+};
+
 struct Biome {
     int x_initial;
     int y_initial;
     JFPBiome type;
     std::string theme;
-    int song;
+    JFPSong song;
     BiomeOptions options;
     std::vector<Segment> segments;
 };
@@ -171,6 +181,7 @@ int convertFloatSpeed(float speed);
 SpeedChange convertFloatSpeedEnum(float speed);
 float convertSpeedToFloat(const std::string& speed);
 float convertSpeedToFloat(SpeedChange speed);
+int convertSpeed(JFPGen::SpeedChange speed);
 bool orientationMatch(int prevO[11], const std::vector<int> pattern);
 bool orientationMatch(const std::vector<Segment>& segments, int idx,
     const std::vector<int>& pattern, bool strictMini = false);
@@ -180,8 +191,26 @@ LevelData generateJFPLevel();
 }  // namespace JFPGen
 
 extern std::map<std::string, std::string> kBank;
-extern std::map<std::string, bool> overrideBank;
 extern std::vector<JFPGen::Color> colorBank;
 extern const std::vector<JFPGen::Color> defaultColorBank;
+
+struct OddsBucket {
+    uint16_t odds;
+    std::vector<std::string> blocks;
+};
+
+struct OverrideStatic {
+    bool active = false;
+    bool keep = false;
+    std::vector<OddsBucket> buckets;
+};
+
+struct OverrideGroups {
+    OverrideStatic standard;
+    OverrideStatic mini;
+};
+
+extern std::vector<std::string> allowedDef;
+extern std::map<std::string, OverrideGroups> overrideBankS;
 
 void pushColor(const JFPGen::Color& color);

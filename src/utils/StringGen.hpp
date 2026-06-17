@@ -2,7 +2,6 @@
 #pragma once
 
 #include <fmt/core.h>
-#include <Geode/cocos/platform/CCFileUtils.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include <filesystem>
 #include <random>
@@ -27,7 +26,6 @@ namespace JFPGen {
 
 static void orientationShift(int prevO[11], int newO);
 void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
-static int convertSpeed(JFPGen::SpeedChange speed);
 
 std::string jfpStringGen(bool compress);
 std::string jfpNewStringGen(LevelData ldata);

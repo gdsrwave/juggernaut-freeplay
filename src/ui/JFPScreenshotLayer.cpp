@@ -9,6 +9,8 @@
 #include "../utils/shared.hpp"
 #include "../utils/StringGen.hpp"
 #include "../utils/Ninja.hpp"
+#include "../utils/OptionStr.hpp"
+#include "../utils/Theming.hpp"
 
 
 JFPScreenshotLayer* JFPScreenshotLayer::create() {
@@ -45,7 +47,6 @@ bool JFPScreenshotLayer::init() {
     // backgroundSprite2->setZOrder(-2);
 
     auto dir = CCDirector::sharedDirector();
-    auto scene = CCScene::create();
     auto size = dir->getWinSize();
 
     // take screenshot, use as filler during the 1 frame between playlayers
@@ -53,6 +54,7 @@ bool JFPScreenshotLayer::init() {
     auto rt = CCRenderTexture::create(size.width, size.height);
     rt->setPosition(size / 2);  // middle of screen
     rt->begin();
+    
     dir->getRunningScene()->visit();
     rt->end();
 
@@ -75,10 +77,19 @@ CCScene* JFPScreenshotLayer::scene() {
 }
 
 void JFPScreenshotLayer::onAutoGen() {
+
     jfpActive = true;
     Mod::get()->setSavedValue<uint32_t>(
         "total-played",
         Mod::get()->getSavedValue<uint32_t>("total-played", 0) + 1);
+    
+    if (Mod::get()->getSavedValue<bool>("opt-0-shuffling")) {
+        auto shuffleList = Mod::get()->getSavedValue<std::vector<std::string>>("opt-0-options-playlist", {});
+        if (!shuffleList.empty()) {
+            int randomIndex = rand() % shuffleList.size();
+            importSettings(shuffleList[randomIndex]);
+        }
+    }
 
     auto level = createGameLevel();
     if (!level) {

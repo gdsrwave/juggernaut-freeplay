@@ -14,9 +14,10 @@
 using namespace geode::prelude;
 
 GJGameLevel* commonLevel = nullptr;
+cocos2d::CCLabelBMFont* menuOptText = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
+    std::string appdataDir = geode::dirs::getSaveDir().string();
     std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
     std::string dstPath = appdataDir + "jfpLoop.mp3";
     if (!std::filesystem::exists(dstPath)) {
@@ -26,7 +27,7 @@ void setupJFPMusic() {
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = std::string(CCFileUtils::sharedFileUtils()->getWritablePath());
+    std::string appdataDir = geode::dirs::getSaveDir().string();
     std::vector<int> res;
     for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
         if (entry.is_regular_file()) {
@@ -42,30 +43,28 @@ std::vector<int> getUserSongs() {
 }
 
 void setupJFPDirectories(bool bypass) {
-    auto localPath = CCFileUtils::sharedFileUtils();
-    std::string jfpDir = std::string(localPath->getWritablePath()) + "jfp\\";
+    auto modSavePath = Mod::get()->getSaveDir();
+    auto jfpDir = modSavePath / "themes";
+
+    bool contFlag = bypass;
     if (!std::filesystem::is_directory(jfpDir)) {
         log::info("Creating JFP directory: {}", jfpDir);
         (void)file::createDirectory(jfpDir);
-    }
-    std::string themesDir = std::string(localPath->getWritablePath()) + "jfp\\themes\\";
-
-    bool contFlag = bypass;
-    if (!std::filesystem::is_directory(themesDir)) {
-        (void)file::createDirectory(themesDir);
         contFlag = true;
     }
+    if (!std::filesystem::is_directory(jfpDir / "shuffle")) (void)file::createDirectory(jfpDir / "shuffle");
+
     if (contFlag) {
-        log::info("Loading .jfpt files into themes directory: {}", themesDir);
+        log::info("Loading .jfpt files into themes directory: {}", jfpDir);
         // Source directory for .jfpt files
         std::filesystem::path srcDir = Mod::get()->getResourcesDir();
-        Mod::get()->setSavedValue<int>("ack-theme-update", 1);
+        Mod::get()->setSavedValue<int>("ack-theme-update", 2);
 
         for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
             auto fileStr = fileName.path().filename().string();
             if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
                 std::filesystem::path srcPath = srcDir / fileStr;
-                std::string dstPath = themesDir + fileStr;
+                std::filesystem::path dstPath = jfpDir / fileStr;
 
                 if (std::filesystem::exists(dstPath)) {
                     if (bypass) {
@@ -207,12 +206,12 @@ const int jfpSoundtrackSize = sizeof(jfpSoundtrack) / sizeof(int);
 
 namespace JFPGen {
 
-const char* levelCommonBaseSeg = "1,660,2,255,3,163,6,17,13,0,64,1,67,1;1,1007,2,-15,3,285,20,1,36,1,51,902,10,1.57,35,0.9,64,1,67,1;1,1007,2,-15,3,315,20,1,36,1,51,903,10,0.0,35,0,64,1,67,1;1,1007,2,-15,3,345,20,1,36,1,51,904,10,0.0,35,0.5,64,1,67,1;";
+const char* levelCommonBaseSeg = "1,660,2,255,3,163,6,17,13,0,57,914,64,1,67,1;1,1007,2,-15,3,285,20,1,36,1,51,902,10,1.57,35,0.9,64,1,67,1;1,1007,2,-15,3,315,20,1,36,1,51,903,10,0.0,35,0,64,1,67,1;1,1007,2,-15,3,345,20,1,36,1,51,904,10,0.0,35,0.5,64,1,67,1;";
 const char* levelBaseSeg = "1,747,2,45,3,15,54,160,116,1;1,7,2,15,3,105,6,-90,21,1004,64,1,67,1;1,5,2,15,3,75,21,1004,64,1,67,1;1,5,2,15,3,45,21,1004,64,1,67,1;1,5,2,15,3,15,21,1004,64,1,67,1;1,7,2,45,3,105,6,-90,21,1004,64,1,67,1;1,5,2,45,3,15,21,1004,64,1,67,1;1,5,2,45,3,45,21,1004,64,1,67,1;1,5,2,45,3,75,21,1004,64,1,67,1;1,7,2,75,3,105,6,-90,21,1004,64,1,67,1;1,5,2,75,3,15,21,1004,64,1,67,1;1,5,2,75,3,75,21,1004,64,1,67,1;1,5,2,75,3,45,21,1004,64,1,67,1;1,7,2,195,3,15,21,1004,64,1,67,1;1,5,2,105,3,75,21,1004,64,1,67,1;1,5,2,105,3,15,21,1004,64,1,67,1;1,7,2,105,3,105,6,-90,21,1004,64,1,67,1;1,5,2,165,3,75;1,5,2,105,3,45,21,1004,64,1,67,1;1,103,2,165,3,129,64,1,67,1;1,5,2,135,3,75,21,1004,64,1,67,1;1,5,2,135,3,45,21,1004,64,1,67,1;1,5,2,135,3,15,21,1004,64,1,67,1;1,8,2,195,3,135,64,1,67,1;1,5,2,165,3,15,21,1004,64,1,67,1;1,5,2,165,3,45,21,1004,64,1,67,1;1,7,2,135,3,105,6,-90,21,1004,64,1,67,1;1,7,2,165,3,105,6,-90,64,1,67,1;1,1,2,195,3,105,64,1,67,1;1,7,2,195,3,75,64,1,67,1;1,7,2,195,3,45,21,1004,64,1,67,1;";
 
-const char* levelStartingBase = "1,1338,2,255,3,45,64,1,67,1;1,1338,2,225,3,15,64,1,67,1;1,1338,2,285,3,{ch_1},6,270,64,1,67,1;1,1338,2,285,3,75,64,1,67,1;1,1338,2,345,3,{ch_2},6,270,64,1,67,1;1,1338,2,345,3,135,64,1,67,1;1,1338,2,315,3,105,64,1,67,1;1,1338,2,315,3,{ch_3},6,270,64,1,67,1;1,1338,2,255,3,{ch_4},6,270,64,1,67,1;1,1338,2,225,3,{ch_5},6,270,64,1,67,1;";
+const char* levelStartingBase = "1,1338,2,{sd_2},3,45,64,1,67,1;1,1338,2,{sd_1},3,15,64,1,67,1;1,1338,2,{sd_3},3,{ch_1},6,270,64,1,67,1;1,1338,2,{sd_3},3,75,64,1,67,1;1,1338,2,{sd_5},3,{ch_2},6,270,64,1,67,1;1,1338,2,{sd_5},3,135,64,1,67,1;1,1338,2,{sd_4},3,105,64,1,67,1;1,1338,2,{sd_4},3,{ch_3},6,270,64,1,67,1;1,1338,2,{sd_2},3,{ch_4},6,270,64,1,67,1;1,1338,2,{sd_1},3,{ch_5},6,270,64,1,67,1;";
 
-const char* levelStartingBase2 = "1,1339,2,315,3,30,5,1,6,90,64,1,67,1;1,1339,2,315,3,{ch_1},4,1,5,1,6,90,64,1,67,1;1,1339,2,285,3,{ch_2},4,1,5,1,6,90,64,1,67,1;1,1339,2,255,3,{ch_3},4,1,5,1,6,90,64,1,67,1;1,1339,2,225,3,{ch_4},4,1,5,1,6,90,64,1,67,1;";
+const char* levelStartingBase2 = "1,1339,2,{sd_4},3,30,5,1,6,90,64,1,67,1;1,1339,2,{sd_4},3,{ch_1},4,1,5,1,6,90,64,1,67,1;1,1339,2,{sd_3},3,{ch_2},4,1,5,1,6,90,64,1,67,1;1,1339,2,{sd_2},3,{ch_3},4,1,5,1,6,90,64,1,67,1;1,1339,2,{sd_1},3,{ch_4},4,1,5,1,6,90,64,1,67,1;";
 
 const char* lowVis = "1,901,2,300,3,285,20,2,36,1,51,903,28,0,29,0,10,1000,30,0,85,2,58,1;1,1011,2,495,3,150,20,2,57,903,64,1,67,1,6,-90,21,1010,24,9,32,2;1,1011,2,495,3,210,20,2,57,903,64,1,67,1,6,-90,21,1010,24,9,32,2;1,1011,2,495,3,30,20,2,57,903,64,1,67,1,6,-90,21,1010,24,9,32,2;1,1011,2,495,3,90,20,2,57,903,64,1,67,1,6,-90,21,1010,24,9,32,2;1,1011,2,495,3,270,20,2,57,903,64,1,67,1,6,-90,21,1010,24,9,32,2;1,211,2,600,3,225,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;1,211,2,600,3,75,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;1,1007,2,645,3,315,20,2,36,1,51,903,10,1.01,35,1;1,211,2,750,3,75,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;1,211,2,750,3,225,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;1,211,2,900,3,225,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;1,211,2,900,3,75,20,2,57,903,64,1,67,1,21,1010,24,9,32,5;";
 
@@ -241,6 +240,8 @@ const std::map<int, std::string> CorridorRulesLabel = {
     {4, "Unrestricted"},
     {5, "LRD"},
     {6, "Limp"},
+    {7, "Burst"},
+    {8, "ABitOfSpam"}
 };
 
 const std::map<int, std::string> DifficultiesLabel = {

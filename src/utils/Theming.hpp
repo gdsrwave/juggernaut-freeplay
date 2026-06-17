@@ -1,6 +1,7 @@
 // Copyright 2025 GDSRWave
 #pragma once
 
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -31,6 +32,12 @@ enum class OMType: int {
     None = 3
 };
 
+enum class JFPTExtraTypes: int {
+    Special = 0,
+    Pattern = 1,
+    None = 2
+};
+
 struct ThemeMatch {
     OMType omType;
     std::vector<OMType> notTypes;
@@ -38,13 +45,13 @@ struct ThemeMatch {
     std::vector<std::vector<int>> notPatterns;
     int offset;
     std::vector<int> notOffsets;
-    std::vector<std::string> commands;
+    std::vector<OddsBucket> buckets;
     bool _else = false;
 };
 
 struct RepeatingPattern {
     int id;
-    std::vector<std::string> data;
+    std::vector<OddsBucket> buckets;
     int start = 195;
     int repeat = 300;
 };
@@ -54,24 +61,25 @@ enum class InOverride : int {
     Base = 1,
     EndDown = 2,
     EndUp = 3,
-    Slope = 4,
-    Fuzz = 5,
-    Spike = 6,
-    Portal = 7,
-    Speed = 8,
-    Start = 9,
-    CorridorBlock = 10
+    Special = 4,
+    Start = 5,
+    CorridorBlock = 6,
+    CorridorBlockFill = 7,
 };
 
 std::array<int, 3> hexToColor(const std::string& hex);
-bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx,
+bool strictOM(const std::vector<JFPGen::Segment>& segments, int idx, int offset,
     const std::vector<int>& pattern, OMType omType = OMType::Corridor,
     bool typeA = false);
-std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None);
-std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f,
-    int maxHeight = 195, int minHeight = 45, int corridorHeight = 60);
+std::string handleColor(ColorAction* color);
+std::string handleRawBlock(std::string addBlockLine, OMType omType = OMType::None,
+    JFPTExtraTypes extra = JFPTExtraTypes::None);
+std::string parseAddBlock(std::string addBlockLine, float X = 465.f, float Y = 195.f, int maxHeight = 195,
+    int minHeight = 45, int corridorHeight = 60, bool isForPattern = false, float rotation = 0.f, float scale = 1.f);
 std::string parseTheme(const std::string& name, const JFPGen::LevelData& leveldata);
 ThemeMetadata parseThemeMeta(const std::string& name);
+void parseThemeMetaopts(const std::string& name);
 std::vector<std::string> tagConflicts(ThemeMetadata tmd);
+const OddsBucket* selectBucket(const std::vector<OddsBucket>& buckets, std::mt19937& rng);
 
 }  // namespace ThemeGen
