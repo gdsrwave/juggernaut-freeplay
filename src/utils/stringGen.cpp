@@ -141,7 +141,7 @@ std::string jfpNewStringGen(LevelData ldata) {
     int scXoff = Mod::get()->getSavedValue<int>("opt-0-starting-sc-x", -90);
 
     std::string levelBuildSeg2 = fmt::format(
-        "1,{speedID},2,{sd_1},3,165,13,1,57,912,64,1,67,1;",
+        "1,{speedID},2,{sd_1},3,165,13,1,57,915,64,1,67,1;",
         fmt::arg("speedID", convertSpeed(ldata.biomes[0].options.startingSpeed)),
         fmt::arg("sd_1", static_cast<int>(startingDist) + scXoff)
     );
