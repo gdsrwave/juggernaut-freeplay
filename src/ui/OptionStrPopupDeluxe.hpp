@@ -3,18 +3,21 @@
 
 #include <string>
 #include <Geode/Geode.hpp>
+#include "./OptionSelectPopup.hpp"
 
 using namespace geode::prelude;
 
-class OptionStrPopup : public geode::Popup {
+class OptionStrPopupDeluxe : public geode::Popup {
  protected:
     bool setup(std::string const& value);
     void onClose(CCObject*) override;
 
+    TextInput* m_inputNameTxt;
     TextInput* m_inputOptTxt;
+    OptionSelectPopup* m_optionPopup;
 
  public:
-    static OptionStrPopup* create(std::string const& text);
+    static OptionStrPopupDeluxe* create(OptionSelectPopup* popup);
 
     void clickImport(CCObject*);
 };

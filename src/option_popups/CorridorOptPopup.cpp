@@ -208,8 +208,8 @@ void CorridorOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
         CorridorOptPopup::save();
     }
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
+    
+    
     this->removeFromParentAndCleanup(true);
 }
 
@@ -304,7 +304,7 @@ void CorridorOptPopup::onInfo(CCObject*) {
 
 CorridorOptPopup* CorridorOptPopup::create(std::string const& text) {
     auto ret = new CorridorOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->init(400.f, 280.f, "GJ_square05.png") && ret->setup(text)) {
         ret->autorelease();
         return ret;
     }

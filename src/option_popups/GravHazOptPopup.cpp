@@ -290,8 +290,8 @@ void GravHazOptPopup::onClose(CCObject* object) {
     if (mod->getSavedValue<bool>("opt-u-save-on-close")) {
         GravHazOptPopup::save();
     }
-    this->setKeypadEnabled(false);
-    this->setTouchEnabled(false);
+    
+    
     this->removeFromParentAndCleanup(true);
 }
 
@@ -423,7 +423,7 @@ void GravHazOptPopup::onInfo(CCObject*) {
 
 GravHazOptPopup* GravHazOptPopup::create(std::string const& text) {
     auto ret = new GravHazOptPopup();
-    if (ret->initAnchored(400.f, 280.f, text, "GJ_square05.png")) {
+    if (ret->init(400.f, 280.f, "GJ_square05.png") && ret->setup(text)) {
         ret->autorelease();
         return ret;
     }

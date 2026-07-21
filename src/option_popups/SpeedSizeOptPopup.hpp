@@ -4,9 +4,9 @@
 
 using namespace geode::prelude;
 
-class SpeedSizeOptPopup : public geode::Popup<std::string const&> {
+class SpeedSizeOptPopup : public geode::Popup {
 protected:
-    bool setup(std::string const& value) override;
+    bool setup(std::string const& value);
     void onClose(CCObject* object) override;
     void onToggle(CCObject* object);
     void onEnumSelect(CCObject* object);

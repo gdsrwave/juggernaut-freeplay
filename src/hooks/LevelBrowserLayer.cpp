@@ -1,5 +1,4 @@
 // Copyright 2025 GDSRWave
-#include <Geode/cocos/platform/CCFileUtils.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
 #include <fmt/core.h>
 #include <cmath>
@@ -50,18 +49,12 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
     void onGenButton(CCObject*) {
         // Special thanks to HJFod for their work on GDShare and GMD-API,
         // which was used as reference here - https://github.com/HJfod
-
-        // create fileutils object and get GMD file from game data path
-        // getWritablePath() = %LOCALAPPDATA%\GeometryDash
         std::srand(std::time(0));
-        auto localPath = CCFileUtils::sharedFileUtils();
+        std::filesystem::path waveman = Mod::get()->getSaveDir() / "waveman.gmd";
         std::string levelString = JFPGen::jfpStringGen(true);
         if (levelString.empty()) return;
-        JFPGen::exportLvlStringGMD(
-            std::string(localPath->getWritablePath()) + "/waveman.gmd",
-            levelString);
-        auto jfpImport = ImportGmdFile::from(
-            std::string(localPath->getWritablePath()) + "/waveman.gmd");
+        JFPGen::exportLvlStringGMD(waveman, levelString);
+        auto jfpImport = ImportGmdFile::from(waveman);
 
         // infer filetype, should always be .gmd for us
         jfpImport.tryInferType();  // .gmd
