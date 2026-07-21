@@ -389,9 +389,17 @@ std::string parseAddBlock(std::string addBlockLine, float X, float Y,
                             } else if (lastOp == '*') {
                                 acc *= num;
                             } else if (lastOp == '/') {
-                                acc /= num;
+                                if (num == 0.f) {
+                                    acc = 0.f;
+                                } else {
+                                    acc /= num;
+                                }
                             } else if (lastOp == '%') {
-                                acc = std::fmod(acc, num);
+                                if (num == 0.f) {
+                                    acc = 0.f;
+                                } else {
+                                    acc = std::fmod(acc, num);
+                                }
                             }
                             if (nextOp == std::string::npos) break;
                             lastOp = parsedExpr[nextOp];
@@ -518,7 +526,9 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
         themeName += ".jfpt";
     }
 
-    std::string themeRaw = file::readString(mod->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    auto themePath = mod->getSaveDir() / "themes" / themeName;
+    if (!std::filesystem::exists(themePath)) return themeGen;
+    std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
     std::vector<std::string> lines;
@@ -1258,7 +1268,9 @@ void parseThemeMetaopts(const std::string& name) {
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    auto themePath = mod->getSaveDir() / "themes" / themeName;
+    if (!std::filesystem::exists(themePath)) return;
+    std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
     std::vector<std::string> lines;
@@ -1320,13 +1332,16 @@ void parseThemeMetaopts(const std::string& name) {
 
 ThemeMetadata parseThemeMeta(const std::string& name) {
     bool inMetadata = false;
+    auto* mod = Mod::get();
     ThemeMetadata metadata;
 
     std::string themeName = name;
     if (themeName.size() < 5 || themeName.substr(themeName.size() - 5) != ".jfpt") {
         themeName += ".jfpt";
     }
-    std::string themeRaw = file::readString(Mod::get()->getSaveDir() / "themes" / themeName).unwrapOrDefault();
+    auto themePath = mod->getSaveDir() / "themes" / themeName;
+    if (!std::filesystem::exists(themePath)) return metadata;
+    std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
     std::vector<std::string> lines;

@@ -1,3 +1,7 @@
+# JFP 1.8.1 (July 21, 2026)
+- 2.2081 support
+- Bugfixes and touch-ups
+
 # JFP 1.8.0 (March 31, 2026)
 - Presets Menu: easily add, use, and shuffle your JFP option codes!
 - Added random Starting Speed option

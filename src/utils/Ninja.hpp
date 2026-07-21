@@ -108,7 +108,9 @@ enum class JFPBiome : int {
     NeironExGaming = 4,
     Campfire = 5,
     DeathCWaveBuff = 6,
-    RandomPart = 7
+    RandomPart = 7,
+    JuggernautAll = 8,
+    SpaceWaves = 9
 };
 
 struct SegmentOptions {

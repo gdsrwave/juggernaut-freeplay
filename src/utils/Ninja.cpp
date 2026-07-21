@@ -345,7 +345,12 @@ LevelData generateJFPLevel() {
 
     if (musicSource == MusicSources::LocalFiles) {
         auto songsList = getUserSongs();
-        levelData.biomes[0].song.id = songsList[songRNG() % (songsList.size())];
+        if (!songsList.empty()) {
+            levelData.biomes[0].song.id = songsList[songRNG() % (songsList.size())];
+        } else {
+            log::warn("No local MP3 files found; falling back to the built-in soundtrack");
+            levelData.biomes[0].song.id = jfpSoundtrack[songRNG() % jfpSoundtrackSize];
+        }
     } else {
         levelData.biomes[0].song.id = jfpSoundtrack[songRNG() % (jfpSoundtrackSize)];
     }
@@ -373,8 +378,12 @@ LevelData generateJFPLevel() {
             log::warn("Failed to get music length for an offset; song will play from start");
         } else {
             auto offsetBound = static_cast<uint32_t>((static_cast<uint32_t>(lengthMs) * 3) / 4);
-            auto songOffset = songRNG() % offsetBound;
-            levelData.biomes[0].song.offset = songOffset;
+            if (offsetBound > 0) {
+                auto songOffset = songRNG() % offsetBound;
+                levelData.biomes[0].song.offset = songOffset;
+            } else {
+                log::warn("Music length produced a zero offset bound; song will play from start");
+            }
         }
     }
 
