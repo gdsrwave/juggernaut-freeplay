@@ -84,7 +84,7 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
         std::vector<std::string> themeFiles;
         for (const auto& fileName :
                 std::filesystem::directory_iterator(srcDir)) {
-            auto fileStr = fileName.path().filename().string();
+            auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
             if (fileStr.size() >= 5 &&
                     fileStr.substr(fileStr.size() - 5) == ".jfpt") {
                 themeFiles.push_back(fileStr);
