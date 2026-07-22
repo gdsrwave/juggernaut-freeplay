@@ -1,4 +1,4 @@
-# JFP 1.8.1 (July 21, 2026)
+# JFP 1.8.2 (July 22, 2026)
 - 2.2081 support
 - Bugfixes and touch-ups
 
