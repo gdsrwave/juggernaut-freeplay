@@ -17,7 +17,7 @@ GJGameLevel* commonLevel = nullptr;
 cocos2d::CCLabelBMFont* menuOptText = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = geode::dirs::getSaveDir().string();
+    std::string appdataDir = geode::utils::string::pathToString(geode::dirs::getSaveDir());
     std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
     std::string dstPath = appdataDir + "jfpLoop.mp3";
     if (!std::filesystem::exists(dstPath)) {
@@ -27,11 +27,11 @@ void setupJFPMusic() {
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = geode::dirs::getSaveDir().string();
+    std::string appdataDir = geode::utils::string::pathToString(geode::dirs::getSaveDir());
     std::vector<int> res;
     for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
         if (entry.is_regular_file()) {
-            auto filename = entry.path().filename().string();
+            auto filename = geode::utils::string::pathToString(entry.path().filename());
             if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".mp3") {
                 std::string numPart = filename.substr(0, filename.size() - 4);
                 int num = geode::utils::numFromString<int>(numPart).unwrapOr(-1);
@@ -61,7 +61,7 @@ void setupJFPDirectories(bool bypass) {
         Mod::get()->setSavedValue<int>("ack-theme-update", 2);
 
         for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
-            auto fileStr = fileName.path().filename().string();
+            auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
             if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
                 std::filesystem::path srcPath = srcDir / fileStr;
                 std::filesystem::path dstPath = jfpDir / fileStr;

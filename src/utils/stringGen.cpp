@@ -68,7 +68,7 @@ std::string jfpStringGen(bool compress) {
         std::vector<std::string> themeFiles;
         for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
             if (entry.is_regular_file()) {
-                auto filename = std::filesystem::relative(entry.path(), modSavePath / "themes").string();
+                auto filename = geode::utils::string::pathToString(std::filesystem::relative(entry.path(), modSavePath / "themes"));
                 if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
                     continue;
                 }

@@ -358,7 +358,7 @@ LevelData generateJFPLevel() {
     // attempt to make a song offset (aka FMOD nonsense)
     if (mod->getSavedValue<bool>("opt-0-music-offset", false)) {
         uint32_t lengthMs = 0;
-        auto bgmPath = (geode::dirs::getSaveDir() / (std::to_string(levelData.biomes[0].song.id) + ".mp3")).string();
+        auto bgmPath = geode::utils::string::pathToString(geode::dirs::getSaveDir() / (std::to_string(levelData.biomes[0].song.id) + ".mp3"));
         //log::info("{}", bgmPath);
         auto* audioEngine = FMODAudioEngine::get();
         constexpr int kMenuMusicID = 1;

@@ -61,7 +61,7 @@ bool ThemeSelectPopup::setup(std::string const& value) {
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
         if (entry.is_regular_file()) {
-            auto filename = std::filesystem::relative(entry.path(), themesDir).string();
+            auto filename = geode::utils::string::pathToString(std::filesystem::relative(entry.path(), themesDir));
             if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
                 continue;
             }
@@ -330,7 +330,7 @@ void ThemeSelectPopup::onReload(CCObject* object, bool update) {
     std::vector<std::string> themeFiles;
     for (const auto& fileName :
             std::filesystem::directory_iterator(srcDir)) {
-        auto fileStr = fileName.path().filename().string();
+        auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
         if (fileStr.size() >= 5 &&
                 fileStr.substr(fileStr.size() - 5) == ".jfpt") {
             themeFiles.push_back(fileStr);
