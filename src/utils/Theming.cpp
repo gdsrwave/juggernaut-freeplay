@@ -527,7 +527,7 @@ std::string parseTheme(const std::string& name, const JFPGen::LevelData& ldata) 
     }
 
     auto themePath = mod->getSaveDir() / "themes" / themeName;
-    if (!std::filesystem::exists(themePath)) return themeGen;
+    if (!themePath.exists()) return themeGen;
     std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
@@ -1269,7 +1269,7 @@ void parseThemeMetaopts(const std::string& name) {
         themeName += ".jfpt";
     }
     auto themePath = mod->getSaveDir() / "themes" / themeName;
-    if (!std::filesystem::exists(themePath)) return;
+    if (!themePath.exists()) return;
     std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     
@@ -1340,7 +1340,7 @@ ThemeMetadata parseThemeMeta(const std::string& name) {
         themeName += ".jfpt";
     }
     auto themePath = mod->getSaveDir() / "themes" / themeName;
-    if (!std::filesystem::exists(themePath)) return metadata;
+    if (!themePath.exists()) return metadata;
     std::string themeRaw = file::readString(themePath).unwrapOrDefault();
     std::istringstream iss(themeRaw);
     

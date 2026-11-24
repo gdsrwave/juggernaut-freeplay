@@ -3,7 +3,7 @@
 
 #include <fmt/core.h>
 #include <Geode/cocos/support/zip_support/ZipUtils.h>
-#include <filesystem>
+#include <asp/fs/Path.hpp>
 #include <random>
 #include <cmath>
 #include <map>
@@ -25,7 +25,7 @@ using namespace geode::prelude;
 namespace JFPGen {
 
 static void orientationShift(int prevO[11], int newO);
-void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1);
+void exportLvlStringGMD(asp::fs::PathView path, std::string ld1);
 
 std::string jfpStringGen(bool compress);
 std::string jfpNewStringGen(LevelData ldata);

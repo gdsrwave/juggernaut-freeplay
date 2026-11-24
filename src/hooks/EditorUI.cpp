@@ -1,7 +1,7 @@
 // Copyright 2025 GDSRWave
 #include <string>
 #include <Geode/Geode.hpp>
-#include <alphalaneous.editortab_api/include/EditorTabAPI.hpp>
+#include <alphalaneous.editortab_api/API.hpp>
 #include "../utils/Theming.hpp"
 
 using namespace geode::prelude;
@@ -74,105 +74,100 @@ class $modify(EditorUI) {
         bool ttb = Mod::get()->getSavedValue<bool>("opt-u-theme-creator-tools");
         if (!ttb) return true;
 
-        alpha::editor_tabs::addTab("gdsrwave.jfp/themetools", alpha::editor_tabs::EDIT,
-                [this]() -> CCNode* {
-            EditorUI* ui = this;
-            auto arr = CCArray::create();
-            // floor seg export btn
-            auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            floorBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("floorIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+        auto editMode = alpha::editor_tabs::getMode(alpha::editor_tabs::Edit);
+        if (!editMode) return true;
 
-            auto floorBtn = CCMenuItemExt::createSpriteExtra(
-                floorBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor); });
-            floorBtn->setID("jfpt-floorcpy-btn");
-            arr->addObject(floorBtn);
+        EditorUI* ui = this;
+        auto arr = CCArray::create();
 
-            // ceiling seg export btn
-            auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            ceilBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("ceilingIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+        // floor seg export btn
+        auto floorBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+        floorBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("floorIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero);
 
-            auto ceilBtn = CCMenuItemExt::createSpriteExtra(
-                ceilBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); });
+        auto floorBtn = CCMenuItemExt::createSpriteExtra(
+            floorBtnSpr,
+            [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor); });
+        floorBtn->setID("jfpt-floorcpy-btn");
+        arr->addObject(floorBtn);
 
-            ceilBtn->setID("jfpt-ceilcpy-btn");
-            arr->addObject(ceilBtn);
+        // ceiling seg export btn
+        auto ceilBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+        ceilBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("ceilingIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero);
 
-            // special override export btn
-            auto specialORBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            specialORBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("specialORIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+        auto ceilBtn = CCMenuItemExt::createSpriteExtra(
+            ceilBtnSpr,
+            [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Ceiling); });
 
-            auto specialORBtn = CCMenuItemExt::createSpriteExtra(
-                specialORBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Special); });
+        ceilBtn->setID("jfpt-ceilcpy-btn");
+        arr->addObject(ceilBtn);
 
-            specialORBtn->setID("jfpt-specialcpy-btn");
-            arr->addObject(specialORBtn);
+        // special override export btn
+        auto specialORBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+        specialORBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("specialORIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero);
 
-            // pattern export btn
-            auto patternBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            patternBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero
-            );
-            auto patternBtn = CCMenuItemExt::createSpriteExtra(
-                patternBtnSpr,
-                [=](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Pattern); }
-            );
-            patternBtn->setID("jfpt-patterncpy-btn");
-            arr->addObject(patternBtn);
+        auto specialORBtn = CCMenuItemExt::createSpriteExtra(
+            specialORBtnSpr,
+            [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Special); });
 
-            // colors export btn
-            auto colorsBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
-            colorsBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("colorsIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero
-            );
-            auto colorsBtn = CCMenuItemExt::createSpriteExtra(
-                colorsBtnSpr,
-                [=](auto) { onCopyColorBtn(ui); }
-            );
-            colorsBtn->setID("jfpt-colorscpy-btn");
-            arr->addObject(colorsBtn);
+        specialORBtn->setID("jfpt-specialcpy-btn");
+        arr->addObject(specialORBtn);
 
-            // info btn
-            auto infoBtnSpr = CCSprite::createWithSpriteFrameName(
-                "blueBg.png"_spr);
-            infoBtnSpr->addChildAtPosition(
-                CCSprite::createWithSpriteFrameName("eInfoIcon.png"_spr),
-                Anchor::Center,
-                CCPointZero);
+        // pattern export btn
+        auto patternBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+        patternBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("patternIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero
+        );
+        auto patternBtn = CCMenuItemExt::createSpriteExtra(
+            patternBtnSpr,
+            [ui](auto) { onCopyBtns(ui, ThemeGen::OMType::Floor, ThemeGen::JFPTExtraTypes::Pattern); }
+        );
+        patternBtn->setID("jfpt-patterncpy-btn");
+        arr->addObject(patternBtn);
 
-            auto infoBtn = CCMenuItemExt::createSpriteExtra(
-                infoBtnSpr,
-                [=](auto) { onThemeInfoButton(); });
+        // colors export btn
+        auto colorsBtnSpr = CCSprite::create("GJ_button_01-uhd.png");
+        colorsBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("colorsIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero
+        );
+        auto colorsBtn = CCMenuItemExt::createSpriteExtra(
+            colorsBtnSpr,
+            [ui](auto) { onCopyColorBtn(ui); }
+        );
+        colorsBtn->setID("jfpt-colorscpy-btn");
+        arr->addObject(colorsBtn);
 
-            infoBtn->setID("jfpt-theme-info-btn");
-            arr->addObject(infoBtn);
+        // info btn
+        auto infoBtnSpr = CCSprite::createWithSpriteFrameName(
+            "blueBg.png"_spr);
+        infoBtnSpr->addChildAtPosition(
+            CCSprite::createWithSpriteFrameName("eInfoIcon.png"_spr),
+            Anchor::Center,
+            CCPointZero);
 
-            auto spanArray = std::vector<geode::Ref<cocos2d::CCNode>>();
-            for (int i = 0; i < arr->count(); ++i) {
-                spanArray.push_back(static_cast<CCNode*>(arr->objectAtIndex(i)));
-            }
-            return alpha::editor_tabs::createEditButtonBar(spanArray);
-        },
-        []() -> CCNode* {
-            CCLabelBMFont* textLabel = CCLabelBMFont::create("JFP", "bigFont.fnt");
-            textLabel->setScale(0.4f);
-            return textLabel;
-        });
+        auto infoBtn = CCMenuItemExt::createSpriteExtra(
+            infoBtnSpr,
+            [](auto) { onThemeInfoButton(); });
+
+        infoBtn->setID("jfpt-theme-info-btn");
+        arr->addObject(infoBtn);
+
+        auto tabNode = alpha::editor_tabs::EditorTab::create(arr);
+        auto textLabel = CCLabelBMFont::create("JFP", "bigFont.fnt");
+        textLabel->setScale(0.4f);
+        editMode->createTab("gdsrwave.jfp/themetools", tabNode, textLabel);
 
         return true;
     }

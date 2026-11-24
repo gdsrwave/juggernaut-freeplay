@@ -392,9 +392,9 @@ void VisualsOptPopup::onEnumDecrease(CCObject* object) {
         if (m_colorModeIndex == 0) m_colorModeIndex = m_colorModeIndexLen;
         m_colorModeIndex -= 1;
         labelText = JFPGen::ColorModeLabel.at(m_colorModeIndex);
-        const char* newSprite = fmt::format("jfp_cm_{}.png"_spr, m_colorModeIndex).c_str();
+        std::string newSprite = fmt::format("jfp_cm_{}.png"_spr, m_colorModeIndex);
         m_colorModePicSpr->setDisplayFrame(
-            frameCache->spriteFrameByName(newSprite)
+            frameCache->spriteFrameByName(newSprite.c_str())
         );
     } else {
         log::warn("Unknown toggle: {}", lbl->getID());
@@ -428,9 +428,9 @@ void VisualsOptPopup::onEnumIncrease(CCObject* object) {
         m_colorModeIndex += 1;
         if (m_colorModeIndex >= m_colorModeIndexLen) m_colorModeIndex = 0;
         labelText = JFPGen::ColorModeLabel.at(m_colorModeIndex);
-        const char* newSprite = fmt::format("jfp_cm_{}.png"_spr, m_colorModeIndex).c_str();
+        std::string newSprite = fmt::format("jfp_cm_{}.png"_spr, m_colorModeIndex);
         m_colorModePicSpr->setDisplayFrame(
-            frameCache->spriteFrameByName(newSprite)
+            frameCache->spriteFrameByName(newSprite.c_str())
         );
     } else {
         log::warn("Unknown toggle: {}", lbl->getID());

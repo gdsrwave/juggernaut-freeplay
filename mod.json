@@ -1,10 +1,10 @@
 {
-	"geode": "5.8.2",
+	"geode": "6.0.0",
 	"gd": {
-		"win": "2.2081",
-		"mac": "2.2081",
-		"ios": "2.2081",
-		"android": "2.2081"
+		"win": "2.2091",
+		"mac": "2.2091",
+		"ios": "2.2091",
+		"android": "2.2091"
 	},
 	"version": "v1.8.2",
 	"id": "gdsrwave.jfp",
@@ -23,9 +23,8 @@
 		]
 	},
 	"dependencies": {
-		"hjfod.gmd-api": ">=v1.4.0",
-		"geode.node-ids": ">=v1.20.0",
-		"alphalaneous.editortab_api": ">=2.1.10"		
+		"geode.node-ids": ">=v1.24.0-beta.1",
+		"alphalaneous.editortab_api": ">=3.0.0-beta.4"		
 	},
 	"tags": [
 		"gameplay",
