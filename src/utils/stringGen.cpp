@@ -1,5 +1,6 @@
 // Copyright 2025 GDSRWave
 #include "StringGen.hpp"
+#include <asp/fs.hpp>
 #include <fmt/core.h>
 #include <fmt/args.h>
 #include <random>
@@ -25,7 +26,7 @@ static void orientationShift(int prevO[11], int newO) {
     prevO[10] = newO;
 }
 
-void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
+void exportLvlStringGMD(asp::fs::PathView path, std::string ld1) {
     auto lvlData = ByteVector(ld1.begin(), ld1.end());
     (void) file::writeBinary(path, lvlData);
 }
@@ -33,7 +34,7 @@ void exportLvlStringGMD(std::filesystem::path const& path, std::string ld1) {
 std::string jfpPackString(const std::string& level, uint32_t seed,
         JFPSong song, bool compress) {
     std::string b64;
-    if (compress) b64 = ZipUtils::compressString(level, true, 0);
+    if (compress) b64 = ZipUtils::compressString(level, true, -1, 0);
     else b64 = level;
     std::string desc = fmt::format("ninja v1 {}", exportSettings(getSettings(JFPGen::JFPBiome::Juggernaut)));
 
@@ -63,16 +64,18 @@ std::string jfpStringGen(bool compress) {
 
         auto modSavePath = Mod::get()->getSaveDir();
         auto themesDir = modSavePath / "themes" / "shuffle";
-        if (!std::filesystem::is_directory(themesDir)) setupJFPDirectories();
+        if (!themesDir.isDir()) setupJFPDirectories();
 
         std::vector<std::string> themeFiles;
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
-            if (entry.is_regular_file()) {
-                auto filename = geode::utils::string::pathToString(std::filesystem::relative(entry.path(), modSavePath / "themes"));
-                if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
-                    continue;
-                }
-                std::string numPart = filename.substr(0, filename.size() - 5);
+        if (auto iter = asp::fs::iterDirRecursive(themesDir)) {
+            for (const auto& entryRes : *iter) {
+                if (!entryRes) continue;
+                const auto& entry = entryRes.unwrap();
+                if (!entry.isFile() || entry.path.extension() != "jfpt") continue;
+                auto rel = entry.path.lexicallyRelative(modSavePath / "themes");
+                if (!rel) continue;
+                auto filename = rel->string();
+                if (filename.size() <= 5) continue;
                 themeFiles.push_back(filename);
             }
         }

@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <asp/fs.hpp>
 #include <Geode/Geode.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 #include "../utils/shared.hpp"
@@ -80,14 +81,17 @@ class ReloadThemesBtnNodeV3 : public SettingNodeV3 {
     }
 
     void onClickReload(CCObject*) {
-        std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+        auto srcDir = Mod::get()->getResourcesDir();
         std::vector<std::string> themeFiles;
-        for (const auto& fileName :
-                std::filesystem::directory_iterator(srcDir)) {
-            auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
-            if (fileStr.size() >= 5 &&
-                    fileStr.substr(fileStr.size() - 5) == ".jfpt") {
-                themeFiles.push_back(fileStr);
+        if (auto iter = asp::fs::iterDir(srcDir)) {
+            for (const auto& entryRes : *iter) {
+                if (!entryRes) continue;
+                const auto& path = entryRes.unwrap().path;
+                if (path.extension() == "jfpt") {
+                    if (auto fn = path.filename()) {
+                        themeFiles.push_back(fn->string());
+                    }
+                }
             }
         }
         std::string message = "Are you sure you want to restore the default themes?"

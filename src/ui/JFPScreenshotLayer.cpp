@@ -97,7 +97,7 @@ void JFPScreenshotLayer::onAutoGen() {
         return FLAlertLayer::create("Error",
             "Level generation failed. (gen-empty)", "OK")->show();
     }
-    auto newScene = PlayLayer::scene(level, false, false);
+    auto newScene = PlayLayer::scene(level, false);
     // seems to work better than pushScene?
     CCDirector::sharedDirector()->replaceScene(newScene);
 
@@ -106,7 +106,7 @@ void JFPScreenshotLayer::onAutoGen() {
 void JFPScreenshotLayer::onEnterTransitionDidFinish() {
 
     JFPGenericLayer::onEnterTransitionDidFinish();
-    queueInMainThread([=]() {
+    queueInMainThread([this]() {
         if (state == JFPGen::AutoJFP::NotInAutoJFP) {
             CCDirector::sharedDirector()->replaceScene(JFPMenuLayer::scene());
         } else {

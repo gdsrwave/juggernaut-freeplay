@@ -1,7 +1,7 @@
 // Copyright 2025 GDSRWave
 #include <fmt/core.h>
 #include <cmath>
-#include <filesystem>
+#include <asp/fs.hpp>
 #include <map>
 #include <random>
 #include <string>
@@ -17,25 +17,31 @@ GJGameLevel* commonLevel = nullptr;
 cocos2d::CCLabelBMFont* menuOptText = nullptr;
 
 void setupJFPMusic() {
-    std::string appdataDir = geode::utils::string::pathToString(geode::dirs::getSaveDir());
-    std::filesystem::path srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
-    std::string dstPath = appdataDir + "jfpLoop.mp3";
-    if (!std::filesystem::exists(dstPath)) {
-        std::filesystem::copy_file(srcPath, dstPath);
-        log::info("Copied JFP loop: {}", dstPath);
+    auto srcPath = Mod::get()->getResourcesDir() / "jfpLoop.mp3";
+    auto dstPath = geode::dirs::getSaveDir() / "jfpLoop.mp3";
+    if (!dstPath.exists()) {
+        if (auto res = asp::fs::copy(srcPath, dstPath)) {
+            log::info("Copied JFP loop: {}", dstPath.string());
+        } else {
+            log::error("Failed to copy JFP loop: {}", res.unwrapErr().message());
+        }
     }
 }
 
 std::vector<int> getUserSongs() {
-    std::string appdataDir = geode::utils::string::pathToString(geode::dirs::getSaveDir());
+    auto appdataDir = geode::dirs::getSaveDir();
     std::vector<int> res;
-    for (const auto& entry : std::filesystem::directory_iterator(appdataDir)) {
-        if (entry.is_regular_file()) {
-            auto filename = geode::utils::string::pathToString(entry.path().filename());
-            if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".mp3") {
-                std::string numPart = filename.substr(0, filename.size() - 4);
-                int num = geode::utils::numFromString<int>(numPart).unwrapOr(-1);
-                if (num > -1) res.push_back(num);
+    if (auto iter = asp::fs::iterDir(appdataDir)) {
+        for (const auto& entryRes : *iter) {
+            if (!entryRes) continue;
+            const auto& entry = entryRes.unwrap();
+            if (!entry.isFile()) continue;
+            const auto& path = entry.path;
+            if (path.extension() == "mp3") {
+                if (auto stem = path.stem()) {
+                    int num = geode::utils::numFromString<int>(*stem).unwrapOr(-1);
+                    if (num > -1) res.push_back(num);
+                }
             }
         }
     }
@@ -47,39 +53,42 @@ void setupJFPDirectories(bool bypass) {
     auto jfpDir = modSavePath / "themes";
 
     bool contFlag = bypass;
-    if (!std::filesystem::is_directory(jfpDir)) {
-        log::info("Creating JFP directory: {}", jfpDir);
+    if (!jfpDir.isDir()) {
+        log::info("Creating JFP directory: {}", jfpDir.string());
         (void)file::createDirectory(jfpDir);
         contFlag = true;
     }
-    if (!std::filesystem::is_directory(jfpDir / "shuffle")) (void)file::createDirectory(jfpDir / "shuffle");
+    if (!(jfpDir / "shuffle").isDir()) (void)file::createDirectory(jfpDir / "shuffle");
 
     if (contFlag) {
-        log::info("Loading .jfpt files into themes directory: {}", jfpDir);
-        // Source directory for .jfpt files
-        std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+        log::info("Loading .jfpt files into themes directory: {}", jfpDir.string());
+        auto srcDir = Mod::get()->getResourcesDir();
         Mod::get()->setSavedValue<int>("ack-theme-update", 2);
 
-        for (const auto& fileName : std::filesystem::directory_iterator(srcDir)) {
-            auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
-            if (fileStr.size() >= 5 && fileStr.substr(fileStr.size() - 5) == ".jfpt") {
-                std::filesystem::path srcPath = srcDir / fileStr;
-                std::filesystem::path dstPath = jfpDir / fileStr;
+        if (auto iter = asp::fs::iterDir(srcDir)) {
+            for (const auto& entryRes : *iter) {
+                if (!entryRes) continue;
+                const auto& srcPath = entryRes.unwrap().path;
+                if (srcPath.extension() == "jfpt") {
+                    auto fileStr = std::string(srcPath.filename().value_or("").view());
+                    auto dstPath = jfpDir / fileStr;
 
-                if (std::filesystem::exists(dstPath)) {
-                    if (bypass) {
-                        std::filesystem::copy_file(
-                            srcPath, dstPath,
-                            std::filesystem::copy_options::overwrite_existing);
-                        log::info("Overwrote existing theme file: {}", dstPath);
+                    if (dstPath.exists()) {
+                        if (bypass) {
+                            if (auto res = asp::fs::copy(srcPath, dstPath)) {
+                                log::info("Overwrote existing theme file: {}", dstPath.string());
+                            } else {
+                                log::error("Failed to overwrite theme file {}: {}", dstPath.string(), res.unwrapErr().message());
+                            }
+                        } else {
+                            log::info("Theme file already exists and bypass is false: {}",
+                                dstPath.string());
+                        }
+                    } else if (auto res = asp::fs::copy(srcPath, dstPath)) {
+                        log::info("Copied theme file: {}", dstPath.string());
                     } else {
-                        log::info("Theme file already exists and bypass is false: {}",
-                            dstPath);
+                        log::error("Failed to copy theme file {}: {}", dstPath.string(), res.unwrapErr().message());
                     }
-                } else if (std::filesystem::copy_file(srcPath, dstPath)) {
-                    log::info("Copied theme file: {}", dstPath);
-                } else {
-                    log::error("Failed to copy theme file {}", dstPath);
                 }
             }
         }

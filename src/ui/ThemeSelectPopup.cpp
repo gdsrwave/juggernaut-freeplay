@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <asp/fs.hpp>
 #include <Geode/Geode.hpp>
 #include "ThemeSelectPopup.hpp"
 #include "../utils/Theming.hpp"
@@ -57,14 +58,17 @@ bool ThemeSelectPopup::setup(std::string const& value) {
 
     auto modSavePath = Mod::get()->getSaveDir();
     auto themesDir = modSavePath / "themes";
-    if (!std::filesystem::is_directory(themesDir)) setupJFPDirectories(true);
+    if (!themesDir.isDir()) setupJFPDirectories(true);
 
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(themesDir)) {
-        if (entry.is_regular_file()) {
-            auto filename = geode::utils::string::pathToString(std::filesystem::relative(entry.path(), themesDir));
-            if (filename.size() <= 5 || filename.substr(filename.size() - 5) != ".jfpt") {
-                continue;
-            }
+    if (auto iter = asp::fs::iterDirRecursive(themesDir)) {
+        for (const auto& entryRes : *iter) {
+            if (!entryRes) continue;
+            const auto& entry = entryRes.unwrap();
+            if (!entry.isFile() || entry.path.extension() != "jfpt") continue;
+            auto rel = entry.path.lexicallyRelative(themesDir);
+            if (!rel) continue;
+            auto filename = rel->string();
+            if (filename.size() <= 5) continue;
             std::string numPart = filename.substr(0, filename.size() - 5);
             m_themeFiles.push_back(numPart);
         }
@@ -173,7 +177,7 @@ bool ThemeSelectPopup::setup(std::string const& value) {
     if (Mod::get()->getSavedValue<int>("ack-theme-update", 0) != THEME_UPDATE_VER) {
         Mod::get()->setSavedValue<int>("ack-theme-update", THEME_UPDATE_VER);
 
-        queueInMainThread([=]() {
+        queueInMainThread([this]() {
             ThemeSelectPopup::onReload(nullptr, true);
         });
     }
@@ -282,8 +286,8 @@ void ThemeSelectPopup::useButtonShuffleFormat() {
         }
     }
     for (int i = 0; i < m_themeUseBtns->count(); i++) {
-        auto themePath = std::filesystem::path(m_themeFiles[i]);
-        if (!themePath.empty() && *themePath.begin() == "shuffle") {
+        auto themePath = asp::fs::Path(m_themeFiles[i]);
+        if (!themePath.empty() && themePath.startsWith("shuffle")) {
             auto newActiveBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(m_themeUseBtns->objectAtIndex(i));
             if (newActiveBtn != nullptr) {
                 newActiveBtn->setSprite(CCSprite::createWithSpriteFrameName("GJ_selectSongOnBtn_001.png"));
@@ -326,14 +330,17 @@ void ThemeSelectPopup::onClickReload(CCObject* object) {
 }
 
 void ThemeSelectPopup::onReload(CCObject* object, bool update) {
-    std::filesystem::path srcDir = Mod::get()->getResourcesDir();
+    auto srcDir = Mod::get()->getResourcesDir();
     std::vector<std::string> themeFiles;
-    for (const auto& fileName :
-            std::filesystem::directory_iterator(srcDir)) {
-        auto fileStr = geode::utils::string::pathToString(fileName.path().filename());
-        if (fileStr.size() >= 5 &&
-                fileStr.substr(fileStr.size() - 5) == ".jfpt") {
-            themeFiles.push_back(fileStr);
+    if (auto iter = asp::fs::iterDir(srcDir)) {
+        for (const auto& entryRes : *iter) {
+            if (!entryRes) continue;
+            const auto& path = entryRes.unwrap().path;
+            if (path.extension() == "jfpt") {
+                if (auto fn = path.filename()) {
+                    themeFiles.push_back(fn->string());
+                }
+            }
         }
     }
 

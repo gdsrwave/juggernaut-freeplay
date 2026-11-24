@@ -359,7 +359,7 @@ void JFPMenuLayer::onAutoGen() {
         return FLAlertLayer::create("Error",
             "Level generation failed. (gen-empty)", "OK")->show();
     }
-    auto newScene = PlayLayer::scene(level, false, false);
+    auto newScene = PlayLayer::scene(level, false);
     // seems to work better than pushScene?
     CCDirector::sharedDirector()->replaceScene(newScene);
 }
@@ -397,7 +397,7 @@ CCScene* JFPMenuLayer::scene() {
     scene->addChild(layer);
 
     if (!GameManager::sharedState()->getGameVariable("0122")) {
-        auto bgmPath = geode::utils::string::pathToString(Mod::get()->getResourcesDir() / "jfpLoop.mp3");
+        auto bgmPath = (Mod::get()->getResourcesDir() / "jfpLoop.mp3").string();
         FMODAudioEngine::get()->playMusic(bgmPath, true, 1.0f, 1);
         
         //log::info("Length: {} {}", mlength, lengthForSound);

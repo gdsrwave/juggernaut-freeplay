@@ -6,7 +6,7 @@
 #include <string>
 #include <Geode/Geode.hpp>
 #include <Geode/ui/BasedButtonSprite.hpp>
-#include <hjfod.gmd-api/include/GMD.hpp>
+#include "../utils/gmd/GMD.hpp"
 #include <Geode/binding/LocalLevelManager.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/cocos.hpp>
@@ -50,7 +50,7 @@ class $modify(LBGenerateLevelLayer, LevelBrowserLayer) {
         // Special thanks to HJFod for their work on GDShare and GMD-API,
         // which was used as reference here - https://github.com/HJfod
         std::srand(std::time(0));
-        std::filesystem::path waveman = Mod::get()->getSaveDir() / "waveman.gmd";
+        asp::fs::Path waveman = Mod::get()->getSaveDir() / "waveman.gmd";
         std::string levelString = JFPGen::jfpStringGen(true);
         if (levelString.empty()) return;
         JFPGen::exportLvlStringGMD(waveman, levelString);
